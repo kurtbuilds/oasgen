@@ -1,0 +1,28 @@
+openapi: ''
+info:
+  title: ''
+  version: ''
+paths:
+  /hello:
+    get:
+      operationId: send_code
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCodeRequest'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendCode'
+components:
+  schemas:
+    SendCode:
+      type: object
+      properties:
+        found_account:
+          type: boolean
