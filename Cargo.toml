@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "openapi-spec-gen",
+    "core",
+    "macro",
+]
+
+
+[patch."https://github.com/kurtbuilds/openapiv3"]
+openapiv3 = { path = "../openapiv3" }
