@@ -15,20 +15,16 @@ fn type_name_to_operation_id(type_name: &str) -> Option<String> {
 //     where
 //         F: Fn(A) -> Fut,
 //         Fut: Future<Output=Output>,
-// Output: OaSchema<Output>,
 impl<F, A, Fut, Output> OaOperation<(A, ), Fut, Output> for F
     where
         F: Fn(A) -> Fut,
         A: OaSchema,
         Fut: Future<Output=Output>,
+        Output: OaSchema,
 {
     // type Args = Args;
     fn operation() -> Operation {
-        // let s = A::schema_ref().unwrap();
-        let s = ReferenceOr::Item(Schema::new_string());
-        // params.push(Parameter {
-        //
-        // });
+        let s = A::schema_ref().unwrap();
         let mut content = indexmap::IndexMap::new();
         content.insert("application/json".to_string(), MediaType {
             schema: Some(s),

@@ -7,7 +7,7 @@ pub struct SendCodeRequest {
     pub mobile: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, OaSchema)]
 pub struct SendCode {
     pub found_account: bool,
 }
