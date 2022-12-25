@@ -1,6 +1,4 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+pub use oasgen_macro::OaSchema;
 
 #[cfg(test)]
 mod tests {

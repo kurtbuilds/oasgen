@@ -1,0 +1,4 @@
+use oasgen
+
+
+#[derive(OaSchema)]
