@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "openapi-spec-gen",
+    "oasgen",
     "core",
     "macro",
 ]

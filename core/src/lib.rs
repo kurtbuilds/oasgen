@@ -65,6 +65,23 @@ where
     }
 }
 
+
+impl<T> OaSchema for Option<T>
+where
+    T: OaSchema,
+{
+    fn schema_ref() -> Option<String> {
+        T::schema_ref()
+    }
+
+    fn schema() -> Option<Schema> {
+        T::schema().map(|mut schema| {
+            schema.schema_data.nullable = true;
+            schema
+        })
+    }
+}
+
 #[cfg(feature = "uuid")]
 impl OaSchema for uuid::Uuid {
     fn schema_ref() -> Option<String> {

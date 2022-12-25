@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-osg_core = { path = "../core" , package = "oasgen-core" }
-osg_macro = { path = "../macro" , package = "oasgen-macro" }
+oasgen-core = { path = "../core" , package = "oasgen-core" }
+oasgen-macro = { path = "../macro" , package = "oasgen-macro" }
+openapiv3 = { git = "https://github.com/kurtbuilds/openapiv3" }

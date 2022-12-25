@@ -50,21 +50,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fad582f4b9e86b6caa621cabeb0963332d92eea04729ab12892c2533951e6440"
 
 [[package]]
-name = "once_cell"
-version = "1.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
-
-[[package]]
-name = "openapi-spec-gen"
+name = "oasgen"
 version = "0.1.0"
 dependencies = [
- "openapi-spec-gen-core",
- "openapi-spec-gen-macro",
+ "oasgen-core",
+ "oasgen-macro",
+ "openapiv3",
 ]
 
 [[package]]
-name = "openapi-spec-gen-core"
+name = "oasgen-core"
 version = "0.1.0"
 dependencies = [
  "assert_matches",
@@ -73,7 +68,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "openapi-spec-gen-macro"
+name = "oasgen-macro"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
@@ -81,6 +76,12 @@ dependencies = [
  "syn",
  "trybuild",
 ]
+
+[[package]]
+name = "once_cell"
+version = "1.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
 name = "openapiv3"

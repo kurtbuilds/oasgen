@@ -1,5 +1,5 @@
 [package]
-name = "openapi-spec-gen-macro"
+name = "oasgen-macro"
 version = "0.1.0"
 edition = "2021"
 
