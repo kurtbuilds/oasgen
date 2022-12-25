@@ -1,15 +1,19 @@
-use openapiv3::{Schema, SchemaKind, SchemaData, ArrayType, Type};
+mod operation;
+
+pub use operation::*;
+
+use openapiv3::{Schema, SchemaKind, SchemaData, ArrayType, Type, ReferenceOr};
 
 pub trait OaSchema<Args = ()> {
-    fn schema_ref() -> Option<String>;
+    fn schema_ref() -> Option<ReferenceOr<Schema>>;
     fn schema() -> Option<Schema>;
 }
 
 macro_rules! impl_oa_schema {
     ($t:ty,$schema:expr) => {
         impl OaSchema for $t {
-            fn schema_ref() -> Option<String> {
-                None
+            fn schema_ref() -> Option<ReferenceOr<Schema>> {
+                Some(ReferenceOr::Item($schema))
             }
 
             fn schema() -> Option<Schema> {
@@ -20,7 +24,7 @@ macro_rules! impl_oa_schema {
 }
 
 impl OaSchema for () {
-    fn schema_ref() -> Option<String> {
+    fn schema_ref() -> Option<ReferenceOr<Schema>> {
         None
     }
 
@@ -44,14 +48,18 @@ impl<T> OaSchema for Vec<T>
 where
     T: OaSchema,
 {
-    fn schema_ref() -> Option<String> {
-        None
+    fn schema_ref() -> Option<ReferenceOr<Schema>> {
+        Some(ReferenceOr::Item(Schema {
+            schema_data: SchemaData::default(),
+            schema_kind: SchemaKind::Type(Type::Array(ArrayType {
+                items: T::schema_ref().map(|r| r.boxed()),
+                ..ArrayType::default()
+            }))
+        }))
     }
 
     fn schema() -> Option<Schema> {
-        if let Some(schema_ref) = T::schema_ref() {
-            Some(Schema::new_array_ref(&schema_ref))
-        } else if let Some(schema) = T::schema() {
+        if let Some(schema) = T::schema() {
             Some(Schema::new_array(schema))
         } else {
             Some(Schema{
@@ -70,7 +78,7 @@ impl<T> OaSchema for Option<T>
 where
     T: OaSchema,
 {
-    fn schema_ref() -> Option<String> {
+    fn schema_ref() -> Option<ReferenceOr<Schema>> {
         T::schema_ref()
     }
 
@@ -83,14 +91,18 @@ where
 }
 
 #[cfg(feature = "uuid")]
-impl OaSchema for uuid::Uuid {
-    fn schema_ref() -> Option<String> {
-        None
+impl_oa_schema!(uuid::Uuid, Schema::new_string().with_format("uuid"));
+
+impl<T> OaSchema for actix_web::web::Json<T>
+where
+    T: OaSchema,
+{
+    fn schema_ref() -> Option<ReferenceOr<Schema>> {
+        T::schema_ref()
     }
 
     fn schema() -> Option<Schema> {
-        Some(Schema::new_string()
-            .with_format("uuid"))
+        T::schema()
     }
 }
 

@@ -1,5 +1,5 @@
+#![allow(unused)]
 use oasgen::OaSchema;
-use oasgen::core::OaSchema;
 
 #[derive(OaSchema)]
 pub struct User {
@@ -14,6 +14,9 @@ pub struct User {
 }
 
 fn main() {
-    let s = User::schema();
-    println!("{:#?}", s);
+    let x = Box::new(5) as Box<dyn std::any::Any>;
+    let y = Box::new("hi") as Box<dyn std::any::Any>;
+    let z = vec![x, y];
+    // let s = User::schema();
+    // println!("{:#?}", s);
 }

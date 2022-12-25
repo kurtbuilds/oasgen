@@ -1,12 +1,7 @@
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, DeriveInput, Type};
+use syn::{parse_macro_input, DeriveInput};
 use quote::quote;
 mod util;
-
-struct Property {
-    pub name: String,
-    pub ty: Type,
-}
 
 #[proc_macro_derive(OaSchema, attributes(openapi))]
 pub fn derive_oaschema(item: TokenStream) -> TokenStream {
@@ -24,12 +19,12 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
 
     let ref_name = format!("#/components/schemas/{}", id);
     let expanded = quote! {
-        impl oasgen::core::OaSchema for #id {
-            fn schema_ref() -> Option<String> {
-                Some(#ref_name.to_string())
+        impl oasgen::OaSchema for #id {
+            fn schema_ref() -> Option<oasgen::ReferenceOr<oasgen::Schema>> {
+                Some(oasgen::ReferenceOr::ref_(#ref_name))
             }
 
-            fn schema() -> Option<openapiv3::Schema> {
+            fn schema() -> Option<oasgen::Schema> {
                 let mut o = oasgen::Schema::new_object();
                 #(#properties)*
                 Some(o)
