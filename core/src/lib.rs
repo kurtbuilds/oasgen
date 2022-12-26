@@ -5,7 +5,7 @@ pub use operation::*;
 use openapiv3::{Schema, SchemaKind, SchemaData, ArrayType, Type, ReferenceOr};
 
 pub trait OaSchema<Args = ()> {
-    fn name() -> Option<&'static str>;
+    fn schema_name() -> Option<&'static str>;
     fn schema_ref() -> Option<ReferenceOr<Schema>>;
     fn schema() -> Option<Schema>;
 }
@@ -13,7 +13,7 @@ pub trait OaSchema<Args = ()> {
 macro_rules! impl_oa_schema {
     ($t:ty,$schema:expr) => {
         impl OaSchema for $t {
-            fn name() -> Option<&'static str> {
+            fn schema_name() -> Option<&'static str> {
                 None
             }
 
@@ -29,7 +29,7 @@ macro_rules! impl_oa_schema {
 }
 
 impl OaSchema for () {
-    fn name() -> Option<&'static str> {
+    fn schema_name() -> Option<&'static str> {
         None
     }
 
@@ -57,7 +57,7 @@ impl<T> OaSchema for Vec<T>
     where
         T: OaSchema,
 {
-    fn name() -> Option<&'static str> {
+    fn schema_name() -> Option<&'static str> {
         None
     }
 
@@ -91,8 +91,8 @@ impl<T> OaSchema for Option<T>
     where
         T: OaSchema,
 {
-    fn name() -> Option<&'static str> {
-        T::name()
+    fn schema_name() -> Option<&'static str> {
+        T::schema_name()
     }
 
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
@@ -114,8 +114,8 @@ impl<T> OaSchema for actix_web::web::Json<T>
     where
         T: OaSchema,
 {
-    fn name() -> Option<&'static str> {
-        T::name()
+    fn schema_name() -> Option<&'static str> {
+        T::schema_name()
     }
 
     fn schema_ref() -> Option<ReferenceOr<Schema>> {

@@ -1,6 +1,6 @@
 use http::Method;
 use openapiv3::{Components, OpenAPI, Operation, PathItem, ReferenceOr};
-use oasgen_core::{OaSchema};
+use oasgen_core::{OaSchema, OaOperation};
 
 // #[cfg(feature = "actix")]
 type RouteInner = actix_web::Route;
@@ -37,19 +37,22 @@ impl Server {
         }
     }
 
-    pub fn get<F, Args>(mut self, path: &str, handler: F) -> Self
+    pub fn get<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
     where
-        F: actix_web::Handler<Args>,
+        F: actix_web::Handler<Args> + OaOperation<Signature>,
         Args: actix_web::FromRequest + 'static,
         F::Output: actix_web::Responder + 'static,
         <F as actix_web::Handler<Args>>::Output: OaSchema,
     {
         let item = self.openapi.paths.paths.entry(path.to_string()).or_default();
         let item = item.as_mut().expect("Currently don't support references for PathItem");
-        // item.get = Some(F::operation());
+        item.get = Some(F::operation());
 
-        if let Some(schema) = F::Output::schema() {
-            self.openapi.schemas_mut().insert(<F::Output as OaSchema>::name().unwrap().to_string(), ReferenceOr::Item(schema));
+        for reference in F::references() {
+            if !self.openapi.schemas().contains_key(reference) {
+                let schema = F::referenced_schema(reference);
+                self.openapi.schemas_mut().insert(reference.to_string(), ReferenceOr::Item(schema));
+            }
         }
 
         self.resources.push(Route {

@@ -21,7 +21,7 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let ref_name = format!("#/components/schemas/{}", id);
     let expanded = quote! {
         impl oasgen::OaSchema for #id {
-            fn name() -> Option<&'static str> {
+            fn schema_name() -> Option<&'static str> {
                 Some(#name)
             }
 

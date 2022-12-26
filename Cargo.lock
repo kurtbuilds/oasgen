@@ -666,7 +666,6 @@ dependencies = [
  "oasgen-core",
  "oasgen-macro",
  "openapiv3",
- "pin-project-lite",
  "serde",
  "serde_yaml",
  "tokio",
@@ -681,6 +680,7 @@ dependencies = [
  "assert_matches",
  "indexmap",
  "openapiv3",
+ "pin-project-lite",
  "uuid",
 ]
 

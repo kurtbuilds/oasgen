@@ -11,6 +11,7 @@ actix-web = "4.2.1"
 indexmap = "1.9.2"
 openapiv3 = { git = "https://github.com/kurtbuilds/openapiv3" }
 uuid = { optional = true, version = "1.2.2" }
+pin-project-lite = "0.2.9"
 
 
 [features]
