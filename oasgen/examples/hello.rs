@@ -27,6 +27,7 @@ pub struct User {
 }
 
 pin_project! {
+    #[repr(transparent)]
     pub struct TypedResponseFuture<F, Signature> {
         #[pin]
         inner: F,
@@ -79,9 +80,11 @@ fn get_operation<Op, Signature>(operation: Op) -> Operation
 }
 
 impl<F, A0, Fut> OaOperation<(A0, Fut)> for F
-where
-F: Fn(A0) -> TypedResponseFuture<Fut, SendCodeSignature>,
-Fut: Future,
+    where
+        F: Fn(A0) -> TypedResponseFuture<Fut, SendCodeSignature>,
+        Fut: Future,
+        A0: OaSchema,
+        Fut::Output: OaSchema,
 {
     fn operation() -> Operation {
         Operation::default()
