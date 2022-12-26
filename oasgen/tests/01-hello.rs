@@ -17,13 +17,8 @@ async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
     Json(SendCodeResponse { found_account: false })
 }
 
-#[test]
-fn test_basic_actix() {
-    use std::fs::File;
-    let s = Server::new()
-        // .get("/hello", send_code)
+fn main() {
+    let _ = Server::new()
+        .get("/hello", send_code)
         ;
-    serde_yaml::to_writer(&File::create("tests/01-hello.yaml").unwrap(), &s.openapi).unwrap();
-    println!("{:?}", s.openapi);
-    assert_eq!(1, 0);
 }
