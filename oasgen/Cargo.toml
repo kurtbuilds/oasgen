@@ -12,7 +12,9 @@ indexmap = "1.9.2"
 oasgen-core = { path = "../core", package = "oasgen-core" }
 oasgen-macro = { path = "../macro", package = "oasgen-macro" }
 openapiv3 = { git = "https://github.com/kurtbuilds/openapiv3" }
+pin-project-lite = "0.2.9"
 serde = { version = "1.0.151", features = ["derive"] }
+tokio = { version = "1.23.0", features = ["full"] }
 
 [features]
 default = ["actix"]

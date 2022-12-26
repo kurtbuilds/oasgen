@@ -16,6 +16,11 @@ async fn send_code(_body: Json<SendCodeRequest>) -> Json<SendCode> {
     Json(SendCode { found_account: false })
 }
 
+pub struct ResponseWrapper<T>(pub T);
+
+pub struct TypeEncoder<Args, Response, Future>(Future, std::marker::PhantomData<(Args, Response)>);
+
+
 #[test]
 fn test_basic_actix() {
     use std::fs::File;
