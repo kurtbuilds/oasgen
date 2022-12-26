@@ -1,5 +1,6 @@
 #![allow(unused)]
 #![allow(non_camel_case_types)]
+/// This is a proof of concept, that is roughly a manual implementation of what the macros do...
 
 use std::future::Future;
 use std::pin::Pin;
@@ -39,14 +40,14 @@ pub async fn send_code(mobile: String) -> SendCodeResponse {
 pub struct __send_code__metadata;
 
 impl FunctionMetadata for __send_code__metadata {
-    fn operation_id() -> Option<String> {
-        Some("send_code_customized_shizzle".to_string())
+    fn operation_id() -> Option<&'static str> {
+        Some("send_code_customized_shizzle")
     }
-    fn summary() -> Option<String> {
-        Some("custom custom read all about it".to_string())
+    fn summary() -> Option<&'static str> {
+        Some("custom custom read all about it")
     }
-    fn description() -> Option<String> {
-        Some("zzzzzzzzzzzSend a verification code to a mobile phone number".to_string())
+    fn description() -> Option<&'static str> {
+        Some("zzzzzzzzzzzSend a verification code to a mobile phone number")
     }
 }
 
@@ -63,12 +64,12 @@ pub fn send_code_transformed(body: Json<SendCode>) -> TypedResponseFuture<impl F
     })
 }
 
-fn get_operation<Op, Signature>(operation: Op) -> Operation
-    where
-        Op: OaOperation<Signature>,
-{
-    Op::operation()
-}
+// fn get_operation<Op, Signature>(operation: Op) -> Operation
+//     where
+//         Op: OaOperation<Signature>,
+// {
+//     Op::operation()
+// }
 
 
 // This is generic. You need 1 for each number of function arguments, but it doesn't need to be for
@@ -80,7 +81,7 @@ async fn main() {
     // let op = get_operation(send_code_transformed);
     let s = Server::new()
         .get("/auth/send-code", send_code_transformed);
-    serde_yaml::to_writer(&std::fs::File::create("examples/hello.yaml").unwrap(), &s.openapi).unwrap();
+    serde_yaml::to_writer(&std::fs::File::create("examples/poc.yaml").unwrap(), &s.openapi).unwrap();
     println!("{:#?}", s.openapi);
     // let s = User::schema();
     // println!("{:#?}", s);

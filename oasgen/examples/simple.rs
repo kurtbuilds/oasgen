@@ -2,12 +2,12 @@ use oasgen::{OaSchema, Server, openapi};
 use actix_web::web::Json;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, OaSchema)]
+#[derive(OaSchema, Deserialize)]
 pub struct SendCode {
     pub mobile: String,
 }
 
-#[derive(Serialize, OaSchema)]
+#[derive(Serialize, OaSchema, Debug)]
 pub struct SendCodeResponse {
     pub found_account: bool,
 }
@@ -17,13 +17,14 @@ async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
     Json(SendCodeResponse { found_account: false })
 }
 
-#[test]
-fn test_basic_actix() {
+#[tokio::main]
+async fn main() {
     use std::fs::File;
     let s = Server::new()
-        // .get("/hello", send_code)
+        .get("/hello", send_code)
         ;
-    serde_yaml::to_writer(&File::create("tests/01-hello.yaml").unwrap(), &s.openapi).unwrap();
-    println!("{:?}", s.openapi);
-    assert_eq!(1, 0);
+    let res = send_code(Json(SendCode { mobile: "123".to_string() })).await;
+    println!("{:#?}", res);
+    serde_yaml::to_writer(&File::create("examples/simple.yaml").unwrap(), &s.openapi).unwrap();
+    // println!("{:?}", s.openapi);
 }

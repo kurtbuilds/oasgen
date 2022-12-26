@@ -1,6 +1,9 @@
+#![allow(non_snake_case)]
+
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, DeriveInput};
-use quote::quote;
+use syn::{parse_macro_input, DeriveInput, ReturnType, Token};
+use quote::{quote, ToTokens};
+
 mod util;
 
 #[proc_macro_derive(OaSchema, attributes(openapi))]
@@ -35,6 +38,60 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
                 Some(o)
             }
         }
+    };
+    TokenStream::from(expanded)
+}
+
+
+#[proc_macro_attribute]
+pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
+    let span = proc_macro2::Span::call_site();
+
+    let mut ast = parse_macro_input!(input as syn::ItemFn);
+    println!("{:#?}", ast.attrs);
+    println!("{:#?}", _args);
+    let name = &ast.sig.ident;
+    let marker_struct_name = syn::Ident::new(&format!("__{}__metadata", name), name.span());
+
+    ast.sig.asyncness = None;
+    let output_type = match std::mem::replace(&mut ast.sig.output, ReturnType::Default) {
+        ReturnType::Type(_, ty) => ty,
+        ReturnType::Default => Box::new(syn::parse2(quote!(())).unwrap()),
+    };
+    ast.sig.output = ReturnType::Type(
+        Token![->](span),
+        Box::new(syn::parse2(quote!(oasgen::TypedResponseFuture<impl std::future::Future<Output=#output_type>, #marker_struct_name>)).expect("parsing empty type")),
+    );
+
+    let block = &ast.block;
+    ast.block = Box::new(syn::parse2(quote!({
+        oasgen::TypedResponseFuture::new(async move #block)
+    })).expect("parsing empty block"));
+
+    println!("{}", ast.to_token_stream());
+
+    let marker_struct_impl_FunctionMetadata = quote! {
+        impl oasgen::FunctionMetadata for #marker_struct_name {
+            fn operation_id() -> Option<&'static str> {
+                None
+            }
+
+            fn summary() -> Option<&'static str> {
+                None
+            }
+
+            fn description() -> Option<&'static str> {
+                None
+            }
+        }
+    };
+    let expanded = quote! {
+        #ast
+
+        #[allow(non_camel_case_types)]
+        struct #marker_struct_name;
+
+        #marker_struct_impl_FunctionMetadata
     };
     TokenStream::from(expanded)
 }
