@@ -23,7 +23,7 @@ struct Route {
 pub struct Server {
     pub openapi: OpenAPI,
     // pub routes: Vec<(String, Method>
-    resources: Vec<Route>
+    resources: Vec<Route>,
 }
 
 impl Server {
@@ -37,12 +37,9 @@ impl Server {
         }
     }
 
-    pub fn get<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
-    where
-        F: actix_web::Handler<Args> + OaOperation<Signature>,
-        Args: actix_web::FromRequest + 'static,
-        F::Output: actix_web::Responder + 'static,
-        <F as actix_web::Handler<Args>>::Output: OaSchema,
+    fn update_spec<F, Signature>(&mut self, path: &str, method: Method, handler: &F)
+        where
+            F: OaOperation<Signature>,
     {
         let item = self.openapi.paths.paths.entry(path.to_string()).or_default();
         let item = item.as_mut().expect("Currently don't support references for PathItem");
@@ -54,10 +51,39 @@ impl Server {
                 self.openapi.schemas_mut().insert(reference.to_string(), ReferenceOr::Item(schema));
             }
         }
+    }
+
+    // #[cfg(feature = "actix")]
+    pub fn get<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
+        where
+            F: actix_web::Handler<Args> + OaOperation<Signature>,
+            Args: actix_web::FromRequest + 'static,
+            F::Output: actix_web::Responder + 'static,
+            <F as actix_web::Handler<Args>>::Output: OaSchema,
+    {
+        self.update_spec(path, Method::GET, &handler);
 
         self.resources.push(Route {
             path: path.to_string(),
             inner: into_inner(Method::GET, handler),
+        });
+
+        self
+    }
+
+    // #[cfg(feature = "actix")]
+    pub fn post<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
+        where
+            F: actix_web::Handler<Args> + OaOperation<Signature>,
+            Args: actix_web::FromRequest + 'static,
+            F::Output: actix_web::Responder + 'static,
+            <F as actix_web::Handler<Args>>::Output: OaSchema,
+    {
+        self.update_spec(path, Method::POST, &handler);
+
+        self.resources.push(Route {
+            path: path.to_string(),
+            inner: into_inner(Method::POST, handler),
         });
 
         self

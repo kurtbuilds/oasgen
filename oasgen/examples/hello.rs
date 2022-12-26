@@ -4,15 +4,15 @@
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use openapiv3::{MediaType, Operation, ReferenceOr, RequestBody, Response, Responses, Schema, StatusCode};
-use oasgen::{OaSchema, Server};
-// use oasgen_core::OaOperation;
-use serde::{Serialize, Deserialize};
+
 use actix_web::web::Json;
+use openapiv3::{MediaType, Operation, ReferenceOr, RequestBody, Response, Responses, Schema, StatusCode};
+
+use oasgen::{OaSchema, Server};
 use oasgen_core::{FunctionMetadata, OaOperation, TypedResponseFuture};
+// use oasgen_core::OaOperation;
+use serde::{Deserialize, Serialize};
 use tokio;
-
-
 
 #[derive(OaSchema)]
 pub struct User {
@@ -26,13 +26,10 @@ pub struct User {
     pub user_status: Option<i32>,
 }
 
-
-
 #[derive(OaSchema, Debug, Serialize)]
 pub struct SendCodeResponse {
     pub found_account: bool,
 }
-
 
 pub async fn send_code(mobile: String) -> SendCodeResponse {
     SendCodeResponse { found_account: false }
@@ -79,7 +76,7 @@ fn get_operation<Op, Signature>(operation: Op) -> Operation
 
 #[tokio::main]
 async fn main() {
-    let r = send_code_transformed(Json(SendCode{mobile: "hi".to_string()})).await;
+    let r = send_code_transformed(Json(SendCode { mobile: "hi".to_string() })).await;
     // let op = get_operation(send_code_transformed);
     let s = Server::new()
         .get("/auth/send-code", send_code_transformed);
