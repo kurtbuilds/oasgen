@@ -18,13 +18,30 @@ async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> std::io::Result<()> {
     use std::fs::File;
+    use actix_web::{HttpResponse, web, HttpServer, App};
     let s = Server::new()
         .get("/hello", send_code)
         ;
     let res = send_code(Json(SendCode { mobile: "123".to_string() })).await;
     println!("{:#?}", res);
     serde_yaml::to_writer(&File::create("examples/simple.yaml").unwrap(), &s.openapi).unwrap();
-    // println!("{:?}", s.openapi);
+
+    let host = "0.0.0.0";
+    let port = 5000;
+    let host = format!("{}:{}", host, port);
+
+    HttpServer::new(move || App::new()
+        .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
+        // .service(build_openapi().into_service("/api"))
+        // .add_routes()
+        // .wrap_api()
+        // .route("/auth/send-code", post().to(auth::send_code))
+                    // .with_json_spec_at("openapi.json")
+                    // .build()
+    )
+        .bind(host)?
+        .run()
+        .await
 }
