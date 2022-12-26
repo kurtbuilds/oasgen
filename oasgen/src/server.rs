@@ -1,5 +1,5 @@
 use http::Method;
-use openapiv3::{Components, OpenAPI, Operation, PathItem, ReferenceOr};
+use openapiv3::{Components, OpenAPI, ReferenceOr};
 use oasgen_core::{OaSchema, OaOperation};
 
 // #[cfg(feature = "actix")]
@@ -16,7 +16,9 @@ fn into_inner<F, Args>(method: Method, handler: F) -> RouteInner where
 }
 
 struct Route {
+    #[allow(unused)]
     path: String,
+    #[allow(unused)]
     inner: RouteInner,
 }
 
@@ -37,7 +39,7 @@ impl Server {
         }
     }
 
-    fn update_spec<F, Signature>(&mut self, path: &str, method: Method, handler: &F)
+    fn update_spec<F, Signature>(&mut self, path: &str, _method: Method, _handler: &F)
         where
             F: OaOperation<Signature>,
     {
@@ -87,6 +89,13 @@ impl Server {
         });
 
         self
+    }
+
+    // #[cfg(feature = "actix")]
+    fn into_service(self) -> () {
+        // actix_web::web::scope("/").routes(self.resources.into_iter().map(|route| {
+        //     actix_web::web::resource(&route.path).route(route.inner)
+        // }))
     }
 }
 

@@ -2,7 +2,7 @@
 
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput, ReturnType, Token};
-use quote::{quote, ToTokens};
+use quote::{quote};
 
 mod util;
 
@@ -16,7 +16,7 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
         let name = f.ident.as_ref().unwrap().to_string();
         let ty = &f.ty;
         quote! {
-            o.add_property(#name, <#ty as OaSchema>::schema().unwrap());
+            o.add_property(#name, <#ty as OaSchema>::schema().unwrap()).unwrap();
         }
     });
 
@@ -48,8 +48,8 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
     let span = proc_macro2::Span::call_site();
 
     let mut ast = parse_macro_input!(input as syn::ItemFn);
-    println!("{:#?}", ast.attrs);
-    println!("{:#?}", _args);
+    // println!("{:#?}", ast.attrs);
+    // println!("{:#?}", _args);
     let name = &ast.sig.ident;
     let marker_struct_name = syn::Ident::new(&format!("__{}__metadata", name), name.span());
 
@@ -68,8 +68,7 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
         oasgen::TypedResponseFuture::new(async move #block)
     })).expect("parsing empty block"));
 
-    println!("{}", ast.to_token_stream());
-
+    // println!("{}", ast.to_token_stream());
     let marker_struct_impl_FunctionMetadata = quote! {
         impl oasgen::FunctionMetadata for #marker_struct_name {
             fn operation_id() -> Option<&'static str> {

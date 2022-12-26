@@ -13,7 +13,7 @@ use oasgen::{OaSchema, Server};
 use oasgen_core::{FunctionMetadata, OaOperation, TypedResponseFuture};
 // use oasgen_core::OaOperation;
 use serde::{Deserialize, Serialize};
-use tokio;
+
 
 #[derive(OaSchema)]
 pub struct User {
