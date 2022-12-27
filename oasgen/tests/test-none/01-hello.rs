@@ -1,3 +1,5 @@
+#![cfg(not(any(feature = "actix")))]
+
 use oasgen::{OaSchema, Server, openapi};
 use serde::{Deserialize, Serialize};
 

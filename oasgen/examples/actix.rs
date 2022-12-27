@@ -47,7 +47,7 @@ mod inner {
             .post("/send-code", send_code)
             .post("/verify-code", verify_code)
             .route_yaml_spec("/openapi.yaml")
-            .write_and_exit_if_env_var("./openapi.yaml")
+            .write_and_exit_if_env_var_set("./openapi.yaml")
             .freeze()
             ;
 

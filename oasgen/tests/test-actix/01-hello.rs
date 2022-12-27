@@ -1,3 +1,4 @@
+#![cfg(feature = "actix")]
 use oasgen::{OaSchema, Server, openapi};
 use actix_web::Json;
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,7 @@ async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
 
 fn main() {
     let _ = Server::new()
-        .get("/hello", send_code)
+        .post("/hello", send_code)
+        .freeze()
         ;
 }

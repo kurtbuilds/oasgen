@@ -82,7 +82,7 @@ impl Server {
     }
 
     /// Configure the server to add a route that serves the spec as JSON
-    /// ```ignore
+    /// ```
     /// Server::new()
     ///     .route_json_spec("/openapi.json")
     ///
@@ -97,7 +97,7 @@ impl Server {
     }
 
     /// Configure the server to add a route that serves the spec as JSON
-    /// ```ignore
+    /// ```
     /// Server::new()
     ///     .route_yaml_spec("/openapi.yaml")
     ///
@@ -117,6 +117,12 @@ impl Server {
         self
     }
 
+    /// Convenience method
+    pub fn inspect(self, closure: impl Fn(&OpenAPI)) -> Self {
+        closure(&self.openapi);
+        self
+    }
+
     /// Convenience method for writing the spec to a file if the process was run with an env var set.
     /// To write your OpenAPI spec to a file during your build process:
     /// 1. Build the server executable.
@@ -124,7 +130,7 @@ impl Server {
     ///
     /// This function checks the env var, and if it's found, writes the spec, and then terminates
     /// the program (with success).
-    pub fn write_and_exit_if_env_var<P: AsRef<Path>>(self, path: P) -> Self {
+    pub fn write_and_exit_if_env_var_set<P: AsRef<Path>>(self, path: P) -> Self {
         let path = path.as_ref();
         if var("OASGEN_WRITE_SPEC").map(|s| s == "1").unwrap_or(false) {
             let spec = if path.extension().map(|e| e == "json").unwrap_or(false) {
@@ -138,10 +144,10 @@ impl Server {
         }
         self
     }
-    /// Moves the OpenAPI spec into an Arc, so that it can be cloned and shared with view handlers.
-    /// Enables `Server::clone()` (which doesn't make sense without freezing, because then modifying
-    /// the schama on one Server wouldn't affect the other).
-    /// You don't need to do this if you're not using a web server.
+    /// Semantically, this declares we've finishing building the spec, and we're ready to serve it.
+    ///
+    /// Functionally, it moves the OpenAPI spec into an Arc, so that view handlers (which are async
+    /// and therefore have undetermined lifespans) can hold onto it.
     pub fn freeze(self) -> Server<Arc<OpenAPI>> {
         Server {
             resources: self.resources,
