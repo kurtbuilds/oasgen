@@ -1,3 +1,4 @@
+#![allow(unused)]
 mod server;
 
 pub use openapiv3::*;

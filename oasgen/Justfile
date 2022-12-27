@@ -17,3 +17,7 @@ alias c := check
 
 fix:
     cargo clippy --fix
+
+run:
+    cargo run --example simple
+alias r := run
