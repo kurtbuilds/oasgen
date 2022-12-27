@@ -8,9 +8,6 @@ build:
     cargo build
 alias b := build
 
-test *ARGS:
-    cargo test "$@"
-
 check:
     cargo check
 alias c := check
@@ -19,5 +16,9 @@ fix:
     cargo clippy --fix
 
 run:
-    cargo run --example simple
+    cargo run --example actix --features actix
+
+test:
+    cargo test "$@"
+    cargo test --features actix "$@"
 alias r := run

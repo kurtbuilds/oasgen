@@ -1,5 +1,5 @@
 use oasgen::{OaSchema, Server, openapi};
-use actix_web::web::Json;
+use actix_web::Json;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, OaSchema)]

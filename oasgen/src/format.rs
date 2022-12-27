@@ -1,8 +1,5 @@
 use std::convert::Infallible;
 use std::future::{Ready, ready};
-use actix_web::{FromRequest, HttpRequest};
-use actix_web::body::BoxBody;
-use actix_web::dev::Payload;
 
 #[derive(Debug)]
 pub enum Format {
@@ -13,7 +10,8 @@ pub enum Format {
 }
 
 impl Format {
-    pub fn sync_from_req(req: &HttpRequest) -> Self {
+    #[cfg(feature = "actix")]
+    pub fn sync_from_req(req: &actix_web::HttpRequest) -> Self {
         if req.path().ends_with(".json") {
             return Format::Json;
         } else if req.path().ends_with(".yaml") {
@@ -31,11 +29,12 @@ impl Format {
     }
 }
 
-impl FromRequest for Format {
+#[cfg(feature = "actix")]
+impl actix_web::FromRequest for Format {
     type Error = Infallible;
     type Future = Ready<Result<Self, Infallible>>;
 
-    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
+    fn from_request(req: &actix_web::HttpRequest, payload: &mut actix_web::dev::Payload) -> Self::Future {
         ready(Ok(Self::sync_from_req(req)))
     }
 }
