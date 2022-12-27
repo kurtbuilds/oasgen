@@ -82,7 +82,7 @@ impl Server {
     }
 
     /// Configure the server to add a route that serves the spec as JSON
-    /// ```
+    /// ```ignore
     /// Server::new()
     ///     .route_json_spec("/openapi.json")
     ///
@@ -97,7 +97,7 @@ impl Server {
     }
 
     /// Configure the server to add a route that serves the spec as JSON
-    /// ```
+    /// ```ignore
     /// Server::new()
     ///     .route_yaml_spec("/openapi.yaml")
     ///

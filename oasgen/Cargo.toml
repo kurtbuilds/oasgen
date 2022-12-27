@@ -27,3 +27,4 @@ actix = ["actix-web", "oasgen-core/actix"]
 [dev-dependencies]
 serde_yaml = "0.9.16"
 trybuild = "1.0.73"
+actix-web = "4.2.1"
