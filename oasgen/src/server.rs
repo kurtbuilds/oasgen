@@ -18,44 +18,44 @@ type RouteInner = actix_web::Route;
 use actix_service::boxed::{BoxFuture, BoxService, BoxServiceFactory};
 use actix_service::ServiceFactory;
 
-type BoxedHttpServiceFactory = BoxServiceFactory<(), ServiceRequest, ServiceResponse<BoxBody>, Error, ()>;
+// type BoxedHttpServiceFactory = BoxServiceFactory<(), ServiceRequest, ServiceResponse<BoxBody>, Error, ()>;
+//
+// type MyServiceFactory<Conf, Req, Res, Err, InitErr> = dyn ServiceFactory<
+//     Req,
+//     Config=Conf,
+//     Response=Res,
+//     Error=Err,
+//     InitError=InitErr,
+//     Service=BoxService<Req, Res, Err>,
+//     Future=BoxFuture<Result<BoxService<Req, Res, Err>, InitErr>>,
+// >;
 
-type MyServiceFactory<Conf, Req, Res, Err, InitErr> = dyn ServiceFactory<
-    Req,
-    Config=Conf,
-    Response=Res,
-    Error=Err,
-    InitError=InitErr,
-    Service=BoxService<Req, Res, Err>,
-    Future=BoxFuture<Result<BoxService<Req, Res, Err>, InitErr>>,
->;
 
-
-fn make_service_factory<F, Args>(handler: F) -> Box<MyServiceFactory<(), ServiceRequest, ServiceResponse<BoxBody>, Error, ()>>
-    where
-        F: actix_web::Handler<Args> + 'static,
-        Args: FromRequest + 'static,
-        F::Output: actix_web::Responder + 'static,
-{
-    let z = fn_service(move |req: ServiceRequest| {
-        let handler = handler.clone();
-
-        async move {
-            let (req, mut payload) = req.into_parts();
-
-            let res = match Args::from_request(&req, &mut payload).await {
-                Err(err) => actix_web::HttpResponse::from_error(err),
-                Ok(data) => handler
-                    .call(data)
-                    .await
-                    .respond_to(&req)
-                    .map_into_boxed_body(),
-            };
-            Ok::<ServiceResponse, actix_web::Error>(actix_web::dev::ServiceResponse::new(req, res))
-        }
-    });
-    Box::new(z)
-}
+// fn make_service_factory<F, Args>(handler: F) -> Box<MyServiceFactory<(), ServiceRequest, ServiceResponse<BoxBody>, Error, ()>>
+//     where
+//         F: actix_web::Handler<Args> + 'static,
+//         Args: FromRequest + 'static,
+//         F::Output: actix_web::Responder + 'static,
+// {
+//     let z = fn_service(move |req: ServiceRequest| {
+//         let handler = handler.clone();
+//
+//         async move {
+//             let (req, mut payload) = req.into_parts();
+//
+//             let res = match Args::from_request(&req, &mut payload).await {
+//                 Err(err) => actix_web::HttpResponse::from_error(err),
+//                 Ok(data) => handler
+//                     .call(data)
+//                     .await
+//                     .respond_to(&req)
+//                     .map_into_boxed_body(),
+//             };
+//             Ok::<ServiceResponse, actix_web::Error>(actix_web::dev::ServiceResponse::new(req, res))
+//         }
+//     });
+//     Box::new(z)
+// }
 
 // #[cfg(feature = "actix")]
 fn into_inner<F, Args>(method: Method, handler: F) -> RouteInner where

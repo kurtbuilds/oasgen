@@ -42,7 +42,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || App::new()
         .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
         .route("/send-code", web::post().to(send_code))
-        .service(server.clone().create_service())
+        // .service(server.clone().create_service())
         // .service(build_openapi().into_service("/api"))
         // .add_routes()
         // .wrap_api()
