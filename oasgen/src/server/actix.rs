@@ -1,5 +1,8 @@
-use actix_web::{FromRequest, Handler, HttpResponse, Resource, Responder, Scope, web};
+use std::sync::{Arc, RwLock};
+use actix_web::{Error, FromRequest, Handler, HttpResponse, Resource, Responder, Scope, web};
+use futures::future::{Ready, ok};
 use http::Method;
+use openapiv3::OpenAPI;
 
 use oasgen_core::{OaOperation, OaSchema};
 
@@ -65,35 +68,47 @@ impl Server {
 
         self
     }
+}
 
+impl Server<Arc<OpenAPI>> {
     pub fn into_service(self) -> Scope {
         let mut scope = web::scope(&self.prefix.unwrap_or_default());
         for resource in self.resources {
             scope = scope.service(resource());
         }
         if let Some(path) = self.json_route {
-            scope = scope.service(web::resource(&path).route(web::get().to(move || async {
-                HttpResponse::Ok().body("foo")
-            })));
-            // scope = scope.service(web::resource(path).route(web::get().to(move || {
-                // let s = "foo".to_string();
-                // let spec = self.openapi;
-                // HttpResponse::Ok().json(spec)
-                // HttpResponse::Ok().body("foo")
-            // })));
-            // scope = scope.service(web::resource(path).route(web::get().to(move || {
-                // HttpResponse::Ok().body("foo")
-                // HttpResponse::Ok().json(&self.openapi)
-            // })));
+            scope = scope.service(web::resource(&path).route(web::get().to(OaSpecJsonHandler(self.openapi.clone()))));
         }
         if let Some(path) = self.yaml_route {
-            // scope = scope.service(web::resource(path).route(web::get().to(move || {
-            //     let body = serde_yaml::to_string(&self.openapi).unwrap();
-            //     HttpResponse::Ok()
-            //         .insert_header((http::header::CONTENT_TYPE, "text/yaml"))
-            //         .body(body)
-            // })));
+            scope = scope.service(web::resource(&path).route(web::get().to(OaSpecJsonHandler(self.openapi.clone()))));
         }
         scope
+    }
+}
+
+#[derive(Clone)]
+struct OaSpecJsonHandler(Arc<openapiv3::OpenAPI>);
+
+impl actix_web::dev::Handler<()> for OaSpecJsonHandler {
+    type Output = Result<HttpResponse, Error>;
+    type Future = Ready<Self::Output>;
+
+    fn call(&self, _: ()) -> Self::Future {
+        ok(HttpResponse::Ok().json(&*self.0))
+    }
+}
+
+#[derive(Clone)]
+struct OaSpecYamlHandler(Arc<openapiv3::OpenAPI>);
+
+impl actix_web::dev::Handler<()> for OaSpecYamlHandler {
+    type Output = Result<HttpResponse, Error>;
+    type Future = Ready<Self::Output>;
+
+    fn call(&self, _: ()) -> Self::Future {
+        let yaml = serde_yaml::to_string(&*self.0).unwrap();
+        ok(HttpResponse::Ok()
+            .insert_header(("Content-Type", "text/yaml"))
+            .body(yaml))
     }
 }

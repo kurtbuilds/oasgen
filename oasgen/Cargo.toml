@@ -8,6 +8,7 @@ readme = "../README.md"
 
 [dependencies]
 actix-web = { version = "4.2.1", optional = true }
+futures = "0.3.25"
 http = "0.2.8"
 indexmap = "1.9.2"
 oasgen-core = { path = "../core", package = "oasgen-core" }

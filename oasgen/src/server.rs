@@ -4,6 +4,8 @@ mod actix;
 mod none;
 
 use std::future::Future;
+use std::marker::PhantomData;
+use std::sync::Arc;
 use http::Method;
 use openapiv3::{Components, OpenAPI, ReferenceOr};
 
@@ -15,10 +17,14 @@ use self::actix::InnerResourceFactory;
 #[cfg(not(any(feature = "actix")))]
 use self::none::InnerResourceFactory;
 
-pub struct Server {
+// This takes a generic, Mutability, the idea being, once we decide the OpenAPI spec is finalized, we
+// no longer need the ability to modify it.
+pub struct Server<Mutability = OpenAPI> {
     resources: Vec<InnerResourceFactory<'static>>,
 
-    pub openapi: OpenAPI,
+    // This is behind an arc because the handlers need to be able to clone it, and they're async,
+    // extending their lifetime.
+    pub openapi: Mutability,
     /// Configuration to mount the API routes (including the OpenAPI spec routes) under a path prefix.
     pub prefix: Option<String>,
     /// Configuration to serve the spec as JSON method=GET, path=`json_route`
@@ -27,8 +33,8 @@ pub struct Server {
     pub yaml_route: Option<String>,
 }
 
-impl Clone for Server {
-    fn clone(&self) -> Self {
+impl Clone for Server<Arc<OpenAPI>> {
+    fn clone(&self) -> Server<Arc<OpenAPI>> {
         Server {
             resources: self.resources.iter()
                 .map(|f| f.manual_clone())
@@ -105,5 +111,19 @@ impl Server {
     pub fn prefix(mut self, prefix: &str) -> Self {
         self.prefix = Some(prefix.to_string());
         self
+    }
+
+    /// Moves the OpenAPI spec into an Arc, so that it can be cloned and shared with view handlers.
+    /// Enables `Server::clone()` (which doesn't make sense without freezing, because then modifying
+    /// the schama on one Server wouldn't affect the other).
+    /// You don't need to do this if you're not using a web server.
+    pub fn freeze(self) -> Server<Arc<OpenAPI>> {
+        Server {
+            resources: self.resources,
+            openapi: Arc::new(self.openapi),
+            json_route: self.json_route,
+            yaml_route: self.yaml_route,
+            prefix: self.prefix,
+        }
     }
 }
