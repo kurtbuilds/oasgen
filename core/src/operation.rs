@@ -87,7 +87,7 @@ impl<F, A0, Fut, FuncMetadata> OaOperation<(A0, Fut, FuncMetadata)> for F
         responses.responses.insert(StatusCode::Code(200), ReferenceOr::Item({
             let mut content = indexmap::IndexMap::new();
             content.insert("application/json".to_string(), MediaType {
-                schema: Some(Fut::Output::schema_ref().unwrap()),
+                schema: Fut::Output::schema_ref(),
                 ..MediaType::default()
             });
             Response {
