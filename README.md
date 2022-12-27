@@ -114,7 +114,7 @@ to start the server normally.
 
 ### Route that displays the spec
 
-It's easiest to use the built-in methods: `Server::route_json_spec` and `Schema::route_yaml_spec`.
+It's easiest to use the built-in methods: `Server::route_json_spec` and `Server::route_yaml_spec`.
 
 If you need to customize these routes, the closure lifetimes can be tricky. Below is a rough sketch:
 
