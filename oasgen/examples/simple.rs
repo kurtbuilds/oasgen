@@ -119,17 +119,7 @@ pub struct FnService<F, Fut, Req, Res, Err>
     _t: PhantomData<fn(Req)>,
 }
 
-type Inner<C, Req, Res, Err, InitErr> = Box<
-    dyn ServiceFactory<
-        Req,
-        Config = C,
-        Response = Res,
-        Error = Err,
-        InitError = InitErr,
-        Service = BoxService<Req, Res, Err>,
-        Future = BoxFuture<Result<BoxService<Req, Res, Err>, InitErr>>,
-    >,
->;
+
 struct FactoryWrapper<SF>(SF);
 impl<SF, Req, Cfg, Res, Err, InitErr> ServiceFactory<Req> for FactoryWrapper<SF>
     where
@@ -155,8 +145,30 @@ impl<SF, Req, Cfg, Res, Err, InitErr> ServiceFactory<Req> for FactoryWrapper<SF>
     }
 }
 
+type Inner<C, Req, Res, Err, InitErr> = Box<
+    dyn ServiceFactory<
+        Req,
+        Config = C,
+        Response = Res,
+        Error = Err,
+        InitError = InitErr,
+        Service = BoxService<Req, Res, Err>,
+        Future = BoxFuture<Result<BoxService<Req, Res, Err>, InitErr>>,
+    >,
+>;
 pub struct BoxServiceFactory<Cfg, Req, Res, Err, InitErr>(Inner<Cfg, Req, Res, Err, InitErr>);
 type BoxedHttpServiceFactory = BoxServiceFactory<(), ServiceRequest, ServiceResponse<BoxBody>, Error, ()>;
+
+type InnerBoxedHttpServiceFactory = Box<
+    dyn ServiceFactory<
+        ServiceRequest,
+        Config = (),
+        Response = ServiceResponse<BoxBody>,
+        Error = Error,
+        InitError = (),
+        Service = BoxService<ServiceRequest, ServiceResponse<BoxBody>, Error>,
+        Future = BoxFuture<Result<BoxService<ServiceRequest, ServiceResponse<BoxBody>, Error>, ()>>,
+    >>;
 
 
 impl<F, Fut, Req, Res, Err> FnService<F, Fut, Req, Res, Err>
@@ -270,7 +282,7 @@ pub fn fn_service<F, Fut, Req, Res, Err, Cfg>(
 }
 
 fn collector<F, Args>(handler: F)
-    -> BoxedHttpServiceFactory
+    -> InnerBoxedHttpServiceFactory
 where
     F: Handler<Args> + 'static,
     Args: FromRequest + 'static,
@@ -296,7 +308,7 @@ where
     };
     let z: FnServiceFactory<_, _, _, _, _, ()> = fn_service(z);
     z.clone();
-    BoxServiceFactory(Box::new(FactoryWrapper(z)))
+    Box::new(FactoryWrapper(z))
     // Box::new(z)
 }
 
