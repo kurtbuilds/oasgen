@@ -3,12 +3,12 @@ use http::Method;
 use oasgen_core::{OaOperation, OaSchema};
 use super::Server;
 
-pub trait MyClonableFn<'a> : Fn() -> MyNonCloneData {
+pub trait MyClonableFn<'a> : Fn() -> MyNonCloneData + Send {
     fn my_clone(&self) -> InnerRouteFactory<'static>;
 }
 
 impl<'a, T> MyClonableFn<'a> for T
-where T: 'static + Clone + Fn() -> MyNonCloneData
+where T: 'static + Clone + Fn() -> MyNonCloneData + Send
 {
     fn my_clone(&self) -> InnerRouteFactory<'static> {
         Box::new(self.clone())
@@ -36,7 +36,7 @@ pub type InnerRouteFactory<'a> = Box<dyn MyClonableFn<'a, Output=MyNonCloneData>
 
 fn build_inner_resource<F, Args>(path: String, method: Method, handler: F) -> InnerRouteFactory<'static>
     where
-        F: Handler<Args> + 'static + Copy,
+        F: Handler<Args> + 'static + Copy + Send,
         Args: FromRequest + 'static,
         F::Output: Responder + 'static,
 {
@@ -50,7 +50,7 @@ impl Server {
     // #[cfg(feature = "actix")]
     pub fn get<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
         where
-            F: actix_web::Handler<Args> + OaOperation<Signature> + Copy,
+            F: actix_web::Handler<Args> + OaOperation<Signature> + Copy + Send,
             Args: actix_web::FromRequest + 'static,
             F::Output: actix_web::Responder + 'static,
             <F as actix_web::Handler<Args>>::Output: OaSchema,
@@ -64,7 +64,7 @@ impl Server {
     // #[cfg(feature = "actix")]
     pub fn post<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
         where
-            F: actix_web::Handler<Args> + OaOperation<Signature> + Copy,
+            F: actix_web::Handler<Args> + OaOperation<Signature> + Copy + Send,
             Args: actix_web::FromRequest + 'static,
             F::Output: actix_web::Responder + 'static,
             <F as actix_web::Handler<Args>>::Output: OaSchema,
