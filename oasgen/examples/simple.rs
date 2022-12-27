@@ -14,6 +14,12 @@ pub struct SendCode {
     pub mobile: String,
 }
 
+#[derive(OaSchema, Deserialize)]
+pub struct VerifyCode {
+    pub mobile: String,
+    pub code: String,
+}
+
 #[derive(Serialize, OaSchema, Debug)]
 pub struct SendCodeResponse {
     pub found_account: bool,
@@ -22,6 +28,11 @@ pub struct SendCodeResponse {
 #[openapi]
 async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
     Json(SendCodeResponse { found_account: false })
+}
+
+#[openapi]
+async fn verify_code(_body: Json<VerifyCode>) -> Json<()> {
+    Json(())
 }
 
 use actix_web::dev::ServiceResponse;
@@ -299,7 +310,9 @@ async fn main() -> std::io::Result<()> {
     let port = 5000;
     let host = format!("{}:{}", host, port);
 
-    collector(send_code);
+    let a = collector(send_code);
+    let b = collector(verify_code);
+    let f = vec![a, b];
 
     // let server = Server::new()
     //     .post("/send-code", send_code)

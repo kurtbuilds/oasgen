@@ -65,6 +65,8 @@ fn into_inner<F, Args>(method: Method, handler: F) -> RouteInner where
 {
     use actix_web::web;
     web::route().method(method).to(handler)
+    // ;
+    // web::resource("/").route();
 }
 
 #[derive(Clone)]
