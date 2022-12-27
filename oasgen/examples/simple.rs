@@ -271,16 +271,6 @@ for FnServiceFactory<F, Fut, Req, Res, Err, Cfg>
     }
 }
 
-pub fn fn_service<F, Fut, Req, Res, Err, Cfg>(
-    f: F,
-) -> FnServiceFactory<F, Fut, Req, Res, Err, Cfg>
-    where
-        F: Fn(Req) -> Fut + Clone,
-        Fut: Future<Output = Result<Res, Err>>,
-{
-    FnServiceFactory::new(f)
-}
-
 fn collector<F, Args>(handler: F)
     -> InnerBoxedHttpServiceFactory
 where
@@ -306,7 +296,7 @@ where
             Ok::<ServiceResponse, actix_web::Error>(ServiceResponse::new(req, res))
         }
     };
-    let z: FnServiceFactory<_, _, _, _, _, ()> = fn_service(z);
+    let z = FnServiceFactory::new(z);
     z.clone();
     Box::new(FactoryWrapper(z))
     // Box::new(z)
