@@ -1,6 +1,7 @@
-use actix_web::{FromRequest, Handler, Responder};
+use actix_web::{FromRequest, Handler, HttpResponse, Responder};
 use http::Method;
 use oasgen_core::{OaOperation, OaSchema};
+use crate::Format;
 use super::Server;
 
 pub trait MyClonableFn<'a> : Fn() -> MyNonCloneData + Send {
@@ -73,6 +74,14 @@ impl Server {
 
         self.resources.push(build_inner_resource(path.to_string(), Method::POST, handler));
 
+        self
+    }
+
+    pub fn get_json_spec_at_path(mut self, path: &str) -> Self {
+        let s = serde_json::to_string(&self.openapi).unwrap();
+        // self.resources.push(build_inner_resource(path.to_string(), Method::GET, || {
+        //     HttpResponse::Ok().json(s)
+        // }));
         self
     }
 

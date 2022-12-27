@@ -667,6 +667,7 @@ dependencies = [
  "oasgen-macro",
  "openapiv3-extended",
  "serde",
+ "serde_json",
  "serde_yaml",
  "tokio",
  "trybuild",

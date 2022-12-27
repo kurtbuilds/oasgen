@@ -36,32 +36,14 @@ async fn verify_code(_body: Json<VerifyCode>) -> Json<()> {
     Json(())
 }
 
-
-fn collector<F, Args>(handler: F, method: Method) -> Box<dyn Fn() -> Route>
-where
-    F: Handler<Args> + 'static + Copy,
-    Args: FromRequest + 'static,
-    F::Output: Responder + 'static,
-{
-    Box::new(move || {
-        web::route().method(method.clone()).to(handler)
-    })
-}
-
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     use std::fs::File;
     use actix_web::{HttpResponse, web, HttpServer, App};
-    // serde_yaml::to_writer(&File::create("examples/simple.yaml").unwrap(), &s.openapi).unwrap();
 
     let host = "0.0.0.0";
     let port = 5000;
     let host = format!("{}:{}", host, port);
-
-    // let a = collector(send_code, Method::POST);
-    // let a = collector(|| HttpResponse::Ok(), Method::POST);
-    // let b = collector(verify_code, Method::POST);
-    // let f = vec![a, b];
 
     let server = Server::new()
         .post("/send-code", send_code)
@@ -69,10 +51,23 @@ async fn main() -> std::io::Result<()> {
         ;
         // .into_service();
 
-    HttpServer::new(move || App::new()
-    // App::new()
-        .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
-        .service(server.clone().into_service())
+    HttpServer::new(move || {
+        let spec = server.openapi.clone();
+        let spec_json = serde_json::to_string(&spec).unwrap();
+        let spec_yaml = serde_yaml::to_string(&spec).unwrap();
+        App::new()
+            // App::new()
+            .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
+            .route("/openapi.json", web::get().to(move || {
+                let spec_json = spec_json.clone();
+                async { HttpResponse::Ok().insert_header(("Content-Type", "application/json")).body(spec_json) }
+            }))
+            .route("/openapi.yaml", web::get().to(move || {
+                let spec = spec_yaml.clone();
+                async { HttpResponse::Ok().body(spec) }
+            }))
+            .service(server.clone().into_service())
+    })
     //     .route("/send-code", web::post().to(send_code))
     // ;
     // Ok(())
@@ -83,7 +78,6 @@ async fn main() -> std::io::Result<()> {
         // .route("/auth/send-code", post().to(auth::send_code))
                     // .with_json_spec_at("openapi.json")
                     // .build()
-    )
         .bind(host)?
         .run()
         .await
