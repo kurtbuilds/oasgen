@@ -20,20 +20,18 @@ fix:
 
 # Bump version. level=major,minor,patch
 version level:
-   git diff-index --exit-code HEAD > /dev/null || ! echo You have untracked changes. Commit your changes before bumping the version.
+   #git diff-index --exit-code HEAD > /dev/null || ! echo You have untracked changes. Commit your changes before bumping the version.
 
-   echo $(dye -c INFO) Make sure that it builds first.
-   just test
+   #echo $(dye -c INFO) Make sure that it builds first.
+   #just test
 
-   show cargo set-version --bump {{ level }} --workspace
-   export VERSION=$(toml get oasgen/Cargo.toml package.version)
-
-   (cd macro && toml set Cargo.toml dependencies.oasgen-core.version $VERSION && cargo update)
-   (cd oasgen && cargo add oasgen-core@$VERSION ormlite-oasgen@$VERSION && cargo update)
-
-   show git commit -am "Bump version {{level}} to $VERSION"
-   show git tag v$VERSION
-   show git push origin v$VERSION
+   cargo set-version --bump {{ level }} --workspace
+   VERSION=$(toml get oasgen/Cargo.toml package.version) && \
+       (cd macro && toml set Cargo.toml dependencies.oasgen-core.version $VERSION && cargo update) && \
+       (cd oasgen && toml set Cargo.toml dependencies.oasgen-core.version $VERSION && toml set Cargo.toml dependencies.oasgen-macro.version $VERSION && cargo update) && \
+       git commit -am "Bump version {{level}} to $VERSION" && \
+       git tag v$VERSION && \
+       git push origin v$VERSION
    git push
 
 publish:

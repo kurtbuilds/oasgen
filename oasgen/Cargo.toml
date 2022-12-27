@@ -1,6 +1,6 @@
 [package]
 name = "oasgen"
-version = "0.1.2"
+version = "0.1.6"
 edition = "2021"
 readme = "../README.md"
 
@@ -13,8 +13,8 @@ actix-web = { version = "4.2.1", optional = true }
 futures = "0.3.25"
 http = "0.2.8"
 indexmap = "1.9.2"
-oasgen-core = { path = "../core", package = "oasgen-core" }
-oasgen-macro = { path = "../macro", package = "oasgen-macro" }
+oasgen-core = { path = "../core", package = "oasgen-core" , version = "0.1.6"}
+oasgen-macro = { path = "../macro", package = "oasgen-macro" , version = "0.1.6"}
 openapiv3-extended = "1.0.14"
 serde = { version = "1.0.151", features = ["derive"] }
 serde_json = "1.0.91"
