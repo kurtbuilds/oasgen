@@ -1,9 +1,61 @@
+use std::future::Future;
+use actix_web::body::BoxBody;
+use actix_web::dev::{fn_service, ServiceRequest, ServiceResponse};
+use actix_web::{Error, FromRequest};
+use actix_web::Responder;
 use http::Method;
 use openapiv3::{Components, OpenAPI, ReferenceOr};
-use oasgen_core::{OaSchema, OaOperation};
+
+use oasgen_core::{OaOperation, OaSchema};
 
 // #[cfg(feature = "actix")]
 type RouteInner = actix_web::Route;
+
+// pub struct CloneableRoute {
+//     method: Method,
+//     handler: Box<dyn actix_web::Handler<dyn FromRequest>>
+// }
+use actix_service::boxed::{BoxFuture, BoxService, BoxServiceFactory};
+use actix_service::ServiceFactory;
+
+type BoxedHttpServiceFactory = BoxServiceFactory<(), ServiceRequest, ServiceResponse<BoxBody>, Error, ()>;
+
+type MyServiceFactory<Conf, Req, Res, Err, InitErr> = dyn ServiceFactory<
+    Req,
+    Config=Conf,
+    Response=Res,
+    Error=Err,
+    InitError=InitErr,
+    Service=BoxService<Req, Res, Err>,
+    Future=BoxFuture<Result<BoxService<Req, Res, Err>, InitErr>>,
+>;
+
+
+fn make_service_factory<F, Args>(handler: F) -> Box<MyServiceFactory<(), ServiceRequest, ServiceResponse<BoxBody>, Error, ()>>
+    where
+        F: actix_web::Handler<Args> + 'static,
+        Args: FromRequest + 'static,
+        F::Output: actix_web::Responder + 'static,
+{
+    let z = fn_service(move |req: ServiceRequest| {
+        let handler = handler.clone();
+
+        async move {
+            let (req, mut payload) = req.into_parts();
+
+            let res = match Args::from_request(&req, &mut payload).await {
+                Err(err) => actix_web::HttpResponse::from_error(err),
+                Ok(data) => handler
+                    .call(data)
+                    .await
+                    .respond_to(&req)
+                    .map_into_boxed_body(),
+            };
+            Ok::<ServiceResponse, actix_web::Error>(actix_web::dev::ServiceResponse::new(req, res))
+        }
+    });
+    Box::new(z)
+}
 
 // #[cfg(feature = "actix")]
 fn into_inner<F, Args>(method: Method, handler: F) -> RouteInner where
@@ -15,13 +67,15 @@ fn into_inner<F, Args>(method: Method, handler: F) -> RouteInner where
     web::route().method(method).to(handler)
 }
 
+#[derive(Clone)]
 struct Route {
     #[allow(unused)]
     path: String,
-    #[allow(unused)]
-    inner: RouteInner,
+    // #[allow(unused)]
+    // inner: Box<dyn NewTrait<Output=RouteInner>>,
 }
 
+#[derive(Clone)]
 pub struct Server {
     pub openapi: OpenAPI,
     // pub routes: Vec<(String, Method>
@@ -67,7 +121,7 @@ impl Server {
 
         self.resources.push(Route {
             path: path.to_string(),
-            inner: into_inner(Method::GET, handler),
+            // inner: Box::new(move || into_inner(Method::GET, handler)),
         });
 
         self
@@ -85,14 +139,19 @@ impl Server {
 
         self.resources.push(Route {
             path: path.to_string(),
-            inner: into_inner(Method::POST, handler),
+            // inner: Box::new(move || into_inner(Method::POST, handler.clone())),
         });
 
         self
     }
 
     // #[cfg(feature = "actix")]
-    fn into_service(self) -> () {
+    pub fn create_service(&self) -> actix_web::Scope {
+        let mut s = actix_web::Scope::new("/");
+        for route in &self.resources {
+            // s = s.route(&route.path, (route.inner)());
+        }
+        s
         // actix_web::web::scope("/").routes(self.resources.into_iter().map(|route| {
         //     actix_web::web::resource(&route.path).route(route.inner)
         // }))

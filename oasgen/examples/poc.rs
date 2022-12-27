@@ -56,7 +56,6 @@ pub struct SendCode {
     pub mobile: String,
 }
 
-
 pub fn send_code_transformed(body: Json<SendCode>) -> TypedResponseFuture<impl Future<Output=Json<SendCodeResponse>>, __send_code__metadata> {
     TypedResponseFuture::new(async move {
         // body of original function...

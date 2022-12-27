@@ -21,8 +21,10 @@ async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
 async fn main() -> std::io::Result<()> {
     use std::fs::File;
     use actix_web::{HttpResponse, web, HttpServer, App};
+
     let s = Server::new()
         .get("/hello", send_code)
+
         ;
     let res = send_code(Json(SendCode { mobile: "123".to_string() })).await;
     println!("{:#?}", res);
@@ -32,9 +34,15 @@ async fn main() -> std::io::Result<()> {
     let port = 5000;
     let host = format!("{}:{}", host, port);
 
+    let server = Server::new()
+        .post("/send-code", send_code)
+        ;
+        // .into_service();
+
     HttpServer::new(move || App::new()
         .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
         .route("/send-code", web::post().to(send_code))
+        .service(server.clone().create_service())
         // .service(build_openapi().into_service("/api"))
         // .add_routes()
         // .wrap_api()
