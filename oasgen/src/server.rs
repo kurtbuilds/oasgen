@@ -21,10 +21,10 @@ impl Clone for Server {
         Server {
             openapi: self.openapi.clone(),
             // resources: manual_clone(&self.resources),
-            // resources: self.resources.iter()
-            //     .map(|f| f.my_clone())
-            //     .collect::<Vec<_>>()
-            resources: vec![],
+            resources: self.resources.iter()
+                .map(|f| f.my_clone())
+                .collect::<Vec<_>>()
+            // resources: vec![],
         }
     }
 }

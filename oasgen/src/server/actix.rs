@@ -4,13 +4,13 @@ use oasgen_core::{OaOperation, OaSchema};
 use super::Server;
 
 pub trait MyClonableFn<'a> : Fn() -> MyNonCloneData {
-    fn my_clone(&self) -> Box<dyn 'a + MyClonableFn>;
+    fn my_clone(&self) -> InnerRouteFactory<'static>;
 }
 
 impl<'a, T> MyClonableFn<'a> for T
-where T: 'a + Clone + Fn() -> MyNonCloneData
+where T: 'static + Clone + Fn() -> MyNonCloneData
 {
-    fn my_clone(&self) -> Box<dyn 'a + MyClonableFn> {
+    fn my_clone(&self) -> InnerRouteFactory<'static> {
         Box::new(self.clone())
     }
 }
