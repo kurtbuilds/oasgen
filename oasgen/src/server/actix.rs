@@ -3,18 +3,45 @@ use http::Method;
 use oasgen_core::{OaOperation, OaSchema};
 use super::Server;
 
-type ResourceInner = actix_web::Resource;
+pub trait MyClonableFn<'a> : Fn() -> MyNonCloneData {
+    fn my_clone(&self) -> Box<dyn 'a + MyClonableFn>;
+}
 
-pub type InnerRouteFactory = Box<dyn Fn() -> ResourceInner>;
+impl<'a, T> MyClonableFn<'a> for T
+where T: 'a + Clone + Fn() -> MyNonCloneData
+{
+    fn my_clone(&self) -> Box<dyn 'a + MyClonableFn> {
+        Box::new(self.clone())
+    }
+}
 
-fn build_inner_resource<F, Args>(path: &str, method: Method, handler: F) -> InnerRouteFactory
+type MyNonCloneData = actix_web::Resource;
+//
+// pub(crate) trait MyCloneableFn<'a>: Fn() -> MyNonCloneData {
+//     fn my_clone(&self) -> Box<dyn 'static + MyCloneableFn>;
+// }
+//
+// // pub fn manual_clone<T: Clone + 'static>(vec: &Vec<Box<T>>) -> Vec<Box<T>> {
+// //     vec.iter().map(|c| c.clone()).collect::<Vec<_>>()
+// // }
+//
+// impl<'a, T> MyCloneableFn<'a> for T
+//     where T: 'a + Clone + Fn() -> MyNonCloneData {
+//     fn my_clone(&self) -> Box<dyn 'static + MyCloneableFn> {
+//         Box::new(self.clone())
+//     }
+// }
+
+pub type InnerRouteFactory<'a> = Box<dyn MyClonableFn<'a, Output=MyNonCloneData>>;
+
+fn build_inner_resource<F, Args>(path: String, method: Method, handler: F) -> InnerRouteFactory<'static>
     where
         F: Handler<Args> + 'static + Copy,
         Args: FromRequest + 'static,
         F::Output: Responder + 'static,
 {
     Box::new(move || {
-        actix_web::Resource::new(path)
+        actix_web::Resource::new(path.clone())
             .route(actix_web::web::route().method(method.clone()).to(handler))
     })
 }
@@ -30,7 +57,7 @@ impl Server {
     {
         self.update_spec(path, Method::GET, &handler);
 
-        self.resources.push(build_inner_resource(path, Method::GET, handler));
+        self.resources.push(build_inner_resource(path.to_string(), Method::GET, handler));
         self
     }
 
@@ -44,7 +71,7 @@ impl Server {
     {
         self.update_spec(path, Method::POST, &handler);
 
-        self.resources.push(build_inner_resource(path, Method::POST, handler));
+        self.resources.push(build_inner_resource(path.to_string(), Method::POST, handler));
 
         self
     }

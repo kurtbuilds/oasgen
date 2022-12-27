@@ -6,14 +6,27 @@ use http::Method;
 use openapiv3::{Components, OpenAPI, ReferenceOr};
 
 use oasgen_core::{OaOperation, OaSchema};
+// use self::actix::MyCloneableFn;
 
 // #[cfg(feature = "actix")]
 use self::actix::InnerRouteFactory;
 
-#[derive(Clone)]
 pub struct Server {
     pub openapi: OpenAPI,
-    resources: Vec<InnerRouteFactory>,
+    resources: Vec<InnerRouteFactory<'static>>,
+}
+
+impl Clone for Server {
+    fn clone(&self) -> Self {
+        Server {
+            openapi: self.openapi.clone(),
+            // resources: manual_clone(&self.resources),
+            // resources: self.resources.iter()
+            //     .map(|f| f.my_clone())
+            //     .collect::<Vec<_>>()
+            resources: vec![],
+        }
+    }
 }
 
 impl Server {

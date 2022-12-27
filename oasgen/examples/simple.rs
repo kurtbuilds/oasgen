@@ -36,6 +36,18 @@ async fn verify_code(_body: Json<VerifyCode>) -> Json<()> {
     Json(())
 }
 
+
+fn collector<F, Args>(handler: F, method: Method) -> Box<dyn Fn() -> Route>
+where
+    F: Handler<Args> + 'static + Copy,
+    Args: FromRequest + 'static,
+    F::Output: Responder + 'static,
+{
+    Box::new(move || {
+        web::route().method(method.clone()).to(handler)
+    })
+}
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     use std::fs::File;
@@ -46,16 +58,31 @@ async fn main() -> std::io::Result<()> {
     let port = 5000;
     let host = format!("{}:{}", host, port);
 
-    let server = Server::new()
-        .post("/send-code", send_code)
-        .post("/verify-code", verify_code)
-        ;
+    let a = collector(send_code, Method::POST);
+    let a = collector(|| HttpResponse::Ok(), Method::POST);
+    let b = collector(verify_code, Method::POST);
+    let f = vec![a, b];
 
-    HttpServer::new(move || App::new()
-        .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
-        .service(server.clone().into_service())
-    )
-        .bind(host)?
-        .run()
-        .await
+    // let server = Server::new()
+    //     .post("/send-code", send_code)
+    //     ;
+        // .into_service();
+
+    // HttpServer::new(move || App::new()
+    // App::new()
+    //     .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
+    //     .route("/send-code", web::post().to(send_code))
+    // ;
+    Ok(())
+        // .service(server.clone().create_service())
+        // .service(build_openapi().into_service("/api"))
+        // .add_routes()
+        // .wrap_api()
+        // .route("/auth/send-code", post().to(auth::send_code))
+                    // .with_json_spec_at("openapi.json")
+                    // .build()
+    // )
+    //     .bind(host)?
+    //     .run()
+    //     .await
 }
