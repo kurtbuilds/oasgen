@@ -37,7 +37,6 @@ version level:
 
    git commit -am "Bump version {{level}} to $VERSION" && \
    git tag v$VERSION && \
-   git push origin v$VERSION
    git push
 
 publish:

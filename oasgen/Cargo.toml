@@ -2,11 +2,27 @@
 name = "oasgen"
 version = "0.1.7"
 edition = "2021"
+authors = ["Kurt Wolf <kurtwolfbuilds@gmail.com>"]
+description = "Dependency of oasgen. Generates OpenAPI 3.0 spec based on Rust code. Works with actix-web, but architected to easily extend to other frameworks (or no framework)."
+license = "MIT"
+repository = "https://github.com/kurtbuilds/oasgen"
+homepage = "https://github.com/kurtbuilds/oasgen"
+documentation = "https://docs.rs/oasgen"
 readme = "../README.md"
+autotests = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 doctest = false
+
+[[test]]
+name = "oasgen_test_no_framework"
+path = "tests/test-none.rs"
+
+[[test]]
+name = "oasgen_test_actix"
+path = "tests/test-actix.rs"
+required-features = ["actix"]
 
 [dependencies]
 actix-web = { version = "4.2.1", optional = true }
