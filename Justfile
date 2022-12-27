@@ -8,8 +8,8 @@ build:
     cargo build
 alias b := build
 
-test *ARGS:
-    cargo test "$@"
+test:
+    @just oasgen/test
 
 check:
     cargo check

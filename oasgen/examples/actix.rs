@@ -1,15 +1,11 @@
 #![allow(unused)]
 
+// We have to wrap the example in `mod` beacuse examples fail compilation without a `main`, and
+// forwarding to an inner mod fixes the issue.
 #[cfg(feature = "actix")]
 mod inner {
-    use std::future::Future;
-    use std::marker::PhantomData;
-    use std::pin::Pin;
-    use std::task::{Context, Poll};
-    use actix_web::{FromRequest, Handler, Responder, Route, web};
     use oasgen::{OaSchema, Server, openapi};
     use actix_web::web::Json;
-    use http::Method;
     use serde::{Deserialize, Serialize};
 
     #[derive(OaSchema, Deserialize)]

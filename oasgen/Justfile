@@ -4,8 +4,8 @@ set positional-arguments
 help:
     @just --list --unsorted
 
-build:
-    cargo build
+build *ARGS:
+    cargo build "$@"
 alias b := build
 
 check:
@@ -15,8 +15,9 @@ alias c := check
 fix:
     cargo clippy --fix
 
-run:
-    cargo run --example actix --features actix
+run *ARGS:
+    cargo run "$@"
+#    cargo run --example actix --features actix
 
 test:
     cargo test "$@"

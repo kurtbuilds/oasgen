@@ -1,7 +1,10 @@
-use actix_web::{FromRequest, Handler, HttpResponse, Responder, Resource};
+use actix_web::{FromRequest, Handler, HttpResponse, Resource, Responder, Scope, web};
 use http::Method;
+
 use oasgen_core::{OaOperation, OaSchema};
+
 use crate::Format;
+
 use super::Server;
 
 /// ResourceFactory is a no-argument closure that returns a user-provided view handler.
@@ -9,12 +12,12 @@ use super::Server;
 /// Because `actix_web::Resource : !Clone`, we can't store the `Resource` directly in the `Server`
 /// struct (since we need `Server: Clone`, because `Server` is cloned for every server thread by actix_web).
 /// This trait essentially adds `Clone` to these closures.
-pub trait ResourceFactory<'a> : Send + Fn() -> Resource {
+pub trait ResourceFactory<'a>: Send + Fn() -> Resource {
     fn manual_clone(&self) -> InnerResourceFactory<'static>;
 }
 
 impl<'a, T> ResourceFactory<'a> for T
-where T: 'static + Clone + Fn() -> Resource + Send
+    where T: 'static + Clone + Fn() -> Resource + Send
 {
     fn manual_clone(&self) -> InnerResourceFactory<'static> {
         Box::new(self.clone())
@@ -63,18 +66,33 @@ impl Server {
         self
     }
 
-    pub fn get_json_spec_at_path(mut self, path: &str) -> Self {
-        let s = serde_json::to_string(&self.openapi).unwrap();
-        // self.resources.push(build_inner_resource(path.to_string(), Method::GET, || {
-        //     HttpResponse::Ok().json(s)
-        // }));
-        self
-    }
-
-    pub fn into_service(self) -> actix_web::Scope {
-        let mut scope = actix_web::Scope::new("");
+    pub fn into_service(self) -> Scope {
+        let mut scope = web::scope(&self.prefix.unwrap_or_default());
         for resource in self.resources {
             scope = scope.service(resource());
+        }
+        if let Some(path) = self.json_route {
+            scope = scope.service(web::resource(&path).route(web::get().to(move || async {
+                HttpResponse::Ok().body("foo")
+            })));
+            // scope = scope.service(web::resource(path).route(web::get().to(move || {
+                // let s = "foo".to_string();
+                // let spec = self.openapi;
+                // HttpResponse::Ok().json(spec)
+                // HttpResponse::Ok().body("foo")
+            // })));
+            // scope = scope.service(web::resource(path).route(web::get().to(move || {
+                // HttpResponse::Ok().body("foo")
+                // HttpResponse::Ok().json(&self.openapi)
+            // })));
+        }
+        if let Some(path) = self.yaml_route {
+            // scope = scope.service(web::resource(path).route(web::get().to(move || {
+            //     let body = serde_yaml::to_string(&self.openapi).unwrap();
+            //     HttpResponse::Ok()
+            //         .insert_header((http::header::CONTENT_TYPE, "text/yaml"))
+            //         .body(body)
+            // })));
         }
         scope
     }
