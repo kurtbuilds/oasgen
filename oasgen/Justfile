@@ -19,6 +19,7 @@ run *ARGS:
     cargo run --example actix --features actix
 
 test:
-    #cargo test "$@"
+    cargo test "$@"
     cargo test --features actix "$@"
+
 alias r := run
