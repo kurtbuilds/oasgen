@@ -3,8 +3,10 @@ mod actix;
 #[cfg(not(any(feature = "actix")))]
 mod none;
 
+use std::env::var;
 use std::future::Future;
 use std::marker::PhantomData;
+use std::path::Path;
 use std::sync::Arc;
 use http::Method;
 use openapiv3::{Components, OpenAPI, ReferenceOr};
@@ -62,6 +64,7 @@ impl Server {
         }
     }
 
+    /// Add a handler to the OpenAPI spec (which is different than mounting it to a server).
     fn add_handler_to_spec<F, Signature>(&mut self, path: &str, _method: Method, _handler: &F)
         where
             F: OaOperation<Signature>,
@@ -108,11 +111,33 @@ impl Server {
         self
     }
 
+    /// Configure a prefix to mount the API routes (including the OpenAPI spec routes) under.
     pub fn prefix(mut self, prefix: &str) -> Self {
         self.prefix = Some(prefix.to_string());
         self
     }
 
+    /// Convenience method for writing the spec to a file if the process was run with an env var set.
+    /// To write your OpenAPI spec to a file during your build process:
+    /// 1. Build the server executable.
+    /// 2. Run the server executable with `OASGEN_WRITE_SPEC=1`.
+    ///
+    /// This function checks the env var, and if it's found, writes the spec, and then terminates
+    /// the program (with success).
+    pub fn write_and_exit_if_env_var<P: AsRef<Path>>(self, path: P) -> Self {
+        let path = path.as_ref();
+        if var("OASGEN_WRITE_SPEC").map(|s| s == "1").unwrap_or(false) {
+            let spec = if path.extension().map(|e| e == "json").unwrap_or(false) {
+                serde_json::to_string(&self.openapi).expect("Serializing OpenAPI spec to JSON failed.")
+            } else {
+                serde_yaml::to_string(&self.openapi).expect("Serializing OpenAPI spec failed.")
+            };
+            std::fs::write(path, spec).expect("Writing OpenAPI spec to file failed.");
+            eprintln!("{}: Wrote OpenAPI spec.", path.display());
+            std::process::exit(0);
+        }
+        self
+    }
     /// Moves the OpenAPI spec into an Arc, so that it can be cloned and shared with view handlers.
     /// Enables `Server::clone()` (which doesn't make sense without freezing, because then modifying
     /// the schama on one Server wouldn't affect the other).

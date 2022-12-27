@@ -80,7 +80,7 @@ impl Server<Arc<OpenAPI>> {
             scope = scope.service(web::resource(&path).route(web::get().to(OaSpecJsonHandler(self.openapi.clone()))));
         }
         if let Some(path) = self.yaml_route {
-            scope = scope.service(web::resource(&path).route(web::get().to(OaSpecJsonHandler(self.openapi.clone()))));
+            scope = scope.service(web::resource(&path).route(web::get().to(OaSpecYamlHandler(self.openapi.clone()))));
         }
         scope
     }

@@ -4,3 +4,6 @@ members = [
     "core",
     "macro",
 ]
+
+[patch.crates-io]
+openapiv3-extended = { path = "../openapiv3" }

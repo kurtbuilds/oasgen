@@ -35,7 +35,7 @@ mod inner {
     }
 
     #[tokio::main]
-    async fn main() -> std::io::Result<()> {
+    pub async fn main() -> std::io::Result<()> {
         use std::fs::File;
         use actix_web::{HttpResponse, web, HttpServer, App};
 
@@ -46,19 +46,17 @@ mod inner {
         let server = Server::new()
             .post("/send-code", send_code)
             .post("/verify-code", verify_code)
+            .route_yaml_spec("/openapi.yaml")
+            .write_and_exit_if_env_var("./openapi.yaml")
+            .freeze()
             ;
 
-        println!("{}", serde_yaml::to_string(&server.openapi()).unwrap());
         println!("Listening on {}", host);
         HttpServer::new(move || {
             let spec = server.openapi.clone();
             App::new()
                 // App::new()
                 .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
-                .route("/openapi.json", web::get().to(move || {
-                    let spec = spec.clone();
-                    async move { HttpResponse::Ok().json(&spec) }
-                }))
                 .service(server.clone().into_service())
         })
             .bind(host)?
