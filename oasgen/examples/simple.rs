@@ -30,7 +30,36 @@ use actix_web::dev::ServiceRequest;
 use actix_web::Responder;
 use actix_web::FromRequest;
 use actix_web::Handler;
-use actix_service::always_ready;
+use actix_service::{always_ready, forward_ready};
+use actix_service::boxed::{BoxFuture, BoxService};
+use actix_web::body::BoxBody;
+use actix_web::Error;
+struct ServiceWrapper<S> {
+    inner: S,
+}
+
+impl<S> ServiceWrapper<S> {
+    fn new(inner: S) -> Self {
+        Self { inner }
+    }
+}
+
+impl<S, Req, Res, Err> Service<Req> for ServiceWrapper<S>
+    where
+        S: Service<Req, Response = Res, Error = Err>,
+        S::Future: 'static,
+{
+    type Response = Res;
+    type Error = Err;
+    type Future = BoxFuture<Result<Res, Err>>;
+
+    forward_ready!(inner);
+
+    fn call(&self, req: Req) -> Self::Future {
+        Box::pin(self.inner.call(req))
+    }
+}
+
 
 #[derive(Debug, Clone)]
 #[must_use = "futures do nothing unless you `.await` or poll them"]
@@ -78,6 +107,46 @@ pub struct FnService<F, Fut, Req, Res, Err>
     f: F,
     _t: PhantomData<fn(Req)>,
 }
+
+type Inner<C, Req, Res, Err, InitErr> = Box<
+    dyn ServiceFactory<
+        Req,
+        Config = C,
+        Response = Res,
+        Error = Err,
+        InitError = InitErr,
+        Service = BoxService<Req, Res, Err>,
+        Future = BoxFuture<Result<BoxService<Req, Res, Err>, InitErr>>,
+    >,
+>;
+struct FactoryWrapper<SF>(SF);
+impl<SF, Req, Cfg, Res, Err, InitErr> ServiceFactory<Req> for FactoryWrapper<SF>
+    where
+        Req: 'static,
+        Res: 'static,
+        Err: 'static,
+        InitErr: 'static,
+        SF: ServiceFactory<Req, Config = Cfg, Response = Res, Error = Err, InitError = InitErr>,
+        SF::Future: 'static,
+        SF::Service: 'static,
+        <SF::Service as Service<Req>>::Future: 'static,
+{
+    type Response = Res;
+    type Error = Err;
+    type Config = Cfg;
+    type Service = BoxService<Req, Res, Err>;
+    type InitError = InitErr;
+    type Future = BoxFuture<Result<Self::Service, Self::InitError>>;
+
+    fn new_service(&self, cfg: Cfg) -> Self::Future {
+        let f = self.0.new_service(cfg);
+        Box::pin(async { f.await.map(|s| Box::new(ServiceWrapper::new(s)) as _) })
+    }
+}
+
+pub struct BoxServiceFactory<Cfg, Req, Res, Err, InitErr>(Inner<Cfg, Req, Res, Err, InitErr>);
+type BoxedHttpServiceFactory = BoxServiceFactory<(), ServiceRequest, ServiceResponse<BoxBody>, Error, ()>;
+
 
 impl<F, Fut, Req, Res, Err> FnService<F, Fut, Req, Res, Err>
     where
@@ -190,7 +259,7 @@ pub fn fn_service<F, Fut, Req, Res, Err, Cfg>(
 }
 
 fn collector<F, Args>(handler: F)
-    -> ()
+    -> BoxedHttpServiceFactory
 where
     F: Handler<Args> + 'static,
     Args: FromRequest + 'static,
@@ -216,6 +285,7 @@ where
     };
     let z: FnServiceFactory<_, _, _, _, _, ()> = fn_service(z);
     z.clone();
+    BoxServiceFactory(Box::new(FactoryWrapper(z)))
     // Box::new(z)
 }
 
