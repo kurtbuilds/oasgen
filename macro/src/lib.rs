@@ -23,17 +23,17 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let name = id.to_string();
     let ref_name = format!("#/components/schemas/{}", id);
     let expanded = quote! {
-        impl oasgen::OaSchema for #id {
+        impl ::oasgen::OaSchema for #id {
             fn schema_name() -> Option<&'static str> {
                 Some(#name)
             }
 
-            fn schema_ref() -> Option<oasgen::ReferenceOr<oasgen::Schema>> {
-                Some(oasgen::ReferenceOr::ref_(#ref_name))
+            fn schema_ref() -> Option<::oasgen::ReferenceOr<oasgen::Schema>> {
+                Some(::oasgen::ReferenceOr::ref_(#ref_name))
             }
 
-            fn schema() -> Option<oasgen::Schema> {
-                let mut o = oasgen::Schema::new_object();
+            fn schema() -> Option<::oasgen::Schema> {
+                let mut o = ::oasgen::Schema::new_object();
                 #(#properties)*
                 Some(o)
             }
@@ -60,17 +60,17 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
     };
     ast.sig.output = ReturnType::Type(
         Token![->](span),
-        Box::new(syn::parse2(quote!(oasgen::TypedResponseFuture<impl std::future::Future<Output=#output_type>, #marker_struct_name>)).expect("parsing empty type")),
+        Box::new(syn::parse2(quote!(::oasgen::TypedResponseFuture<impl std::future::Future<Output=#output_type>, #marker_struct_name>)).expect("parsing empty type")),
     );
 
     let block = &ast.block;
     ast.block = Box::new(syn::parse2(quote!({
-        oasgen::TypedResponseFuture::new(async move #block)
+        ::oasgen::TypedResponseFuture::new(async move #block)
     })).expect("parsing empty block"));
 
     // println!("{}", ast.to_token_stream());
     let marker_struct_impl_FunctionMetadata = quote! {
-        impl oasgen::FunctionMetadata for #marker_struct_name {
+        impl ::oasgen::FunctionMetadata for #marker_struct_name {
             fn operation_id() -> Option<&'static str> {
                 None
             }
