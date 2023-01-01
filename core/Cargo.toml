@@ -19,7 +19,7 @@ uuid = { optional = true, version = "1.2.2" }
 chrono = { optional = true, version = "0.4.23" }
 time = { optional = true, version = "0.3.17" }
 pin-project-lite = "0.2.9"
-sqlx = { version = "0.6.2", optional = true, features = ["postgres"] }
+sqlx = { version = "0.6.2", optional = true, features = ["postgres", "runtime-tokio-rustls"] }
 
 [features]
 actix = ["actix-web", "sqlx"]
