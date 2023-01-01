@@ -27,19 +27,45 @@ macro_rules! impl_oa_schema {
     }
 }
 
-impl OaSchema for () {
-    fn schema_name() -> Option<&'static str> {
-        None
-    }
+#[macro_export]
+macro_rules! impl_oa_schema_passthrough {
+    ($t:ty) => {
+        impl<T> OaSchema for $t where T: OaSchema {
+            fn schema_name() -> Option<&'static str> {
+                T::schema_name()
+            }
 
-    fn schema_ref() -> Option<ReferenceOr<Schema>> {
-        None
-    }
+            fn schema_ref() -> Option<ReferenceOr<Schema>> {
+                T::schema_ref()
+            }
 
-    fn schema() -> Option<Schema> {
-        None
+            fn schema() -> Option<Schema> {
+                T::schema()
+            }
+        }
     }
 }
+
+#[macro_export]
+macro_rules! impl_oa_schema_none {
+    ($t:ty) => {
+        impl OaSchema for $t {
+            fn schema_name() -> Option<&'static str> {
+                None
+            }
+
+            fn schema_ref() -> Option<ReferenceOr<Schema>> {
+                None
+            }
+
+            fn schema() -> Option<Schema> {
+                None
+            }
+        }
+    }
+}
+
+impl_oa_schema_none!(());
 
 impl_oa_schema!(usize, Schema::new_integer());
 impl_oa_schema!(u32, Schema::new_integer());
@@ -106,5 +132,37 @@ impl<T> OaSchema for Option<T>
     }
 }
 
+impl<T, E> OaSchema for Result<T, E>
+    where
+        T: OaSchema,
+{
+    fn schema_name() -> Option<&'static str> {
+        T::schema_name()
+    }
+
+    fn schema_ref() -> Option<ReferenceOr<Schema>> {
+        T::schema_ref()
+    }
+
+    fn schema() -> Option<Schema> {
+        T::schema()
+    }
+}
+
 #[cfg(feature = "uuid")]
 impl_oa_schema!(uuid::Uuid, Schema::new_string().with_format("uuid"));
+
+#[cfg(feature = "time")]
+impl_oa_schema!(::time::OffsetDateTime, Schema::new_string().with_format("date-time"));
+#[cfg(feature = "time")]
+impl_oa_schema!(::time::PrimitiveDateTime, Schema::new_string().with_format("date-time"));
+#[cfg(feature = "time")]
+impl_oa_schema!(::time::Date, Schema::new_string().with_format("date"));
+#[cfg(feature = "time")]
+impl_oa_schema!(::time::Time, Schema::new_string().with_format("time"));
+
+#[cfg(feature = "chrono")]
+impl_oa_schema!(::chrono::DateTime, Schema::new_string().with_format("date-time"));
+#[cfg(feature = "chrono")]
+impl_oa_schema!(::chrono::NaiveDateTime, Schema::new_string().with_format("date-time"));
+

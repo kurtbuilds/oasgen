@@ -65,13 +65,23 @@ impl Server {
     }
 
     /// Add a handler to the OpenAPI spec (which is different than mounting it to a server).
-    fn add_handler_to_spec<F, Signature>(&mut self, path: &str, _method: Method, _handler: &F)
+    fn add_handler_to_spec<F, Signature>(&mut self, path: &str, method: Method, _handler: &F)
         where
             F: OaOperation<Signature>,
     {
         let item = self.openapi.paths.paths.entry(path.to_string()).or_default();
         let item = item.as_mut().expect("Currently don't support references for PathItem");
-        item.get = Some(F::operation());
+        match method.as_str() {
+            "GET" => item.get = Some(F::operation()),
+            "POST" => item.post = Some(F::operation()),
+            "PUT" => item.put = Some(F::operation()),
+            "DELETE" => item.delete = Some(F::operation()),
+            "OPTIONS" => item.options = Some(F::operation()),
+            "HEAD" => item.head = Some(F::operation()),
+            "PATCH" => item.patch = Some(F::operation()),
+            "TRACE" => item.trace = Some(F::operation()),
+            _ => panic!("Unsupported method: {}", method),
+        }
 
         for reference in F::references() {
             if !self.openapi.schemas().contains_key(reference) {

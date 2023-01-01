@@ -29,9 +29,9 @@ actix-web = { version = "4.2.1", optional = true }
 futures = "0.3.25"
 http = "0.2.8"
 indexmap = "1.9.2"
-oasgen-core = { path = "../core", package = "oasgen-core" , version = "0.1.8"}
-oasgen-macro = { path = "../macro", package = "oasgen-macro" , version = "0.1.8"}
-openapiv3-extended = "1.0.14"
+oasgen-core = { path = "../core", version = "0.1.8" }
+oasgen-macro = { path = "../macro", version = "0.1.8" }
+openapiv3-extended = "2.0.0"
 serde = { version = "1.0.151", features = ["derive"] }
 serde_json = "1.0.91"
 serde_yaml = "0.9.16"
@@ -39,6 +39,8 @@ tokio = { version = "1.23.0", features = ["full"] }
 
 [features]
 actix = ["actix-web", "oasgen-core/actix"]
+time = ["oasgen-core/time"]
+uuid = ["oasgen-core/uuid"]
 
 [dev-dependencies]
 serde_yaml = "0.9.16"

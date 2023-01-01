@@ -48,7 +48,6 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
     let span = proc_macro2::Span::call_site();
 
     let mut ast = parse_macro_input!(input as syn::ItemFn);
-    // println!("{:#?}", ast.attrs);
     // println!("{:#?}", _args);
     let name = &ast.sig.ident;
     let marker_struct_name = syn::Ident::new(&format!("__{}__metadata", name), name.span());
@@ -67,6 +66,8 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
     ast.block = Box::new(syn::parse2(quote!({
         ::oasgen::TypedResponseFuture::new(async move #block)
     })).expect("parsing empty block"));
+
+    let public = ast.vis.clone();
 
     // println!("{}", ast.to_token_stream());
     let marker_struct_impl_FunctionMetadata = quote! {
@@ -88,7 +89,7 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
         #ast
 
         #[allow(non_camel_case_types)]
-        struct #marker_struct_name;
+        #public struct #marker_struct_name;
 
         #marker_struct_impl_FunctionMetadata
     };

@@ -1,20 +1,9 @@
 use openapiv3::{Schema, ReferenceOr};
-use crate::OaSchema;
+use crate::{impl_oa_schema_none, impl_oa_schema_passthrough, OaSchema};
 
+impl_oa_schema_passthrough!(actix_web::web::Json<T>);
+impl_oa_schema_passthrough!(sqlx::types::Json<T>);
 
-impl<T> OaSchema for actix_web::web::Json<T>
-    where
-        T: OaSchema,
-{
-    fn schema_name() -> Option<&'static str> {
-        T::schema_name()
-    }
-
-    fn schema_ref() -> Option<ReferenceOr<Schema>> {
-        T::schema_ref()
-    }
-
-    fn schema() -> Option<Schema> {
-        T::schema()
-    }
-}
+impl_oa_schema_none!(actix_web::web::Data<sqlx::postgres::PgPool>);
+impl_oa_schema_none!(actix_web::HttpRequest);
+impl_oa_schema_none!(actix_web::HttpResponse);

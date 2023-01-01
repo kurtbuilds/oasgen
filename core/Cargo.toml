@@ -14,14 +14,15 @@ documentation = "https://docs.rs/oasgen"
 [dependencies]
 actix-web = { version = "4.2.1", optional = true }
 indexmap = "1.9.2"
-openapiv3-extended = "1.0.13"
+openapiv3-extended = "2.0.0"
 uuid = { optional = true, version = "1.2.2" }
 chrono = { optional = true, version = "0.4.23" }
+time = { optional = true, version = "0.3.17" }
 pin-project-lite = "0.2.9"
+sqlx = { version = "0.6.2", optional = true, features = ["postgres"] }
 
 [features]
-default = ["uuid", "chrono"]
-actix = ["actix-web"]
+actix = ["actix-web", "sqlx"]
 
 [dev-dependencies]
 assert_matches = "1.5.0"

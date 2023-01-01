@@ -70,11 +70,98 @@ impl<F, A0, Fut, FuncMetadata> OaOperation<(A0, Fut, FuncMetadata)> for F
         Fut::Output: OaSchema,
         FuncMetadata: FunctionMetadata,
 {
+    fn referenced_schema(schema: &str) -> Schema {
+        if A0::schema_name().map(|s| s == schema).unwrap_or(false) {
+            A0::schema().unwrap()
+        } else if Fut::Output::schema_name().map(|s| s == schema).unwrap_or(false) {
+            Fut::Output::schema().unwrap()
+        } else {
+            panic!("Unknown schema: {}", schema)
+        }
+    }
+
+    fn references() -> Vec<&'static str> {
+        vec![A0::schema_name(), Fut::Output::schema_name()].into_iter().flatten().collect()
+    }
+
     fn operation() -> Operation {
-        let a0 = A0::schema_ref().unwrap();
+        let a0 = A0::schema_ref();
+        let request_body = if let Some(a0) = a0 {
+            let mut content = indexmap::IndexMap::new();
+            content.insert("application/json".to_string(), MediaType {
+                schema: Some(a0),
+                ..MediaType::default()
+            });
+            let body = RequestBody {
+                content,
+                required: true,
+                ..RequestBody::default()
+            };
+            Some(ReferenceOr::Item(body))
+        } else {
+            None
+        };
+
+        let mut responses = Responses::default();
+
+        responses.responses.insert(StatusCode::Code(200), ReferenceOr::Item({
+            let mut content = indexmap::IndexMap::new();
+            content.insert("application/json".to_string(), MediaType {
+                schema: Fut::Output::schema_ref(),
+                ..MediaType::default()
+            });
+            Response {
+                content,
+                ..Response::default()
+            }
+        }));
+
+        Operation {
+            operation_id: type_name_to_operation_id(std::any::type_name::<F>()),
+            request_body,
+            summary: FuncMetadata::summary().map(str::to_string),
+            responses,
+            ..Operation::default()
+        }
+    }
+}
+
+impl<F, A0, A1, Fut, FuncMetadata> OaOperation<(A0, A1, Fut, FuncMetadata)> for F
+    where
+        F: Fn(A0, A1) -> TypedResponseFuture<Fut, FuncMetadata>,
+        Fut: Future,
+        A0: OaSchema,
+        A1: OaSchema,
+        Fut::Output: OaSchema,
+        FuncMetadata: FunctionMetadata,
+{
+    fn referenced_schema(schema: &str) -> Schema {
+        if A0::schema_name().map(|s| s == schema).unwrap_or(false) {
+            A0::schema().unwrap()
+        } else if A1::schema_name().map(|s| s == schema).unwrap_or(false) {
+                A1::schema().unwrap()
+        } else if Fut::Output::schema_name().map(|s| s == schema).unwrap_or(false) {
+            Fut::Output::schema().unwrap()
+        } else {
+            panic!("Unknown schema: {}", schema)
+        }
+    }
+
+    fn references() -> Vec<&'static str> {
+        vec![
+            A0::schema_name(),
+            A1::schema_name(),
+            Fut::Output::schema_name()
+        ].into_iter().flatten().collect()
+    }
+
+    fn operation() -> Operation {
+        let body = A0::schema_ref().or_else(
+            || A1::schema_ref()
+        ).unwrap();
         let mut content = indexmap::IndexMap::new();
         content.insert("application/json".to_string(), MediaType {
-            schema: Some(a0),
+            schema: Some(body),
             ..MediaType::default()
         });
         let body = RequestBody {
@@ -104,18 +191,79 @@ impl<F, A0, Fut, FuncMetadata> OaOperation<(A0, Fut, FuncMetadata)> for F
             ..Operation::default()
         }
     }
+}
 
-    fn references() -> Vec<&'static str> {
-        vec![A0::schema_name(), Fut::Output::schema_name()].into_iter().flatten().collect()
-    }
 
+impl<F, A0, A1, A2, Fut, FuncMetadata> OaOperation<(A0, A1, A2, Fut, FuncMetadata)> for F
+    where
+        F: Fn(A0, A1, A2) -> TypedResponseFuture<Fut, FuncMetadata>,
+        Fut: Future,
+        A0: OaSchema,
+        A1: OaSchema,
+        A2: OaSchema,
+        Fut::Output: OaSchema,
+        FuncMetadata: FunctionMetadata,
+{
     fn referenced_schema(schema: &str) -> Schema {
         if A0::schema_name().map(|s| s == schema).unwrap_or(false) {
             A0::schema().unwrap()
+        } else if A1::schema_name().map(|s| s == schema).unwrap_or(false) {
+            A1::schema().unwrap()
+        } else if A2::schema_name().map(|s| s == schema).unwrap_or(false) {
+            A2::schema().unwrap()
         } else if Fut::Output::schema_name().map(|s| s == schema).unwrap_or(false) {
             Fut::Output::schema().unwrap()
         } else {
             panic!("Unknown schema: {}", schema)
+        }
+    }
+
+    fn references() -> Vec<&'static str> {
+        vec![
+            A0::schema_name(),
+            A1::schema_name(),
+            A2::schema_name(),
+            Fut::Output::schema_name()
+        ].into_iter().flatten().collect()
+    }
+
+    fn operation() -> Operation {
+        let body = A0::schema_ref().or_else(
+            || A1::schema_ref()
+        ).or_else(
+            || A2::schema_ref()
+        )
+            .unwrap();
+        let mut content = indexmap::IndexMap::new();
+        content.insert("application/json".to_string(), MediaType {
+            schema: Some(body),
+            ..MediaType::default()
+        });
+        let body = RequestBody {
+            content,
+            required: true,
+            ..RequestBody::default()
+        };
+        let mut responses = Responses::default();
+
+        responses.responses.insert(StatusCode::Code(200), ReferenceOr::Item({
+            let mut content = indexmap::IndexMap::new();
+            content.insert("application/json".to_string(), MediaType {
+                schema: Fut::Output::schema_ref(),
+                ..MediaType::default()
+            });
+            Response {
+                content,
+                ..Response::default()
+            }
+        }));
+
+        Operation {
+            operation_id: type_name_to_operation_id(std::any::type_name::<F>()),
+            request_body: Some(ReferenceOr::Item(body)),
+            summary: FuncMetadata::summary().map(str::to_string),
+            responses,
+            ..Operation::default()
         }
     }
 }

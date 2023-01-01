@@ -15,7 +15,7 @@ impl Format {
         if req.path().ends_with(".json") {
             return Format::Json;
         } else if req.path().ends_with(".yaml") {
-            return Format::Json;
+            return Format::Yaml;
         }
         if let Some(accept) = req.headers().get("Accept") {
             let accept = accept.to_str().unwrap();
