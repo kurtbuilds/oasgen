@@ -158,10 +158,10 @@ impl<F, A0, A1, Fut, FuncMetadata> OaOperation<(A0, A1, Fut, FuncMetadata)> for 
     fn operation() -> Operation {
         let body = A0::schema_ref().or_else(
             || A1::schema_ref()
-        ).unwrap();
+        );
         let mut content = indexmap::IndexMap::new();
         content.insert("application/json".to_string(), MediaType {
-            schema: Some(body),
+            schema: body,
             ..MediaType::default()
         });
         let body = RequestBody {
