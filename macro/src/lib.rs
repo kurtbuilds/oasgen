@@ -3,6 +3,7 @@
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, DeriveInput, ReturnType, Token};
 use quote::{quote};
+use oasgen_core::OpenApiAttributes;
 
 mod util;
 
@@ -13,6 +14,10 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let fields = util::get_fields(&ast);
 
     let properties = fields.into_iter().map(|f| {
+        let attr = OpenApiAttributes::try_from(&f.attrs).unwrap();
+        if attr.skip {
+            return quote! {};
+        }
         let name = f.ident.as_ref().unwrap().to_string();
         let ty = &f.ty;
         quote! {

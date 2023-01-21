@@ -20,6 +20,8 @@ chrono = { optional = true, version = "0.4.23" }
 time = { optional = true, version = "0.3.17" }
 pin-project-lite = "0.2.9"
 sqlx = { version = "0.6.2", optional = true, features = ["postgres", "runtime-tokio-rustls"] }
+structmeta = "0.1.5"
+syn = "1.0.107"
 
 [features]
 actix = ["actix-web", "sqlx"]

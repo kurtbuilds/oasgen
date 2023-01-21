@@ -1,8 +1,11 @@
 mod operation;
 mod schema;
+mod attr;
+mod parse_error;
 
 pub use operation::*;
 pub use schema::*;
+pub use attr::*;
 
 #[cfg(test)]
 #[allow(non_snake_case)]
