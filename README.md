@@ -134,17 +134,3 @@ async fn main() {
 ```
 
 You can also assign a clone of the spec to a `web::Data` (or even a `lazy_static`).
-
-### Support multiple web frameworks
-
-Framework support is controlled via features, which are mutually incompatible. If you need to support
-multiple frameworks in the same codebase, you can depend on `oasgen` multiple times with different
-feature sets.
-
-```toml
-[dependencies]
-oasgen_actix = { version = "0.1.0", features = ["actix"] , package = "oasgen" }
-oasgen_none = { version = "0.1.0", package = "oasgen" }
-```
-
-Right now we only support actix, but the support exists for when other frameworks are supported.
