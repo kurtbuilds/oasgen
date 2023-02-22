@@ -162,7 +162,7 @@ impl_oa_schema!(::time::Date, Schema::new_string().with_format("date"));
 impl_oa_schema!(::time::Time, Schema::new_string().with_format("time"));
 
 #[cfg(feature = "chrono")]
-impl_oa_schema!(::chrono::DateTime, Schema::new_string().with_format("date-time"));
+impl_oa_schema!(::chrono::DateTime<::chrono::Utc>, Schema::new_string().with_format("date-time"));
 #[cfg(feature = "chrono")]
 impl_oa_schema!(::chrono::NaiveDateTime, Schema::new_string().with_format("date-time"));
 
