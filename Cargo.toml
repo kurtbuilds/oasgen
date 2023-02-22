@@ -4,8 +4,3 @@ members = [
     "core",
     "macro",
 ]
-
-#[patch.crates-io]
-#openapiv3-extended = { path = "../openapiv3" }
-#oasgen-macro = { path = "./macro" }
-#oasgen-core = { path = "./core" }

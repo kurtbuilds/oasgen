@@ -40,6 +40,7 @@ tokio = { version = "1.23.0", features = ["full"] }
 [features]
 actix = ["actix-web", "oasgen-core/actix"]
 time = ["oasgen-core/time"]
+chrono = ["oasgen-core/chrono"]
 uuid = ["oasgen-core/uuid"]
 
 [dev-dependencies]
