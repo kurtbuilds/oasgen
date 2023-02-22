@@ -33,7 +33,7 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
                 Some(#name)
             }
 
-            fn schema_ref() -> Option<::oasgen::ReferenceOr<oasgen::Schema>> {
+            fn schema_ref() -> Option<::oasgen::ReferenceOr<::oasgen::Schema>> {
                 Some(::oasgen::ReferenceOr::ref_(#ref_name))
             }
 
@@ -41,6 +41,10 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
                 let mut o = ::oasgen::Schema::new_object();
                 #(#properties)*
                 Some(o)
+            }
+
+            fn parameter() -> Option<::oasgen::ReferenceOr<::oasgen::Parameter>> {
+                None
             }
         }
     };

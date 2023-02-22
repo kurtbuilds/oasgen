@@ -1,3 +1,4 @@
+use openapiv3 as oa;
 use openapiv3::{Schema, SchemaKind, SchemaData, ArrayType, Type, ReferenceOr};
 
 #[cfg(feature = "actix")]
@@ -5,8 +6,12 @@ mod actix;
 
 pub trait OaSchema<Args = ()> {
     fn schema_name() -> Option<&'static str>;
+
     fn schema_ref() -> Option<ReferenceOr<Schema>>;
+
     fn schema() -> Option<Schema>;
+
+    fn parameter() -> Option<ReferenceOr<oa::Parameter>>;
 }
 
 macro_rules! impl_oa_schema {
@@ -22,6 +27,10 @@ macro_rules! impl_oa_schema {
 
             fn schema() -> Option<Schema> {
                 Some($schema)
+            }
+
+            fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
+                None
             }
         }
     }
@@ -42,6 +51,10 @@ macro_rules! impl_oa_schema_passthrough {
             fn schema() -> Option<Schema> {
                 T::schema()
             }
+
+            fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
+                None
+            }
         }
     }
 }
@@ -59,6 +72,10 @@ macro_rules! impl_oa_schema_none {
             }
 
             fn schema() -> Option<Schema> {
+                None
+            }
+
+            fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
                 None
             }
         }
@@ -110,6 +127,10 @@ impl<T> OaSchema for Vec<T>
             })
         }
     }
+
+    fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
+        None
+    }
 }
 
 
@@ -131,6 +152,10 @@ impl<T> OaSchema for Option<T>
             schema
         })
     }
+
+    fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
+        None
+    }
 }
 
 impl<T, E> OaSchema for Result<T, E>
@@ -147,6 +172,10 @@ impl<T, E> OaSchema for Result<T, E>
 
     fn schema() -> Option<Schema> {
         T::schema()
+    }
+
+    fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
+        None
     }
 }
 

@@ -50,7 +50,6 @@ impl Server {
             <F as actix_web::Handler<Args>>::Output: OaSchema,
     {
         self.add_handler_to_spec(path, Method::GET, &handler);
-
         self.resources.push(build_inner_resource(path.to_string(), Method::GET, handler));
         self
     }
@@ -63,9 +62,7 @@ impl Server {
             <F as actix_web::Handler<Args>>::Output: OaSchema,
     {
         self.add_handler_to_spec(path, Method::POST, &handler);
-
         self.resources.push(build_inner_resource(path.to_string(), Method::POST, handler));
-
         self
     }
 }
