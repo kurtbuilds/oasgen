@@ -1098,6 +1098,7 @@ dependencies = [
  "indexmap",
  "openapiv3-extended",
  "pin-project-lite",
+ "serde_json",
  "sqlx",
  "structmeta",
  "syn",

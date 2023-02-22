@@ -22,6 +22,7 @@ pin-project-lite = "0.2.9"
 sqlx = { version = "0.6.2", optional = true, features = ["postgres", "runtime-tokio-rustls"] }
 structmeta = "0.1.5"
 syn = "1.0.107"
+serde_json = "1.0.93"
 
 [features]
 actix = ["actix-web", "sqlx"]

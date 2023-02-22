@@ -67,6 +67,8 @@ macro_rules! impl_oa_schema_none {
 
 impl_oa_schema_none!(());
 
+impl_oa_schema!(bool, Schema::new_bool());
+
 impl_oa_schema!(usize, Schema::new_integer());
 impl_oa_schema!(u32, Schema::new_integer());
 impl_oa_schema!(i32, Schema::new_integer());
@@ -74,7 +76,6 @@ impl_oa_schema!(u64, Schema::new_integer());
 impl_oa_schema!(i64, Schema::new_integer());
 impl_oa_schema!(u16, Schema::new_integer());
 impl_oa_schema!(i16, Schema::new_integer());
-impl_oa_schema!(bool, Schema::new_bool());
 
 impl_oa_schema!(String, Schema::new_string());
 
@@ -166,3 +167,4 @@ impl_oa_schema!(::chrono::DateTime<::chrono::Utc>, Schema::new_string().with_for
 #[cfg(feature = "chrono")]
 impl_oa_schema!(::chrono::NaiveDateTime, Schema::new_string().with_format("date-time"));
 
+impl_oa_schema!(serde_json::Value, Schema::new_object());
