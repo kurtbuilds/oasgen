@@ -42,10 +42,6 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
                 #(#properties)*
                 Some(o)
             }
-
-            fn parameter() -> Option<::oasgen::ReferenceOr<::oasgen::Parameter>> {
-                None
-            }
         }
     };
     TokenStream::from(expanded)

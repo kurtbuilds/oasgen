@@ -5,32 +5,32 @@ use openapiv3::{Schema, SchemaKind, SchemaData, ArrayType, Type, ReferenceOr};
 mod actix;
 
 pub trait OaSchema<Args = ()> {
-    fn schema_name() -> Option<&'static str>;
+    fn schema_name() -> Option<&'static str> {
+        None
+    }
 
-    fn schema_ref() -> Option<ReferenceOr<Schema>>;
+    fn schema_ref() -> Option<ReferenceOr<Schema>> {
+        None
+    }
 
-    fn schema() -> Option<Schema>;
+    fn schema() -> Option<Schema> {
+        None
+    }
 
-    fn parameter() -> Option<ReferenceOr<oa::Parameter>>;
+    fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
+        None
+    }
 }
 
 macro_rules! impl_oa_schema {
     ($t:ty,$schema:expr) => {
         impl OaSchema for $t {
-            fn schema_name() -> Option<&'static str> {
-                None
-            }
-
             fn schema_ref() -> Option<ReferenceOr<Schema>> {
                 Some(ReferenceOr::Item($schema))
             }
 
             fn schema() -> Option<Schema> {
                 Some($schema)
-            }
-
-            fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
-                None
             }
         }
     }
@@ -51,10 +51,6 @@ macro_rules! impl_oa_schema_passthrough {
             fn schema() -> Option<Schema> {
                 T::schema()
             }
-
-            fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
-                None
-            }
         }
     }
 }
@@ -63,21 +59,6 @@ macro_rules! impl_oa_schema_passthrough {
 macro_rules! impl_oa_schema_none {
     ($t:ty) => {
         impl OaSchema for $t {
-            fn schema_name() -> Option<&'static str> {
-                None
-            }
-
-            fn schema_ref() -> Option<ReferenceOr<Schema>> {
-                None
-            }
-
-            fn schema() -> Option<Schema> {
-                None
-            }
-
-            fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
-                None
-            }
         }
     }
 }
@@ -100,10 +81,6 @@ impl<T> OaSchema for Vec<T>
     where
         T: OaSchema,
 {
-    fn schema_name() -> Option<&'static str> {
-        None
-    }
-
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
         Some(ReferenceOr::Item(Schema {
             schema_data: SchemaData::default(),
@@ -127,10 +104,6 @@ impl<T> OaSchema for Vec<T>
             })
         }
     }
-
-    fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
-        None
-    }
 }
 
 
@@ -152,10 +125,6 @@ impl<T> OaSchema for Option<T>
             schema
         })
     }
-
-    fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
-        None
-    }
 }
 
 impl<T, E> OaSchema for Result<T, E>
@@ -172,10 +141,6 @@ impl<T, E> OaSchema for Result<T, E>
 
     fn schema() -> Option<Schema> {
         T::schema()
-    }
-
-    fn parameter() -> Option<ReferenceOr<oa::Parameter>> {
-        None
     }
 }
 

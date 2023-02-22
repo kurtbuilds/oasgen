@@ -94,8 +94,12 @@ macro_rules! construct_operation {
 
             fn operation() -> Operation {
                 let parameters = vec![
-                    $( $arg::parameter(), )+
-                ].into_iter().flatten().collect::<Vec<_>>();
+                    $( $arg::parameters(), )+
+                ]
+                    .into_iter()
+                    .flatten()
+                    .flatten()
+                    .collect::<Vec<_>>();
 
                 let body = vec![
                     $( $arg::schema_ref(), )+
