@@ -41,11 +41,7 @@ version level:
 
 publish:
    cd core && cargo publish --features actix
-   @echo $(dye -c INFO) Need to sleep so that crates.io has time to update.
-   sleep 5
    cd macro && cargo publish
-   @echo $(dye -c INFO) Need to sleep so that crates.io has time to update.
-   sleep 5
    cd oasgen && cargo publish --features actix
 
 patch: test
