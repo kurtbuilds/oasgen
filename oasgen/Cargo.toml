@@ -1,6 +1,6 @@
 [package]
 name = "oasgen"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 authors = ["Kurt Wolf <kurtwolfbuilds@gmail.com>"]
 description = "Dependency of oasgen. Generates OpenAPI 3.0 spec based on Rust code. Works with actix-web, but architected to easily extend to other frameworks (or no framework)."
@@ -29,8 +29,8 @@ actix-web = { version = "4.3.0", optional = true }
 futures = "0.3.26"
 http = "0.2.9"
 indexmap = "1.9.2"
-oasgen-core = { path = "../core", version = "0.3.1"}
-oasgen-macro = { path = "../macro", version = "0.3.1"}
+oasgen-core = { path = "../core", version = "0.4.0"}
+oasgen-macro = { path = "../macro", version = "0.4.0"}
 openapiv3-extended = "2.0.3"
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
