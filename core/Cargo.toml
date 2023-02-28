@@ -13,19 +13,20 @@ documentation = "https://docs.rs/oasgen"
 
 [dependencies]
 actix-web = { version = "4.3.0", optional = true }
+axum = { version = "0.6.9", optional = true }
 indexmap = "1.9.2"
 openapiv3-extended = "2.1"
 uuid = { optional = true, version = "1.3.0" }
 chrono = { optional = true, version = "0.4.23" }
 time = { optional = true, version = "0.3.19" }
 pin-project-lite = "0.2.9"
-sqlx = { version = "0.6.2", optional = true, features = ["postgres", "runtime-tokio-rustls"] }
+sqlx = { version = "0.6.2", optional = true }
 structmeta = "0.1.5"
 syn = "1.0.107"
 serde_json = "1.0.93"
 
 [features]
-actix = ["actix-web", "sqlx"]
+actix = ["actix-web"]
 
 [dev-dependencies]
 assert_matches = "1.5.0"

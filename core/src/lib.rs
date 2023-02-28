@@ -6,6 +6,8 @@ mod parse_error;
 pub use operation::*;
 pub use schema::*;
 pub use attr::*;
+pub use openapiv3::*;
+
 
 #[cfg(test)]
 #[allow(non_snake_case)]

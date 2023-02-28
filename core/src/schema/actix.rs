@@ -1,11 +1,13 @@
 use openapiv3 as oa;
-use openapiv3::{Schema, ReferenceOr};
+use openapiv3::{ReferenceOr};
 use crate::{impl_oa_schema_none, impl_oa_schema_passthrough, OaSchema};
 
 impl_oa_schema_passthrough!(actix_web::web::Json<T>);
-impl_oa_schema_passthrough!(sqlx::types::Json<T>);
 
-impl_oa_schema_none!(actix_web::web::Data<sqlx::postgres::PgPool>);
+impl<T> OaSchema for actix_web::web::Data<T> {
+
+}
+
 impl_oa_schema_none!(actix_web::HttpRequest);
 impl_oa_schema_none!(actix_web::HttpResponse);
 
@@ -38,7 +40,7 @@ macro_rules! construct_path {
                 ])
             }
         }
-    }
+    };
 }
 
 construct_path!(A1);

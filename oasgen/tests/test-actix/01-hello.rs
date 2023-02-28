@@ -1,4 +1,3 @@
-#![cfg(feature = "actix")]
 use oasgen::{OaSchema, Server, openapi};
 use actix_web::web::Json;
 use serde::{Deserialize, Serialize};

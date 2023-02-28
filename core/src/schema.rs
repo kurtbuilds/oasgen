@@ -4,6 +4,16 @@ use openapiv3::{Schema, SchemaKind, SchemaData, ArrayType, Type, ReferenceOr};
 #[cfg(feature = "actix")]
 mod actix;
 
+#[cfg(feature = "axum")]
+mod axum;
+
+#[cfg(feature = "sqlx")]
+mod sqlx;
+#[cfg(feature = "time")]
+mod time;
+#[cfg(feature = "chrono")]
+mod chrono;
+
 pub trait OaSchema<Args = ()> {
     fn schema_name() -> Option<&'static str> {
         None
@@ -22,45 +32,46 @@ pub trait OaSchema<Args = ()> {
     }
 }
 
+#[macro_export]
 macro_rules! impl_oa_schema {
     ($t:ty,$schema:expr) => {
-        impl OaSchema for $t {
-            fn schema_ref() -> Option<ReferenceOr<Schema>> {
-                Some(ReferenceOr::Item($schema))
+        impl $crate::OaSchema for $t {
+            fn schema_ref() -> Option<$crate::ReferenceOr<$crate::Schema>> {
+                Some($crate::ReferenceOr::Item($schema))
             }
 
-            fn schema() -> Option<Schema> {
+            fn schema() -> Option<$crate::Schema> {
                 Some($schema)
             }
         }
-    }
+    };
 }
 
 #[macro_export]
 macro_rules! impl_oa_schema_passthrough {
     ($t:ty) => {
-        impl<T> OaSchema for $t where T: OaSchema {
+        impl<T> $crate::OaSchema for $t where T: $crate::OaSchema {
             fn schema_name() -> Option<&'static str> {
                 T::schema_name()
             }
 
-            fn schema_ref() -> Option<ReferenceOr<Schema>> {
+            fn schema_ref() -> Option<$crate::ReferenceOr<$crate::Schema>> {
                 T::schema_ref()
             }
 
-            fn schema() -> Option<Schema> {
+            fn schema() -> Option<$crate::Schema> {
                 T::schema()
             }
         }
-    }
+    };
 }
 
 #[macro_export]
 macro_rules! impl_oa_schema_none {
     ($t:ty) => {
-        impl OaSchema for $t {
+        impl $crate::OaSchema for $t {
         }
-    }
+    };
 }
 
 impl_oa_schema_none!(());
@@ -146,19 +157,5 @@ impl<T, E> OaSchema for Result<T, E>
 
 #[cfg(feature = "uuid")]
 impl_oa_schema!(uuid::Uuid, Schema::new_string().with_format("uuid"));
-
-#[cfg(feature = "time")]
-impl_oa_schema!(::time::OffsetDateTime, Schema::new_string().with_format("date-time"));
-#[cfg(feature = "time")]
-impl_oa_schema!(::time::PrimitiveDateTime, Schema::new_string().with_format("date-time"));
-#[cfg(feature = "time")]
-impl_oa_schema!(::time::Date, Schema::new_string().with_format("date"));
-#[cfg(feature = "time")]
-impl_oa_schema!(::time::Time, Schema::new_string().with_format("time"));
-
-#[cfg(feature = "chrono")]
-impl_oa_schema!(::chrono::DateTime<::chrono::Utc>, Schema::new_string().with_format("date-time"));
-#[cfg(feature = "chrono")]
-impl_oa_schema!(::chrono::NaiveDateTime, Schema::new_string().with_format("date-time"));
 
 impl_oa_schema!(serde_json::Value, Schema::new_object());
