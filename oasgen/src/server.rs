@@ -1,6 +1,8 @@
 #[cfg(feature = "actix")]
 mod actix;
-#[cfg(not(any(feature = "actix")))]
+#[cfg(feature = "axum")]
+mod axum;
+#[cfg(not(any(feature = "actix", feature="axum")))]
 mod none;
 
 use std::env::var;
@@ -13,19 +15,11 @@ use openapiv3::{Components, OpenAPI, ReferenceOr};
 
 use oasgen_core::{OaOperation, OaSchema};
 
-#[cfg(feature = "actix")]
-use self::actix::InnerResourceFactory;
+pub struct Server<Router, Mutability = OpenAPI> {
+    router: Router,
 
-#[cfg(not(any(feature = "actix")))]
-use self::none::InnerResourceFactory;
-
-// This takes a generic, Mutability, the idea being, once we decide the OpenAPI spec is finalized, we
-// no longer need the ability to modify it.
-pub struct Server<Mutability = OpenAPI> {
-    resources: Vec<InnerResourceFactory<'static>>,
-
-    // This is behind an arc because the handlers need to be able to clone it, and they're async,
-    // extending their lifetime.
+    /// This is behind an arc because the handlers need to be able to clone it, and they're async,
+    /// extending their lifetime.
     pub openapi: Mutability,
     /// Configuration to mount the API routes (including the OpenAPI spec routes) under a path prefix.
     pub prefix: Option<String>,
@@ -35,13 +29,10 @@ pub struct Server<Mutability = OpenAPI> {
     pub yaml_route: Option<String>,
 }
 
-impl Clone for Server<Arc<OpenAPI>> {
-    fn clone(&self) -> Server<Arc<OpenAPI>> {
+impl<Router: Clone> Clone for Server<Router, Arc<OpenAPI>> {
+    fn clone(&self) -> Self {
         Server {
-            resources: self.resources.iter()
-                .map(|f| f.manual_clone())
-                .collect::<Vec<_>>(),
-
+            router: self.router.clone(),
             openapi: self.openapi.clone(),
             json_route: self.json_route.clone(),
             yaml_route: self.yaml_route.clone(),
@@ -50,14 +41,14 @@ impl Clone for Server<Arc<OpenAPI>> {
     }
 }
 
-impl Server {
+impl<Router: Default> Server<Router, OpenAPI> {
     pub fn new() -> Self {
         Self {
             openapi: OpenAPI {
                 components: Some(Components::default()),
                 ..OpenAPI::default()
             },
-            resources: vec![],
+            router: Router::default(),
             json_route: None,
             yaml_route: None,
             prefix: None,
@@ -158,9 +149,9 @@ impl Server {
     ///
     /// Functionally, it moves the OpenAPI spec into an Arc, so that view handlers (which are async
     /// and therefore have undetermined lifespans) can hold onto it.
-    pub fn freeze(self) -> Server<Arc<OpenAPI>> {
+    pub fn freeze(self) -> Server<Router, Arc<OpenAPI>> {
         Server {
-            resources: self.resources,
+            router: self.router,
             openapi: Arc::new(self.openapi),
             json_route: self.json_route,
             yaml_route: self.yaml_route,

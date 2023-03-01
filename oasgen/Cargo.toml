@@ -26,11 +26,12 @@ required-features = ["actix"]
 
 [dependencies]
 actix-web = { version = "4.3.0", optional = true }
+axum = { version = "0.6.9", optional = true }
 futures = "0.3.26"
 http = "0.2.9"
 indexmap = "1.9.2"
-oasgen-core = { path = "../core", version = "0.5.0" }
-oasgen-macro = { path = "../macro", version = "0.5.0" }
+oasgen-core = { path = "../core" }
+oasgen-macro = { path = "../macro" }
 openapiv3-extended = { version = "2.1" }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
@@ -39,13 +40,11 @@ tokio = { version = "1.25.0", features = ["full"] }
 
 [features]
 actix = ["actix-web", "oasgen-core/actix"]
-axum = ["oasgen-core/axum"]
+axum = ["oasgen-core/axum", "dep:axum"]
 time = ["oasgen-core/time"]
 chrono = ["oasgen-core/chrono"]
 uuid = ["oasgen-core/uuid"]
 sqlx = ["oasgen-core/sqlx"]
 
 [dev-dependencies]
-serde_yaml = "0.9.17"
 trybuild = "1.0.77"
-actix-web = "4.3.0"

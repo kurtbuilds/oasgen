@@ -1,5 +1,3 @@
-#![cfg(not(any(feature = "actix")))]
-
 use oasgen::{OaSchema, Server, openapi};
 use serde::{Deserialize, Serialize};
 
@@ -18,8 +16,14 @@ async fn send_code(_body: SendCode) -> SendCodeResponse {
     SendCodeResponse { found_account: false }
 }
 
+#[openapi]
+async fn no_params() -> SendCodeResponse {
+    SendCodeResponse { found_account: false }
+}
+
 fn main() {
     let _ = Server::new()
         .get("/hello", send_code)
+        // .get("/no_params", no_params())
         ;
 }

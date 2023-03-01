@@ -50,6 +50,10 @@ impl<F, Signature> TypedResponseFuture<F, Signature>
     pub fn new(inner: F) -> Self {
         Self { inner, _marker: Default::default() }
     }
+
+    pub fn into_inner(self) -> F {
+        self.inner
+    }
 }
 
 impl<F, Signature> Future for TypedResponseFuture<F, Signature>

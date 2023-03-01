@@ -14,7 +14,7 @@ mod time;
 #[cfg(feature = "chrono")]
 mod chrono;
 
-pub trait OaSchema<Args = ()> {
+pub trait OaSchema {
     fn schema_name() -> Option<&'static str> {
         None
     }

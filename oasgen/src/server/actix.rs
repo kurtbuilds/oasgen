@@ -1,5 +1,5 @@
 use std::sync::{Arc, RwLock};
-use actix_web::{Error, FromRequest, Handler, HttpResponse, Resource, Responder, Scope, web};
+use actix_web::{delete, Error, FromRequest, Handler, HttpResponse, Resource, Responder, Scope, web};
 use futures::future::{Ready, ok};
 use http::Method;
 use openapiv3::OpenAPI;
@@ -9,6 +9,15 @@ use oasgen_core::{OaOperation, OaSchema};
 use crate::Format;
 
 use super::Server;
+
+#[derive(Default)]
+pub struct ActixRouter(Vec<InnerResourceFactory<'static>>);
+
+impl Clone for ActixRouter {
+    fn clone(&self) -> Self {
+        ActixRouter(self.0.iter().map(|f| f.manual_clone()).collect::<Vec<_>>())
+    }
+}
 
 /// ResourceFactory is a no-argument closure that returns a user-provided view handler.
 ///
@@ -41,16 +50,17 @@ fn build_inner_resource<F, Args>(path: String, method: Method, handler: F) -> In
     })
 }
 
-impl Server {
+impl Server<ActixRouter> {
     pub fn get<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
         where
-            F: actix_web::Handler<Args> + OaOperation<Signature> + Copy + Send,
+            F: actix_web::Handler<Args>,
             Args: actix_web::FromRequest + 'static,
             F::Output: actix_web::Responder + 'static,
             <F as actix_web::Handler<Args>>::Output: OaSchema,
+            F: OaOperation<Signature> + Copy + Send,
     {
         self.add_handler_to_spec(path, Method::GET, &handler);
-        self.resources.push(build_inner_resource(path.to_string(), Method::GET, handler));
+        self.router.0.push(build_inner_resource(path.to_string(), Method::GET, handler));
         self
     }
 
@@ -62,15 +72,15 @@ impl Server {
             <F as actix_web::Handler<Args>>::Output: OaSchema,
     {
         self.add_handler_to_spec(path, Method::POST, &handler);
-        self.resources.push(build_inner_resource(path.to_string(), Method::POST, handler));
+        self.router.0.push(build_inner_resource(path.to_string(), Method::POST, handler));
         self
     }
 }
 
-impl Server<Arc<OpenAPI>> {
+impl Server<ActixRouter, Arc<OpenAPI>> {
     pub fn into_service(self) -> Scope {
         let mut scope = web::scope(&self.prefix.unwrap_or_default());
-        for resource in self.resources {
+        for resource in self.router.0 {
             scope = scope.service(resource());
         }
         if let Some(path) = self.json_route {
