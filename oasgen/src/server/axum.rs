@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::sync::{Arc};
 use axum::handler::Handler;
 use axum::routing;
@@ -87,8 +88,8 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
         }
 
         if let Some(json_route) = self.json_route {
-            let spec = self.openapi.clone();
-            let bytes = serde_json::to_vec(&spec).unwrap();
+            let spec = self.openapi.as_ref();
+            let bytes = serde_json::to_vec(spec).unwrap();
             router = router.route(&json_route, routing::get(|| async {
                 (
                     [(
@@ -101,8 +102,8 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
         }
 
         if let Some(yaml_route) = self.yaml_route {
-            let spec = self.openapi.clone();
-            let yaml = serde_yaml::to_string(&spec).unwrap();
+            let spec = self.openapi.as_ref();
+            let yaml = serde_yaml::to_string(spec).unwrap();
             router = router.route(&yaml_route, routing::get(|| async {
                 (
                     [(
