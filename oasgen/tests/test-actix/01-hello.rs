@@ -18,7 +18,7 @@ async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
 }
 
 fn main() {
-    let _ = Server::new()
+    let _ = Server::actix()
         .post("/hello", send_code)
         .freeze()
         ;

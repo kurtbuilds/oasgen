@@ -51,6 +51,10 @@ fn build_inner_resource<F, Args>(path: String, method: Method, handler: F) -> In
 }
 
 impl Server<ActixRouter> {
+    pub fn actix() -> Self {
+        Self::new()
+    }
+
     pub fn get<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
         where
             F: actix_web::Handler<Args>,

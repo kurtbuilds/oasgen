@@ -43,7 +43,7 @@ mod inner {
         let port = 5000;
         let host = format!("{}:{}", host, port);
 
-        let server = Server::new()
+        let server = Server::actix()
             .post("/send-code", send_code)
             .post("/verify-code", verify_code)
             .route_yaml_spec("/openapi.yaml")

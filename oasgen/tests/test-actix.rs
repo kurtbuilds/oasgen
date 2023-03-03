@@ -1,5 +1,3 @@
-#![cfg(feature = "actix")]
-
 #[test]
 fn run_tests() {
     let t = trybuild::TestCases::new();

@@ -22,7 +22,7 @@ async fn no_params() -> SendCodeResponse {
 }
 
 fn main() {
-    let _ = Server::new()
+    let _ = Server::none()
         .get("/hello", send_code)
         // .get("/no_params", no_params())
         ;

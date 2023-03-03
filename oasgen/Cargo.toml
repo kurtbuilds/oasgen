@@ -3,7 +3,7 @@ name = "oasgen"
 version = "0.6.1"
 edition = "2021"
 authors = ["Kurt Wolf <kurtwolfbuilds@gmail.com>"]
-description = "Dependency of oasgen. Generates OpenAPI 3.0 spec based on Rust code. Works with actix-web, but architected to easily extend to other frameworks (or no framework)."
+description = "Generates OpenAPI 3.0 spec based on Rust code. Works with axum, actix-web, or independent of a web framework."
 license = "MIT"
 repository = "https://github.com/kurtbuilds/oasgen"
 homepage = "https://github.com/kurtbuilds/oasgen"
@@ -47,6 +47,8 @@ chrono = ["oasgen-core/chrono"]
 uuid = ["oasgen-core/uuid"]
 sqlx = ["oasgen-core/sqlx"]
 swagger-ui = ["swagger-ui2"]
+postgres = ["oasgen-core/postgres"]
 
 [dev-dependencies]
 trybuild = "1.0.77"
+actix-web = { version = "4.3.0" }

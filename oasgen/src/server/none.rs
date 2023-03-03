@@ -4,6 +4,10 @@ use crate::Server;
 
 
 impl Server<()> {
+    pub fn none() -> Self {
+        Self::new()
+    }
+
     pub fn get<F, Signature>(mut self, path: &str, handler: F) -> Self
         where
             F: OaOperation<Signature>,
