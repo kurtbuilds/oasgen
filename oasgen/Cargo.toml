@@ -37,7 +37,7 @@ serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 serde_yaml = "0.9.17"
 tokio = { version = "1.25.0", features = ["full"] }
-swagger-ui2 = { version = "0.2.0", optional = true, path = "../swagger-ui" }
+swagger-ui2 = { version = "0.1.1", optional = true }
 
 [features]
 actix = ["actix-web", "oasgen-core/actix"]
