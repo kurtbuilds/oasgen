@@ -1,8 +1,6 @@
-use std::borrow::Cow;
 use serde::{Serialize};
 
 const SWAGGER_STANDALONE_LAYOUT: &str = "StandaloneLayout";
-const SWAGGER_BASE_LAYOUT: &str = "BaseLayout";
 
 #[non_exhaustive]
 #[derive(Serialize, Clone, Debug)]
@@ -169,9 +167,9 @@ pub struct Url {
     name: String,
     url: String,
     #[serde(skip)]
+    #[allow(dead_code)]
     primary: bool,
 }
-
 
 impl From<&str> for Url {
     fn from(url: &str) -> Self {
