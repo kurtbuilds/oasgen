@@ -1,5 +1,7 @@
+#[cfg_attr(docsrs, doc(cfg(feature = "actix")))]
 #[cfg(feature = "actix")]
 mod actix;
+#[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
 #[cfg(feature = "axum")]
 mod axum;
 mod none;
@@ -28,8 +30,10 @@ pub struct Server<Router, Mutability = OpenAPI> {
     pub yaml_route: Option<String>,
 
     #[cfg(feature = "swagger-ui")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "swagger-ui")))]
     /// Configuration for route to serve Swagger UI
     pub swagger_ui_route: Option<String>,
+    #[cfg_attr(docsrs, doc(cfg(feature = "swagger-ui")))]
     #[cfg(feature = "swagger-ui")]
     /// Configuration for Swagger UI itself
     pub swagger_ui: Option<swagger_ui::SwaggerUi>,
@@ -133,6 +137,7 @@ impl<Router: Default> Server<Router, OpenAPI> {
     }
 
     #[cfg(feature = "swagger-ui")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "swagger-ui")))]
     /// Specify a path to serve Swagger UI on.
     pub fn swagger_ui(mut self, swagger_ui_route: &str) -> Self {
         let swagger = swagger_ui::SwaggerUi::default()

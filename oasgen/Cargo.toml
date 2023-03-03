@@ -11,6 +11,10 @@ documentation = "https://docs.rs/oasgen"
 readme = "../README.md"
 autotests = false
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 doctest = false

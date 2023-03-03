@@ -1204,7 +1204,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "swagger-ui2",
+ "swagger-ui2 0.1.1",
  "tokio",
  "trybuild",
 ]
@@ -1844,6 +1844,18 @@ name = "subtle"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
+
+[[package]]
+name = "swagger-ui2"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f258685832803fc313a978b02b8c4529d696697b23a9611a518493812cf0675b"
+dependencies = [
+ "http",
+ "rust-embed",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "swagger-ui2"

@@ -40,10 +40,13 @@ version level:
        git push --tags
 
 publish:
-   cd core && cargo publish --features actix
-   cd macro && cargo publish
-   cd oasgen && cargo publish --features actix
+   cd core && cargo publish --all-features
+   cd macro && cargo publish --all-features
+   cd oasgen && cargo publish --all-features
 
 patch: test
     just version patch
     just publish
+
+doc:
+     @just oasgen/doc
