@@ -3,4 +3,5 @@ members = [
     "oasgen",
     "core",
     "macro",
+    "swagger-ui",
 ]

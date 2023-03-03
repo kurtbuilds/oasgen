@@ -1,0 +1,17 @@
+[package]
+name = "swagger-ui2"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Library to embed swagger-ui into your rust application. Entirely independent of web framework."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "swagger_ui"
+path = "src/lib.rs"
+
+[dependencies]
+http = "0.2.9"
+rust-embed = "6.4.2"
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"

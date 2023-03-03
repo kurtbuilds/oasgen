@@ -37,6 +37,7 @@ serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 serde_yaml = "0.9.17"
 tokio = { version = "1.25.0", features = ["full"] }
+swagger-ui2 = { version = "0.1.0", optional = true, path = "../swagger-ui" }
 
 [features]
 actix = ["actix-web", "oasgen-core/actix"]
@@ -45,6 +46,7 @@ time = ["oasgen-core/time"]
 chrono = ["oasgen-core/chrono"]
 uuid = ["oasgen-core/uuid"]
 sqlx = ["oasgen-core/sqlx"]
+swagger-ui = ["swagger-ui2"]
 
 [dev-dependencies]
 trybuild = "1.0.77"

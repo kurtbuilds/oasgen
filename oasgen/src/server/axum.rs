@@ -87,7 +87,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
             router = router.route(&path, inner);
         }
 
-        if let Some(json_route) = self.json_route {
+        if let Some(json_route) = &self.json_route {
             let spec = self.openapi.as_ref();
             let bytes = serde_json::to_vec(spec).unwrap();
             router = router.route(&json_route, routing::get(|| async {
@@ -101,7 +101,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
             }));
         }
 
-        if let Some(yaml_route) = self.yaml_route {
+        if let Some(yaml_route) = &self.yaml_route {
             let spec = self.openapi.as_ref();
             let yaml = serde_yaml::to_string(spec).unwrap();
             router = router.route(&yaml_route, routing::get(|| async {
@@ -113,6 +113,33 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
                     yaml,
                 ).into_response()
             }));
+        }
+
+        if let Some(mut path) = self.swagger_ui_route {
+            println!("Swagger UI route: {}", path);
+            let swagger = self.swagger_ui.expect("Swagger UI route set but no Swagger UI is configured.");
+            let handler = routing::get(|uri: http::Uri| async move {
+                println!("Swagger UI request: {}", uri);
+                match swagger.handle_url(&uri) {
+                    Some(response) => response.into_response(),
+                    None => {
+                        axum::response::Response::builder()
+                            .status(http::StatusCode::NOT_FOUND)
+                            .body(axum::body::boxed(Body::empty()))
+                            .unwrap()
+                    }
+                }
+            });
+            if !path.ends_with('/') {
+                path.push('/');
+                let slash = path.clone();
+                router = router.route(&path[..path.len() - 1], routing::get(|| async move {
+                    axum::response::Redirect::to(&slash)
+                }));
+            }
+            router = router
+                .route(&format!("{}", &path), handler.clone())
+                .route(&format!("{}*rest", &path), handler)
         }
         router
     }

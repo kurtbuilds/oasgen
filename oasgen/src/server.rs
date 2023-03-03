@@ -2,7 +2,6 @@
 mod actix;
 #[cfg(feature = "axum")]
 mod axum;
-#[cfg(not(any(feature = "actix", feature="axum")))]
 mod none;
 
 use std::env::var;
@@ -23,10 +22,17 @@ pub struct Server<Router, Mutability = OpenAPI> {
     pub openapi: Mutability,
     /// Configuration to mount the API routes (including the OpenAPI spec routes) under a path prefix.
     pub prefix: Option<String>,
-    /// Configuration to serve the spec as JSON method=GET, path=`json_route`
+    /// Configuration to serve the spec as JSON
     pub json_route: Option<String>,
-    /// Configuration to serve the spec as YAML method=GET, path=`json_route`
+    /// Configuration to serve the spec as YAML
     pub yaml_route: Option<String>,
+
+    #[cfg(feature = "swagger-ui")]
+    /// Configuration for route to serve Swagger UI
+    pub swagger_ui_route: Option<String>,
+    #[cfg(feature = "swagger-ui")]
+    /// Configuration for Swagger UI itself
+    pub swagger_ui: Option<swagger_ui::SwaggerUi>,
 }
 
 impl<Router: Clone> Clone for Server<Router, Arc<OpenAPI>> {
@@ -37,6 +43,10 @@ impl<Router: Clone> Clone for Server<Router, Arc<OpenAPI>> {
             json_route: self.json_route.clone(),
             yaml_route: self.yaml_route.clone(),
             prefix: self.prefix.clone(),
+            #[cfg(feature = "swagger-ui")]
+            swagger_ui_route: self.swagger_ui_route.clone(),
+            #[cfg(feature = "swagger-ui")]
+            swagger_ui: self.swagger_ui.clone(),
         }
     }
 }
@@ -52,6 +62,10 @@ impl<Router: Default> Server<Router, OpenAPI> {
             json_route: None,
             yaml_route: None,
             prefix: None,
+            #[cfg(feature = "swagger-ui")]
+            swagger_ui_route: None,
+            #[cfg(feature = "swagger-ui")]
+            swagger_ui: None,
         }
     }
 
@@ -118,6 +132,22 @@ impl<Router: Default> Server<Router, OpenAPI> {
         self
     }
 
+    #[cfg(feature = "swagger-ui")]
+    /// Specify a path to serve Swagger UI on.
+    pub fn swagger_ui(mut self, swagger_ui_route: &str) -> Self {
+        let swagger = swagger_ui::SwaggerUi::default()
+            .prefix(swagger_ui_route)
+            .url(self.json_route.as_ref()
+                .or(self.yaml_route.as_ref())
+                .expect("Tried to create Swagger UI route, but no JSON or YAML route was set. \
+                On `oasgen::Server` instance, call `route_yaml_spec` or `route_json_spec`. \
+                If you manually create the route, set the field, call this method, then set the field to None.")
+            );
+        self.swagger_ui_route = Some(swagger_ui_route.to_string());
+        self.swagger_ui = Some(swagger);
+        self
+    }
+
     /// Convenience method
     pub fn inspect(self, closure: impl Fn(&OpenAPI)) -> Self {
         closure(&self.openapi);
@@ -156,6 +186,10 @@ impl<Router: Default> Server<Router, OpenAPI> {
             json_route: self.json_route,
             yaml_route: self.yaml_route,
             prefix: self.prefix,
+            #[cfg(feature = "swagger-ui")]
+            swagger_ui_route: self.swagger_ui_route,
+            #[cfg(feature = "swagger-ui")]
+            swagger_ui: self.swagger_ui,
         }
     }
 }
