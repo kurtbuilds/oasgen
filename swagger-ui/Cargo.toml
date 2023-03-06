@@ -1,6 +1,6 @@
 [package]
 name = "swagger-ui2"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 license = "MIT"
 description = "Library to embed swagger-ui into your rust application. Entirely independent of web framework."
