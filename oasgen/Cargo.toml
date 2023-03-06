@@ -51,7 +51,7 @@ chrono = ["oasgen-core/chrono"]
 uuid = ["oasgen-core/uuid"]
 sqlx = ["oasgen-core/sqlx"]
 swagger-ui = ["swagger-ui2"]
-postgres = ["oasgen-core/postgres"]
+json = ["oasgen-core/json"]
 
 [dev-dependencies]
 trybuild = "1.0.77"
