@@ -11,7 +11,7 @@ impl TryFrom<&Vec<syn::Attribute>> for OpenApiAttributes {
 
     fn try_from(attrs: &Vec<syn::Attribute>) -> Result<Self, Self::Error> {
         let mut attrs = attrs.into_iter().filter_map(|attr| {
-            attr.path.get_ident().and_then(|ident| {
+            attr.path().get_ident().and_then(|ident| {
                 if ident == "openapi" || ident == "serde" {
                     let attrs: OpenApiAttributes = attr.parse_args().ok()?;
                     Some(attrs)

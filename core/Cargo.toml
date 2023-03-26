@@ -21,13 +21,15 @@ chrono = { optional = true, version = "0.4.23" }
 time = { optional = true, version = "0.3.19" }
 pin-project-lite = "0.2.9"
 sqlx = { version = "0.6.2", optional = true , features = ["runtime-tokio-rustls"]}
-structmeta = "0.1.5"
-syn = "1.0.107"
+structmeta = { version = "0.1.6", git = "https://github.com/frozenlib/structmeta" }
+syn = "2"
 serde_json = "1.0.93"
+tower-cookies = {version = "0.9.0", optional = true}
 
 [features]
 actix = ["actix-web"]
 json = ["sqlx/json"]
+cookies = ["tower-cookies"]
 
 [dev-dependencies]
 assert_matches = "1.5.0"

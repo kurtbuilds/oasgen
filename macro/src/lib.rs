@@ -74,9 +74,20 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
 
     let public = ast.vis.clone();
 
+    let bounds = ast.sig.inputs.iter().map(|input| {
+        let ty = match input {
+            syn::FnArg::Receiver(_) => panic!("receiver not supported"),
+            syn::FnArg::Typed(ty) => &ty.ty,
+        };
+        quote! { #ty: ::oasgen::OaSchema }
+    });
+
     // println!("{}", ast.to_token_stream());
     let marker_struct_impl_FunctionMetadata = quote! {
-        impl ::oasgen::FunctionMetadata for #marker_struct_name {
+        impl ::oasgen::FunctionMetadata for #marker_struct_name where
+            #output_type: OaSchema
+            #(, #bounds )*
+        {
             fn operation_id() -> Option<&'static str> {
                 None
             }

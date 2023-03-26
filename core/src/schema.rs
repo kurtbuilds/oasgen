@@ -13,6 +13,8 @@ mod sqlx;
 mod time;
 #[cfg(feature = "chrono")]
 mod chrono;
+#[cfg(feature = "cookies")]
+mod cookies;
 
 pub trait OaSchema {
     fn schema_name() -> Option<&'static str> {

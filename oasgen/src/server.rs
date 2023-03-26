@@ -78,6 +78,14 @@ impl<Router: Default> Server<Router, OpenAPI> {
         where
             F: OaOperation<Signature>,
     {
+        let mut path = path.to_string();
+        if path.contains(':') {
+            use once_cell::sync::OnceCell;
+            use regex::Regex;
+            static REMAP: OnceCell<Regex> = OnceCell::new();
+            let remap = REMAP.get_or_init(|| Regex::new("/:([a-zA-Z0-9_]+)/").unwrap());
+            path = remap.replace_all(&path, "/{$1}/").to_string();
+        }
         let item = self.openapi.paths.paths.entry(path.to_string()).or_default();
         let item = item.as_mut().expect("Currently don't support references for PathItem");
         match method.as_str() {

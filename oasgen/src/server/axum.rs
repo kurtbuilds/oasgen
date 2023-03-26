@@ -31,6 +31,9 @@ impl<S> Server<Router<S>, OpenAPI>
     }
 
     fn add_route(&mut self, path: &str, route: MethodRouter<S>) {
+        if path.contains('{') {
+            eprintln!("WARNING: Path parameters are specified with `:name` with axum, not `{{name}}`.");
+        }
         match self.router.0.get_mut(path) {
             Some(method_router) => {
                 let existing = std::mem::take(method_router);
@@ -108,7 +111,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
                 (
                     [(
                         http::header::CONTENT_TYPE,
-                        http::HeaderValue::from_str("application/yaml").unwrap(),
+                        http::HeaderValue::from_str("text/yaml").unwrap(),
                     )],
                     yaml,
                 ).into_response()

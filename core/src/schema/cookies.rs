@@ -1,0 +1,1 @@
+impl crate::OaSchema for tower_cookies::Cookies {}

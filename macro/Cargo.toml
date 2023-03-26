@@ -15,9 +15,9 @@ documentation = "https://docs.rs/oasgen"
 proc-macro = true
 
 [dependencies]
-syn = { version = "1.0", features = ["full"] }
+syn = { version = "2", features = ["full"] }
 quote = "1.0"
-proc-macro2 = "1.0.51"
+proc-macro2 = "1.0.52"
 oasgen-core = { path = "../core" , version = "0.7.1"}
 
 [dev-dependencies]
