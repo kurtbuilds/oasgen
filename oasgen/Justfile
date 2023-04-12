@@ -25,3 +25,21 @@ alias r := run
 
 doc:
     RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --open
+
+expand-run:
+    printf '#![allow(unused)]\n' > examples/expand.rs
+    printf '#![feature(fmt_internals)]\n' >> examples/expand.rs
+    printf '#![feature(fmt_helpers_for_derive)]\n' >> examples/expand.rs
+    printf '#![feature(print_internals)]\n' >> examples/expand.rs
+    printf '#![feature(core_panic)]\n' >> examples/expand.rs
+    cargo expand --example test >> examples/expand.rs
+    sd '::alloc::' '::std::' examples/expand.rs -f
+    sd '# ?\[serde.*' '' examples/expand.rs -f
+    sd '# ?\[openapi.*' '' examples/expand.rs -f
+    sd -s '#[rustc_box]' '' examples/expand.rs -f
+    @just rerun
+alias er := expand-run
+
+rerun:
+    cargo +nightly run --example expand
+alias rr := expand-run

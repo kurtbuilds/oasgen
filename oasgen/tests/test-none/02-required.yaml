@@ -1,0 +1,13 @@
+type: object
+properties:
+  is_required:
+    type: string
+  is_nullable:
+    nullable: true
+    type: string
+  is_not_required:
+    nullable: true
+    type: string
+required:
+- is_required
+- is_nullable

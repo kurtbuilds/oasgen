@@ -1,9 +1,11 @@
 use structmeta::StructMeta;
+use syn::LitStr;
 
 /// Available attributes on a struct
-#[derive(StructMeta, Debug, Default)]
+#[derive(StructMeta, Default)]
 pub struct OpenApiAttributes {
     pub skip: bool,
+    pub skip_serializing_if: Option<LitStr>,
 }
 
 impl TryFrom<&Vec<syn::Attribute>> for OpenApiAttributes {
@@ -24,6 +26,9 @@ impl TryFrom<&Vec<syn::Attribute>> for OpenApiAttributes {
         for attr in attrs {
             if attr.skip {
                 result.skip = true;
+            }
+            if attr.skip_serializing_if.is_some() {
+                result.skip_serializing_if = attr.skip_serializing_if;
             }
         }
         Ok(result)

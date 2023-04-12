@@ -13,8 +13,11 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let id = &ast.ident;
     let fields = util::get_fields(&ast);
 
-    let properties = fields.into_iter().map(|f| {
-        let attr = OpenApiAttributes::try_from(&f.attrs).unwrap();
+    let fields: Vec<(&syn::Field, OpenApiAttributes)> = fields.into_iter().map(|f| {
+        (f, OpenApiAttributes::try_from(&f.attrs).unwrap())
+    }).collect::<Vec<_>>();
+
+    let properties = fields.iter().map(|(f, attr)| {
         if attr.skip {
             return quote! {};
         }
@@ -24,6 +27,15 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
             o.add_property(#name, <#ty as OaSchema>::schema().unwrap()).unwrap();
         }
     });
+
+    let required = fields.iter().map(|(f, attr)| {
+        if attr.skip || attr.skip_serializing_if.is_some() {
+            return quote! {};
+        }
+        let name = f.ident.as_ref().unwrap().to_string();
+        quote! { #name.to_string(), }
+    });
+    let required = quote! { vec! [ #(#required)* ] };
 
     let name = id.to_string();
     let ref_name = format!("#/components/schemas/{}", id);
@@ -40,6 +52,8 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
             fn schema() -> Option<::oasgen::Schema> {
                 let mut o = ::oasgen::Schema::new_object();
                 #(#properties)*
+                let req = o.required_mut().unwrap();
+                *req = #required;
                 Some(o)
             }
         }
