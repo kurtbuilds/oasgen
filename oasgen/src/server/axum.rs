@@ -120,10 +120,8 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
 
         #[cfg(feature = "swagger-ui")]
         if let Some(mut path) = self.swagger_ui_route {
-            println!("Swagger UI route: {}", path);
             let swagger = self.swagger_ui.expect("Swagger UI route set but no Swagger UI is configured.");
             let handler = routing::get(|uri: http::Uri| async move {
-                println!("Swagger UI request: {}", uri);
                 match swagger.handle_url(&uri) {
                     Some(response) => response.into_response(),
                     None => {
