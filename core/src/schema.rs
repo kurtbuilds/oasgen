@@ -15,6 +15,8 @@ mod time;
 mod chrono;
 #[cfg(feature = "cookies")]
 mod cookies;
+#[cfg(feature = "phonenumber")]
+mod phonenumber;
 
 pub trait OaSchema {
     fn schema_name() -> Option<&'static str> {

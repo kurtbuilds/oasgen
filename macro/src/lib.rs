@@ -24,7 +24,7 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
         let name = f.ident.as_ref().unwrap().to_string();
         let ty = &f.ty;
         quote! {
-            o.add_property(#name, <#ty as OaSchema>::schema().unwrap()).unwrap();
+            o.add_property(#name, <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))).unwrap();
         }
     });
 

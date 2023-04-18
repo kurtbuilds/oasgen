@@ -82,11 +82,11 @@ macro_rules! construct_operation {
             fn referenced_schema(schema: &str) -> oa::Schema {
                 $(
                     if $arg::schema_name().map(|s| s == schema).unwrap_or(false) {
-                        return $arg::schema().unwrap();
+                        return $arg::schema().expect(&format!("Schema not found: {}", schema));
                     }
                 )+
                 if Fut::Output::schema_name().map(|s| s == schema).unwrap_or(false) {
-                    Fut::Output::schema().unwrap()
+                    Fut::Output::schema().expect(&format!("Schema not found: {}", schema))
                 } else {
                     panic!("Unknown schema: {}", schema)
                 }

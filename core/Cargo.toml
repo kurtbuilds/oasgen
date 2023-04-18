@@ -19,6 +19,7 @@ openapiv3-extended = "2.2.1"
 uuid = { optional = true, version = "1.3.0" }
 chrono = { optional = true, version = "0.4.23" }
 time = { optional = true, version = "0.3.19" }
+phonenumber = { optional = true, version = "0.3.2" }
 pin-project-lite = "0.2.9"
 sqlx = { version = "0.6.2", optional = true, features = ["runtime-tokio-rustls"] }
 structmeta = { version = "0.2.0" }

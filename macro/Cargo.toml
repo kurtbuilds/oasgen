@@ -19,6 +19,7 @@ syn = { version = "2", features = ["full"] }
 quote = "1.0"
 proc-macro2 = "1.0.52"
 oasgen-core = { path = "../core" , version = "0.8.1"}
+structmeta = "0.2.0"
 
 [dev-dependencies]
 trybuild = "1.0.77"
