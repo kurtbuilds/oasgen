@@ -132,15 +132,12 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
                     }
                 }
             });
+            router = router
+                .route(&format!("{}", &path), handler.clone());
             if !path.ends_with('/') {
                 path.push('/');
-                let slash = path.clone();
-                router = router.route(&path[..path.len() - 1], routing::get(|| async move {
-                    axum::response::Redirect::to(&slash)
-                }));
             }
             router = router
-                .route(&format!("{}", &path), handler.clone())
                 .route(&format!("{}*rest", &path), handler)
         }
         router
