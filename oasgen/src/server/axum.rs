@@ -120,6 +120,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
 
         #[cfg(feature = "swagger-ui")]
         if let Some(mut path) = self.swagger_ui_route {
+
             let swagger = self.swagger_ui.expect("Swagger UI route set but no Swagger UI is configured.");
             let handler = routing::get(|uri: http::Uri| async move {
                 match swagger.handle_url(&uri) {
@@ -134,9 +135,6 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
             });
             router = router
                 .route(&format!("{}", &path), handler.clone());
-            if !path.ends_with('/') {
-                path.push('/');
-            }
             router = router
                 .route(&format!("{}*rest", &path), handler)
         }

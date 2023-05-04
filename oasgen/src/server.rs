@@ -148,8 +148,12 @@ impl<Router: Default> Server<Router, OpenAPI> {
     #[cfg_attr(docsrs, doc(cfg(feature = "swagger-ui")))]
     /// Specify a path to serve Swagger UI on.
     pub fn swagger_ui(mut self, swagger_ui_route: &str) -> Self {
+        if !swagger_ui_route.ends_with('/') {
+            panic!("Swagger UI route must end with a slash. Without it, static resources will not be found.");
+        }
+        let route_without_trailing = &swagger_ui_route[..swagger_ui_route.len() - 1];
         let swagger = swagger_ui::SwaggerUi::default()
-            .prefix(swagger_ui_route)
+            .prefix(route_without_trailing)
             .url(self.json_route.as_ref()
                 .or(self.yaml_route.as_ref())
                 .expect("Tried to create Swagger UI route, but no JSON or YAML route was set. \
