@@ -89,6 +89,8 @@ impl_oa_schema!(u64, Schema::new_integer());
 impl_oa_schema!(i64, Schema::new_integer());
 impl_oa_schema!(u16, Schema::new_integer());
 impl_oa_schema!(i16, Schema::new_integer());
+impl_oa_schema!(f32, Schema::new_number());
+impl_oa_schema!(f64, Schema::new_number());
 
 impl_oa_schema!(String, Schema::new_string());
 
