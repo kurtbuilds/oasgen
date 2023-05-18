@@ -34,7 +34,7 @@ impl SwaggerUi {
         self
     }
 
-    pub fn handle_url<U>(&self, url: U) -> Option<Response<String>>
+    pub fn handle_url<U>(&self, url: U) -> Option<Response<Vec<u8>>>
         where
             U: TryInto<http::Uri> + Debug,
             <U as TryInto<http::Uri>>::Error: Error
@@ -44,7 +44,7 @@ impl SwaggerUi {
         match path {
             "" | "/" => {
                 let f = SwaggerUiDist::get("index.html").unwrap();
-                let body = String::from_utf8(f.data.to_vec()).unwrap();
+                let body = f.data.to_vec();
                 Some(Response::builder()
                     .status(200)
                     .header("Content-Type", HTML_MIME)
@@ -56,7 +56,7 @@ impl SwaggerUi {
                 let f = SwaggerUiDist::get("swagger-initializer.js").unwrap();
                 let body = String::from_utf8(f.data.to_vec()).unwrap();
                 let config = serde_json::to_string(&self.config).unwrap();
-                let body = body.replace("{config}", &config);
+                let body = body.replace("{config}", &config).into_bytes();
                 Some(Response::builder()
                     .status(200)
                     .header("Content-Type", JS_MIME)
@@ -66,7 +66,7 @@ impl SwaggerUi {
             }
             z => {
                 let f = SwaggerUiDist::get(&z[1..])?;
-                let body = String::from_utf8(f.data.to_vec()).unwrap();
+                let body = f.data.to_vec();
                 let ext = std::path::Path::new(z).extension().unwrap().to_str().unwrap();
                 let mime = match ext {
                     "html" => HTML_MIME,
