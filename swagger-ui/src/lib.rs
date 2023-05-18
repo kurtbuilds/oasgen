@@ -109,7 +109,8 @@ mod test {
         let res = ui.handle_url("/swagger-initializer.js").unwrap();
         assert_eq!(res.status(), 200);
         assert_eq!(res.headers().get("Content-Type").unwrap(), JS_MIME);
-        assert!(!res.body().contains("{config}"));
+        let body = String::from_utf8(res.body().to_vec()).unwrap();
+        assert!(!body.contains("{config}"));
 
         let res = ui.handle_url("/swagger-ui.css").unwrap();
         assert_eq!(res.status(), 200);
