@@ -1129,7 +1129,7 @@ dependencies = [
 
 [[package]]
 name = "oasgen"
-version = "0.10.3"
+version = "0.10.4"
 dependencies = [
  "actix-web",
  "axum",
@@ -1153,7 +1153,7 @@ dependencies = [
 
 [[package]]
 name = "oasgen-core"
-version = "0.10.3"
+version = "0.10.4"
 dependencies = [
  "actix-web",
  "assert_matches",
@@ -1174,7 +1174,7 @@ dependencies = [
 
 [[package]]
 name = "oasgen-macro"
-version = "0.10.3"
+version = "0.10.4"
 dependencies = [
  "oasgen-core",
  "proc-macro2",
