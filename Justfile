@@ -26,7 +26,7 @@ version level:
    echo $(dye -c INFO) Make sure that it builds first.
    just test
 
-   cargo set-version --bump {{ level }} --workspace
+   cargo set-version --bump {{ level }} --workspace --exclude swagger-ui2
    VERSION=$(toml get oasgen/Cargo.toml package.version)
 
    toml set macro/Cargo.toml dependencies.oasgen-core.version $VERSION
