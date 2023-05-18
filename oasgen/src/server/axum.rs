@@ -7,7 +7,7 @@ use http::Method;
 use indexmap::IndexMap;
 use openapiv3::OpenAPI;
 use axum::routing::MethodRouter;
-use axum::body::Body;
+use axum::body::{Body, Full};
 
 use oasgen_core::{OaOperation, OaSchema};
 
@@ -124,7 +124,10 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
             let swagger = self.swagger_ui.expect("Swagger UI route set but no Swagger UI is configured.");
             let handler = routing::get(|uri: http::Uri| async move {
                 match swagger.handle_url(&uri) {
-                    Some(response) => response.into_response(),
+                    Some(response) => {
+                        let (headers, body) = response.into_parts();
+                        axum::response::Response::from_parts(headers, axum::body::boxed(Full::from(body)))
+                    }
                     None => {
                         axum::response::Response::builder()
                             .status(http::StatusCode::NOT_FOUND)

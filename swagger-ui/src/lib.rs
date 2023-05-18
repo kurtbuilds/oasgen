@@ -1,5 +1,6 @@
 mod config;
 
+use bytes::Bytes;
 use std::convert::TryInto;
 use std::error::Error;
 use std::fmt::Debug;
@@ -34,7 +35,7 @@ impl SwaggerUi {
         self
     }
 
-    pub fn handle_url<U>(&self, url: U) -> Option<Response<Vec<u8>>>
+    pub fn handle_url<U>(&self, url: U) -> Option<Response<Bytes>>
         where
             U: TryInto<http::Uri> + Debug,
             <U as TryInto<http::Uri>>::Error: Error
@@ -49,7 +50,7 @@ impl SwaggerUi {
                     .status(200)
                     .header("Content-Type", HTML_MIME)
                     .header("Content-Length", body.len())
-                    .body(body)
+                    .body(body.into())
                     .unwrap())
             }
             "/swagger-initializer.js" => {
@@ -61,7 +62,7 @@ impl SwaggerUi {
                     .status(200)
                     .header("Content-Type", JS_MIME)
                     .header("Content-Length", body.len())
-                    .body(body)
+                    .body(body.into())
                     .unwrap())
             }
             z => {
@@ -79,7 +80,7 @@ impl SwaggerUi {
                     .status(200)
                     .header("Content-Type", mime)
                     .header("Content-Length", body.len())
-                    .body(body)
+                    .body(body.into())
                     .unwrap())
             }
         }

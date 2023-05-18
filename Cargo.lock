@@ -1145,7 +1145,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "swagger-ui2 0.1.1",
+ "swagger-ui2",
  "tokio",
  "tower-cookies",
  "trybuild",
@@ -1836,20 +1836,9 @@ dependencies = [
 
 [[package]]
 name = "swagger-ui2"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f258685832803fc313a978b02b8c4529d696697b23a9611a518493812cf0675b"
-dependencies = [
- "http",
- "rust-embed",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "swagger-ui2"
 version = "0.5.2"
 dependencies = [
+ "bytes",
  "http",
  "rust-embed",
  "serde",
