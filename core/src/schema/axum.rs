@@ -10,6 +10,8 @@ impl<T> OaSchema for axum::http::Response<T> {}
 
 impl<T> OaSchema for axum::http::Request<T> {}
 
+impl<T> OaSchema for axum::extract::ConnectInfo<T> {}
+
 // TODO fill this out
 impl<T> OaSchema for axum::extract::Query<T> {}
 
