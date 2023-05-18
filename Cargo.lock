@@ -1129,7 +1129,7 @@ dependencies = [
 
 [[package]]
 name = "oasgen"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "actix-web",
  "axum",
@@ -1153,7 +1153,7 @@ dependencies = [
 
 [[package]]
 name = "oasgen-core"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "actix-web",
  "assert_matches",
@@ -1174,7 +1174,7 @@ dependencies = [
 
 [[package]]
 name = "oasgen-macro"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "oasgen-core",
  "proc-macro2",
@@ -1836,7 +1836,7 @@ dependencies = [
 
 [[package]]
 name = "swagger-ui2"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "bytes",
  "http",
