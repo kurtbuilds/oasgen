@@ -14,3 +14,11 @@ pub use server::Server;
 #[cfg(feature = "swagger-ui")]
 #[cfg_attr(docsrs, doc(cfg(feature = "swagger-ui")))]
 pub use swagger_ui;
+
+// #[cfg(feature = "axum")]
+// pub mod axum {
+//     pub trait CompileCheckImplementsExtract<S, B>: axum::extract::FromRequest<S, B> {
+//         type S;
+//         type B;
+//     }
+// }
