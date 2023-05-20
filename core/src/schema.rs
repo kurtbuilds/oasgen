@@ -18,6 +18,8 @@ mod cookies;
 #[cfg(feature = "phonenumber")]
 mod phonenumber;
 
+mod http;
+
 pub trait OaSchema {
     fn schema_name() -> Option<&'static str> {
         None

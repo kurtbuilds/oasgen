@@ -1159,6 +1159,7 @@ dependencies = [
  "assert_matches",
  "axum",
  "chrono",
+ "http",
  "indexmap",
  "openapiv3-extended",
  "phonenumber",

@@ -19,3 +19,5 @@ impl<T> OaSchema for axum::extract::Query<T> {}
 
 // TODO fill this out
 impl<T> OaSchema for axum::extract::Path<T> {}
+
+impl OaSchema for axum::http::request::Parts {}
