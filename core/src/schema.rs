@@ -19,6 +19,7 @@ mod cookies;
 mod phonenumber;
 
 mod http;
+#[cfg(feature = "sid")]
 mod sid;
 
 pub trait OaSchema {
