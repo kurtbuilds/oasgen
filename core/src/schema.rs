@@ -19,6 +19,7 @@ mod cookies;
 mod phonenumber;
 
 mod http;
+mod sid;
 
 pub trait OaSchema {
     fn schema_name() -> Option<&'static str> {

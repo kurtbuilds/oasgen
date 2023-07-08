@@ -57,6 +57,7 @@ swagger-ui = ["swagger-ui2"]
 json = ["oasgen-core/json"]
 cookies = ["tower-cookies", "oasgen-core/cookies"]
 phonenumber = ["oasgen-core/phonenumber"]
+sid = ["oasgen-core/sid"]
 
 [dev-dependencies]
 trybuild = "1.0.77"
