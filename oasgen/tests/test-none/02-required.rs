@@ -7,6 +7,7 @@ pub struct Foo {
     is_nullable: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     is_not_required: Option<String>,
+    #[allow(dead_code)]
     #[serde(skip)]
     is_not_on_schema: String,
     #[openapi(skip)]
