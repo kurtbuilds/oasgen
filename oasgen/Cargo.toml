@@ -33,10 +33,10 @@ actix-web = { version = "4.3.0", optional = true }
 axum = { version = "0.6.9", optional = true }
 futures = "0.3.26"
 http = "0.2.9"
-indexmap = "2"
+indexmap = "1.9.2"
+openapiv3 = { version = "2.2.1", package = "openapiv3-extended" }
 oasgen-core = { path = "../core", version = "0.11.0"}
 oasgen-macro = { path = "../macro", version = "0.11.0"}
-openapiv3 = { version = "3" , package = "openapiv3-extended"}
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.93"
 serde_yaml = "0.9.17"
