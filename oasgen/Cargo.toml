@@ -63,6 +63,3 @@ sid = ["oasgen-core/sid"]
 trybuild = "1.0.81"
 actix-web = { version = "4.3.1" }
 pretty_assertions = "1.4.0"
-# Fixes this issue: https://github.com/rust-lang/libc/issues/3297
-# Can be removed once fixed
-libc = "=0.2.144"
