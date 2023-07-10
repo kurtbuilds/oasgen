@@ -31,7 +31,7 @@ jobs:
         # https://github.com/rust-lang/rust/issues/113104
         # https://github.com/rust-lang/rust/issues/111888
         # Fix the toolchain until those are fixed
-        toolchain: 1.69
+        toolchain: 1.67
     - uses: Swatinem/rust-cache@v1
     - run: cargo install just
     - run: just test
