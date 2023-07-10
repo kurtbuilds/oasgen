@@ -17,9 +17,9 @@ proc-macro = true
 [dependencies]
 syn = { version = "2", features = ["full"] }
 quote = "1.0"
-proc-macro2 = "1.0.52"
+proc-macro2 = "1.0.64"
 oasgen-core = { path = "../core" , version = "0.11.0"}
 structmeta = "0.2.0"
 
 [dev-dependencies]
-trybuild = "1.0.77"
+trybuild = "1.0.81"

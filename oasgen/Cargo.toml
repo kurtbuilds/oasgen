@@ -29,22 +29,22 @@ path = "tests/test-actix.rs"
 required-features = ["actix"]
 
 [dependencies]
-actix-web = { version = "4.3.0", optional = true }
-axum = { version = "0.6.9", optional = true }
-futures = "0.3.26"
+actix-web = { version = "4.3.1", optional = true }
+axum = { version = "0.6.18", optional = true }
+futures = "0.3.28"
 http = "0.2.9"
-indexmap = "1.9.2"
+indexmap = "2"
 openapiv3 = { version = "3", package = "openapiv3-extended" }
 oasgen-core = { path = "../core", version = "0.11.0"}
 oasgen-macro = { path = "../macro", version = "0.11.0"}
-serde = { version = "1.0.152", features = ["derive"] }
-serde_json = "1.0.93"
-serde_yaml = "0.9.17"
-tokio = { version = "1.25.0", features = ["full"] }
+serde = { version = "1.0.171", features = ["derive"] }
+serde_json = "1.0.100"
+serde_yaml = "0.9.22"
+tokio = { version = "1.29.1", features = ["full"] }
 swagger-ui2 = { version = "0.5.3", optional = true, path = "../swagger-ui" }
 tower-cookies = { version = "0.9.0", optional = true }
-regex = "1.7.2"
-once_cell = "1.17.1"
+regex = "1.9.1"
+once_cell = "1.18.0"
 
 [features]
 actix = ["actix-web", "oasgen-core/actix"]
@@ -60,9 +60,9 @@ phonenumber = ["oasgen-core/phonenumber"]
 sid = ["oasgen-core/sid"]
 
 [dev-dependencies]
-trybuild = "1.0.77"
-actix-web = { version = "4.3.0" }
-pretty_assertions = "1.3.0"
+trybuild = "1.0.81"
+actix-web = { version = "4.3.1" }
+pretty_assertions = "1.4.0"
 # Fixes this issue: https://github.com/rust-lang/libc/issues/3297
 # Can be removed once fixed
 libc = "=0.2.144"
