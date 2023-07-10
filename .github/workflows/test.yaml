@@ -24,7 +24,15 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions-rs/toolchain@v1
       with:
+
         toolchain: stable
     - uses: Swatinem/rust-cache@v1
     - run: cargo install just
-    - run: just test
+      # There is some kind of breakage in Rust, related to `ld` (GNU linker), that breaks the build on Github Actions.
+      # It appears to primarily impact macro crates, as that's when the compilation fails here,
+      # and the Github issue also mentions it failing in a macro crate.
+      # See:
+      # https://github.com/rust-lang/rust/issues/113104
+      # https://github.com/rust-lang/rust/issues/111888
+      # Use `lld` (Clang linker) until issue is fixed
+    - run: RUSTFLAGS="-Clinker=clang -Clink-arg=-fuse-ld=lld" just test
