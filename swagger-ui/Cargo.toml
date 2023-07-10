@@ -13,10 +13,6 @@ path = "src/lib.rs"
 [dependencies]
 http = "0.2.9"
 rust-embed = "6.8.1"
-<<<<<<< HEAD
-serde = { version = "1.0.170", features = ["derive"] }
-=======
 serde = { version = "1.0.171", features = ["derive"] }
->>>>>>> kw/github-actions
 serde_json = "1.0.100"
 bytes = "1.4.0"
