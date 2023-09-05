@@ -6,6 +6,7 @@ pub enum Duration {
     Day,
     Week,
     Month,
+    #[openapi(skip)]
     Year,
 }
 

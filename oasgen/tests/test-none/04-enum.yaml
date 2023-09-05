@@ -6,6 +6,5 @@ properties:
     - Day
     - Week
     - Month
-    - Year
 required:
 - duration
