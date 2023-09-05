@@ -1,34 +1,50 @@
 use oasgen_core::OpenApiAttributes;
 use proc_macro::TokenStream;
+use proc_macro2::Ident;
 use quote::quote;
-use syn::{punctuated::Punctuated, token::Comma, *};
+use serde_derive_internals::ast::{Field, Variant};
 
 /// Create OaSchema derive token stream for a struct from ident and fields
-pub fn derive_oaschema_struct(ident: &Ident, fields: &Punctuated<Field, Comma>) -> TokenStream {
-    let fields: Vec<(&syn::Field, OpenApiAttributes)> = fields
+pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
+    let properties = fields
         .into_iter()
-        .map(|f| (f, OpenApiAttributes::try_from(&f.attrs).unwrap()))
+        .map(|f| {
+            let openapi_attrs = OpenApiAttributes::try_from(&f.original.attrs).unwrap();
+
+            if openapi_attrs.skip {
+                return quote! {};
+            }
+
+            let name = f.attrs.name().serialize_name();
+            let ty = f.ty;
+
+            if f.attrs.flatten() {
+                quote! {
+                    if let oasgen_core::SchemaKind::Type(oasgen_core::Type::Object(oasgen_core::ObjectType { properties, required, .. }))
+                            = <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name)).schema_kind {
+                        for (name, schema) in properties.into_iter() {
+                            match schema {
+                                oasgen_core::ReferenceOr::Item(mut item) => o.add_property(&name, item.clone()).unwrap(),
+                                oasgen_core::ReferenceOr::Reference {..} => panic!("Cannot flatten a reference")
+                            }
+                        }
+                        o.required_mut().unwrap().extend_from_slice(&required);
+                    }
+                }
+            } else {
+                let required = if openapi_attrs.skip || openapi_attrs.skip_serializing_if.is_some() {
+                    quote! {}
+                } else {
+                    quote! { o.required_mut().unwrap().push(#name.to_string()); }
+                };
+
+                quote! {
+                    o.add_property(#name, <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))).unwrap();
+                    #required
+                }
+            }
+        })
         .collect::<Vec<_>>();
-
-    let properties = fields.iter().map(|(f, attr)| {
-        if attr.skip {
-            return quote! {};
-        }
-        let name = f.ident.as_ref().unwrap().to_string();
-        let ty = &f.ty;
-        quote! {
-            o.add_property(#name, <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))).unwrap();
-        }
-    });
-
-    let required = fields.iter().map(|(f, attr)| {
-        if attr.skip || attr.skip_serializing_if.is_some() {
-            return quote! {};
-        }
-        let name = f.ident.as_ref().unwrap().to_string();
-        quote! { #name.to_string(), }
-    });
-    let required = quote! { vec! [ #(#required)* ] };
 
     let name = ident.to_string();
     let ref_name = format!("#/components/schemas/{}", ident);
@@ -45,8 +61,6 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &Punctuated<Field, Comma>) 
             fn schema() -> Option<::oasgen::Schema> {
                 let mut o = ::oasgen::Schema::new_object();
                 #(#properties)*
-                let req = o.required_mut().unwrap();
-                *req = #required;
                 Some(o)
             }
         }
@@ -77,10 +91,10 @@ pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
 }
 
 /// Create OaSchema derive token stream for an enum from ident and variants
-pub fn derive_oaschema_enum(ident: &Ident, variants: &Punctuated<Variant, Comma>) -> TokenStream {
-    let variants: Vec<(&syn::Variant, OpenApiAttributes)> = variants
+pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream {
+    let variants: Vec<(&Variant, OpenApiAttributes)> = variants
         .into_iter()
-        .map(|v| (v, OpenApiAttributes::try_from(&v.attrs).unwrap()))
+        .map(|v| (v, OpenApiAttributes::try_from(&v.original.attrs).unwrap()))
         .collect::<Vec<_>>();
 
     let str_variants = variants.iter().map(|(v, attr)| {

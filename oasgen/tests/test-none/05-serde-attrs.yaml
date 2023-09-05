@@ -1,0 +1,20 @@
+type: object
+properties:
+  propA:
+    type: object
+    properties:
+      isRequired:
+        type: integer
+      isNotRequired:
+        nullable: true
+        type: string
+    required:
+    - isRequired
+  isRequired:
+    type: integer
+  isNotRequired:
+    nullable: true
+    type: string
+required:
+- propA
+- isRequired
