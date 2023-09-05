@@ -76,7 +76,7 @@ pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-/// Create OaSchema derive token stream for a struct from ident and fields
+/// Create OaSchema derive token stream for an enum from ident and variants
 pub fn derive_oaschema_enum(ident: &Ident, variants: &Punctuated<Variant, Comma>) -> TokenStream {
     let variants: Vec<(&syn::Variant, OpenApiAttributes)> = variants
         .into_iter()
