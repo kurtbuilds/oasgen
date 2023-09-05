@@ -3,9 +3,9 @@ properties:
   duration:
     type: string
     enum:
-    - day
-    - week
-    - month
-    - year
+    - Day
+    - Week
+    - Month
+    - Year
 required:
 - duration

@@ -11,15 +11,15 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &Punctuated<Field, Comma>) 
         .collect::<Vec<_>>();
 
     let properties = fields.iter().map(|(f, attr)| {
-                    if attr.skip {
-                        return quote! {};
-                    }
-                    let name = f.ident.as_ref().unwrap().to_string();
-                    let ty = &f.ty;
-                    quote! {
-                        o.add_property(#name, <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))).unwrap();
-                    }
-                });
+        if attr.skip {
+            return quote! {};
+        }
+        let name = f.ident.as_ref().unwrap().to_string();
+        let ty = &f.ty;
+        quote! {
+            o.add_property(#name, <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))).unwrap();
+        }
+    });
 
     let required = fields.iter().map(|(f, attr)| {
         if attr.skip || attr.skip_serializing_if.is_some() {
@@ -73,5 +73,43 @@ pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
             }
         }
     };
+    TokenStream::from(expanded)
+}
+
+/// Create OaSchema derive token stream for a struct from ident and fields
+pub fn derive_oaschema_enum(ident: &Ident, variants: &Punctuated<Variant, Comma>) -> TokenStream {
+    let variants: Vec<(&syn::Variant, OpenApiAttributes)> = variants
+        .into_iter()
+        .map(|v| (v, OpenApiAttributes::try_from(&v.attrs).unwrap()))
+        .collect::<Vec<_>>();
+
+    let str_variants = variants.iter().map(|(v, attr)| {
+        if attr.skip {
+            return quote! {};
+        }
+        assert!(v.fields.len() == 0, "Enum with fields not supported.");
+        let name = v.ident.to_string();
+        quote! { #name.to_string(), }
+    });
+
+    let name = ident.to_string();
+    let ref_name = format!("#/components/schemas/{}", ident);
+    let expanded = quote! {
+        impl ::oasgen::OaSchema for #ident {
+            fn schema_name() -> Option<&'static str> {
+                Some(#name)
+            }
+
+            fn schema_ref() -> Option<::oasgen::ReferenceOr<::oasgen::Schema>> {
+                Some(::oasgen::ReferenceOr::ref_(#ref_name))
+            }
+
+            fn schema() -> Option<::oasgen::Schema> {
+                let mut o = ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]);
+                Some(o)
+            }
+        }
+    };
+
     TokenStream::from(expanded)
 }

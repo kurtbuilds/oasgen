@@ -2,8 +2,8 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data::Struct, *};
-use util::{derive_oaschema_newtype, derive_oaschema_struct};
+use syn::{Data, *};
+use util::{derive_oaschema_enum, derive_oaschema_newtype, derive_oaschema_struct};
 
 mod util;
 
@@ -13,14 +13,15 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let id = &ast.ident;
 
     match &ast.data {
-        Struct(DataStruct { ref fields, .. }) => match fields {
+        Data::Struct(DataStruct { ref fields, .. }) => match fields {
             Fields::Named(FieldsNamed { named: fields, .. }) => derive_oaschema_struct(id, fields),
             Fields::Unnamed(FieldsUnnamed { unnamed, .. }) if unnamed.len() == 1 => {
                 derive_oaschema_newtype(id, unnamed.first().unwrap())
             }
             _ => panic!("#[ormlite] can only be used on structs with named fields or newtypes"),
         },
-        _ => panic!("#[ormlite] can only be used on structs"),
+        Data::Enum(DataEnum { variants, .. }) => derive_oaschema_enum(id, variants),
+        Data::Union(_) => panic!("#[ormlite] can not be used on unions"),
     }
 }
 
