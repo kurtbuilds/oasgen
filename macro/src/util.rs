@@ -3,7 +3,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{punctuated::Punctuated, token::Comma, *};
 
-/// Given derive input of a struct, get the fields of the struct.
+/// Create OaSchema derive token stream for a struct from ident and fields
 pub fn derive_oaschema_struct(ident: &Ident, fields: &Punctuated<Field, Comma>) -> TokenStream {
     let fields: Vec<(&syn::Field, OpenApiAttributes)> = fields
         .into_iter()
@@ -54,6 +54,7 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &Punctuated<Field, Comma>) 
     TokenStream::from(expanded)
 }
 
+/// Create OaSchema derive token stream for a newtype struct from ident and a single inner field
 pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
     let ty = &field.ty;
     let name = ident.to_string();
