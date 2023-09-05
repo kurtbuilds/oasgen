@@ -1,0 +1,11 @@
+type: object
+properties:
+  duration:
+    type: string
+    enum:
+    - day
+    - week
+    - month
+    - year
+required:
+- duration
