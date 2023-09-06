@@ -17,7 +17,7 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
 
     let cont = {
         let ctxt = Ctxt::new();
-        let cont = Container::from_ast(&ctxt, &ast, Derive::Serialize);
+        let cont = Container::from_ast(&ctxt, &ast, Derive::Deserialize);
         ctxt.check().unwrap();
         cont.unwrap()
     };

@@ -15,7 +15,7 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
                 return quote! {};
             }
 
-            let name = f.attrs.name().serialize_name();
+            let name = f.attrs.name().deserialize_name();
             let ty = f.ty;
 
             if f.attrs.flatten() {
@@ -102,7 +102,7 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream 
             return quote! {};
         }
         assert!(v.fields.len() == 0, "Enum with fields not supported.");
-        let name = v.ident.to_string();
+        let name = v.attrs.name().deserialize_name();
         quote! { #name.to_string(), }
     });
 

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(OaSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Bar {
+    #[serde(rename = "is_renamed")]
     is_required: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     is_not_required: Option<String>,
@@ -11,10 +12,22 @@ pub struct Bar {
 
 #[derive(OaSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub enum Duration {
+    Day,
+    #[serde(rename = "renamedWeek")]
+    Week,
+    Month,
+    #[openapi(skip)]
+    Year,
+}
+
+#[derive(OaSchema, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Foo {
-    prop_a: Bar,
+    camel_bar: Bar,
+    camel_duration: Duration,
     #[serde(flatten)]
-    prop_b: Bar,
+    flattened: Bar,
 }
 
 fn main() {

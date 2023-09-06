@@ -1,20 +1,27 @@
 type: object
 properties:
-  propA:
+  camelBar:
     type: object
     properties:
-      isRequired:
+      is_renamed:
         type: integer
       isNotRequired:
         nullable: true
         type: string
     required:
-    - isRequired
-  isRequired:
+    - is_renamed
+  camelDuration:
+    type: string
+    enum:
+    - day
+    - renamedWeek
+    - month
+  is_renamed:
     type: integer
   isNotRequired:
     nullable: true
     type: string
 required:
-- propA
-- isRequired
+- camelBar
+- camelDuration
+- is_renamed
