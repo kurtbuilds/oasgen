@@ -95,19 +95,19 @@ pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
 
 /// Create OaSchema derive token stream for an enum from ident and variants
 pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream {
-    let variants: Vec<(&Variant, OpenApiAttributes)> = variants
+    let str_variants = variants
         .into_iter()
-        .map(|v| (v, OpenApiAttributes::try_from(&v.original.attrs).unwrap()))
-        .collect::<Vec<_>>();
+        .map(|v| {
+            let openapi_attrs = OpenApiAttributes::try_from(&v.original.attrs).unwrap();
 
-    let str_variants = variants.iter().map(|(v, attr)| {
-        if attr.skip {
-            return quote! {};
-        }
-        assert!(v.fields.len() == 0, "Enum with fields not supported.");
-        let name = v.attrs.name().deserialize_name();
-        quote! { #name.to_string(), }
-    });
+            if openapi_attrs.skip {
+                return quote! {};
+            }
+            assert!(v.fields.len() == 0, "Enum with fields not supported.");
+            let name = v.attrs.name().deserialize_name();
+            quote! { #name.to_string(), }
+        })
+        .collect::<Vec<_>>();
 
     let name = ident.to_string();
     let ref_name = format!("#/components/schemas/{}", ident);
