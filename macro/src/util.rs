@@ -17,11 +17,14 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
 
             let name = f.attrs.name().deserialize_name();
             let ty = f.ty;
+            let schema = quote! {
+                <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))
+            };
 
             if f.attrs.flatten() {
                 quote! {
                     if let oasgen_core::SchemaKind::Type(oasgen_core::Type::Object(oasgen_core::ObjectType { properties, required, .. }))
-                            = <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name)).schema_kind {
+                            = #schema.schema_kind {
                         for (name, schema) in properties.into_iter() {
                             match schema {
                                 oasgen_core::ReferenceOr::Item(mut item) => o.add_property(&name, item.clone()).unwrap(),
@@ -39,7 +42,7 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
                 };
 
                 quote! {
-                    o.add_property(#name, <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))).unwrap();
+                    o.add_property(#name, #schema).unwrap();
                     #required
                 }
             }
