@@ -23,12 +23,12 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
 
             if f.attrs.flatten() {
                 quote! {
-                    if let oasgen_core::SchemaKind::Type(oasgen_core::Type::Object(oasgen_core::ObjectType { properties, required, .. }))
+                    if let ::oasgen::SchemaKind::Type(::oasgen::Type::Object(::oasgen::ObjectType { properties, required, .. }))
                             = #schema.schema_kind {
                         for (name, schema) in properties.into_iter() {
                             match schema {
-                                oasgen_core::ReferenceOr::Item(mut item) => o.add_property(&name, item.clone()).unwrap(),
-                                oasgen_core::ReferenceOr::Reference {..} => panic!("Cannot flatten a reference")
+                                ::oasgen::ReferenceOr::Item(mut item) => o.add_property(&name, item.clone()).unwrap(),
+                                ::oasgen::ReferenceOr::Reference {..} => panic!("Cannot flatten a reference")
                             }
                         }
                         o.required_mut().unwrap().extend_from_slice(&required);
