@@ -2,7 +2,10 @@ use oasgen_core::OpenApiAttributes;
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, TokenStream as TokenStream2};
 use quote::quote;
-use serde_derive_internals::ast::{Field, Variant};
+use serde_derive_internals::{
+    ast::{Field, Variant},
+    attr::TagType,
+};
 
 pub fn derive_oaschema_process_fields(fields: &[Field]) -> TokenStream2 {
     // newtype
@@ -92,7 +95,7 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
 }
 
 /// Create OaSchema derive token stream for an enum from ident and variants
-pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream {
+pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType) -> TokenStream {
     let (mut complex_variants, str_variants) = variants
         .into_iter()
         .filter(|v| {
@@ -108,14 +111,56 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream 
                     str_variants.push(quote! { #name.to_string(), });
                     (complex_variants, str_variants)
                 } else {
-                    complex_variants.push(derive_oaschema_process_fields(&v.fields));
+                    let schema = derive_oaschema_process_fields(&v.fields);
+                    let variant = match tag {
+                        TagType::External => quote! {{
+                            let mut o = ::oasgen::Schema::new_object();
+                            o.add_property(#name, #schema).unwrap();
+                            o.required_mut().unwrap().push(#name.to_string());
+                            o
+                        }},
+                        TagType::Internal { tag } => quote! {{
+                            let mut o = #schema;
+                            o.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()])).unwrap();
+                            o.required_mut().unwrap().push(#tag.to_string());
+                            o
+                        }},
+                        TagType::Adjacent { tag, content } => quote! {{
+                            let mut o = ::oasgen::Schema::new_object();
+                            o.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()])).unwrap();
+                            o.add_property(#content, #schema).unwrap();
+                            o.required_mut().unwrap().push(#tag.to_string());
+                            o.required_mut().unwrap().push(#content.to_string());
+                            o
+                        }},
+                        TagType::None => schema,
+                    };
+                    complex_variants.push(variant);
                     (complex_variants, str_variants)
                 }
             },
         );
 
     if str_variants.len() > 0 {
-        complex_variants.push(quote! { ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]) });
+        match tag {
+            TagType::External => complex_variants.push(quote! { ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]) }),
+            TagType::Internal { tag } => complex_variants.push(quote! {{
+                let mut o = ::oasgen::Schema::new_object();
+                o.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*])).unwrap();
+                o.required_mut().unwrap().push(#tag.to_string());
+                o
+            }}),
+            TagType::Adjacent { tag, .. } => complex_variants.push(quote! {{
+                let mut o = ::oasgen::Schema::new_object();
+                o.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*])).unwrap();
+                o.required_mut().unwrap().push(#tag.to_string());
+                o
+            }}),
+            _ => () // a null case should be handled, which will deserialize to the first unit
+                    // variant, but unsure how to handle this case. I tried an enum with
+                    // type: 'null', which is supported in glademiller:openapiv3, but not in
+                    // kurtbuilds:openapiv3
+        }
     }
 
     let schema = if complex_variants.len() == 1 {

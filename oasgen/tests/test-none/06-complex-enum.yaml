@@ -13,7 +13,8 @@ properties:
         C:
           type: object
           properties:
-            test: integer
+            test:
+              type: integer
           required:
           - test
       required:
@@ -23,7 +24,8 @@ properties:
         D:
           type: object
           properties:
-            test: string
+            test:
+              type: string
           required:
           - test
       required:
@@ -36,24 +38,26 @@ properties:
     oneOf:
     - type: object
       properties:
+        test:
+          type: integer
         type:
           type: string
           enum:
           - C
-        test: integer
       required:
-      - type
       - test
+      - type
     - type: object
       properties:
+        test:
+          type: string
         type:
           type: string
           enum:
           - D
-        test: string
       required:
-      - type
       - test
+      - type
     - type: object
       properties:
         type:
@@ -71,7 +75,8 @@ properties:
           type: string
           enum:
           - A
-        c: integer
+        c:
+          type: integer
       required:
       - t
       - c
@@ -84,7 +89,8 @@ properties:
         c:
           type: object
           properties:
-            test: integer
+            test:
+              type: integer
           required:
           - test
       required:
@@ -99,7 +105,8 @@ properties:
         c:
           type: object
           properties:
-            test: string
+            test:
+              type: string
           required:
           - test
       required:
@@ -113,7 +120,7 @@ properties:
           - B
           - E
       required:
-      - type
+      - t
   untagged:
     oneOf:
     - type: integer
@@ -129,10 +136,6 @@ properties:
           type: string
       required:
       - test
-    - type: string
-      enum:
-      - B
-      - E
 required:
 - externally_tagged
 - internally_tagged

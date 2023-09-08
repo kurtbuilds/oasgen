@@ -32,7 +32,7 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
             panic!("#[ormlite] can not be used on unit structs")
         }
         Data::Struct(_, fields) => derive_oaschema_struct(id, fields),
-        Data::Enum(variants) => derive_oaschema_enum(id, variants),
+        Data::Enum(variants) => derive_oaschema_enum(id, variants, &cont.attrs.tag()),
     }
 }
 
