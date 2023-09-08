@@ -58,7 +58,7 @@ json = ["oasgen-core/json"]
 cookies = ["tower-cookies", "oasgen-core/cookies"]
 phonenumber = ["oasgen-core/phonenumber"]
 sid = ["oasgen-core/sid"]
-qs = ["oasgen-core/qs"]
+serde_qs = ["oasgen-core/qs"]
 
 [dev-dependencies]
 trybuild = "1.0.81"
