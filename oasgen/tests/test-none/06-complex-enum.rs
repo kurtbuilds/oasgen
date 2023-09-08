@@ -1,6 +1,7 @@
 use oasgen::OaSchema;
 use serde::{Deserialize, Serialize};
 
+#[derive(OaSchema, Serialize, Deserialize)]
 pub struct Bar {
     test: String,
 }
@@ -56,5 +57,5 @@ fn main() {
     use pretty_assertions::assert_eq;
     let schema = Foo::schema().unwrap();
     let spec = serde_yaml::to_string(&schema).unwrap();
-    assert_eq!(spec.trim(), include_str!("06-serde-attrs.yaml"));
+    assert_eq!(spec.trim(), include_str!("06-complex-enum.yaml"));
 }
