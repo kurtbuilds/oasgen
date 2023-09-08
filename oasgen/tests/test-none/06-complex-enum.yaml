@@ -119,12 +119,14 @@ properties:
     - type: integer
     - type: object
       properties:
-        test: integer
+        test:
+          type: integer
       required:
       - test
     - type: object
       properties:
-        test: string
+        test:
+          type: string
       required:
       - test
     - type: string

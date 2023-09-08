@@ -7,7 +7,7 @@ use serde_derive_internals::{
     Ctxt, Derive,
 };
 use syn::*;
-use util::{derive_oaschema_enum, derive_oaschema_newtype, derive_oaschema_struct};
+use util::{derive_oaschema_enum, derive_oaschema_struct};
 
 mod util;
 
@@ -25,13 +25,13 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let id = &cont.ident;
 
     match &cont.data {
-        Data::Struct(Style::Struct, fields) => derive_oaschema_struct(id, fields),
-        Data::Struct(Style::Newtype, fields) => {
-            derive_oaschema_newtype(id, fields.first().unwrap())
+        Data::Struct(Style::Tuple, _) => {
+            panic!("#[ormlite] can not be used on tuple structs")
         }
-        Data::Struct(_, _) => {
-            panic!("#[ormlite] can only be used on structs with named fields or newtypes")
+        Data::Struct(Style::Unit, _) => {
+            panic!("#[ormlite] can not be used on unit structs")
         }
+        Data::Struct(_, fields) => derive_oaschema_struct(id, fields),
         Data::Enum(variants) => derive_oaschema_enum(id, variants),
     }
 }
