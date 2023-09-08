@@ -1,0 +1,138 @@
+type: object
+properties:
+  externally_tagged:
+    oneOf:
+    - type: object
+      properties:
+        A:
+          type: integer
+      required:
+      - A
+    - type: object
+      properties:
+        C:
+          type: object
+          properties:
+            test: integer
+          required:
+          - test
+      required:
+      - C
+    - type: object
+      properties:
+        D:
+          type: object
+          properties:
+            test: string
+          required:
+          - test
+      required:
+      - D
+    - type: string
+      enum:
+      - B
+      - E
+  internally_tagged:
+    oneOf:
+    - type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - C
+        test: integer
+      required:
+      - type
+      - test
+    - type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - D
+        test: string
+      required:
+      - type
+      - test
+    - type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - B
+          - E
+      required:
+      - type
+  adjacently_tagged:
+    oneOf:
+    - type: object
+      properties:
+        t:
+          type: string
+          enum:
+          - A
+        c: integer
+      required:
+      - t
+      - c
+    - type: object
+      properties:
+        t:
+          type: string
+          enum:
+          - C
+        c:
+          type: object
+          properties:
+            test: integer
+          required:
+          - test
+      required:
+      - t
+      - c
+    - type: object
+      properties:
+        t:
+          type: string
+          enum:
+          - D
+        c:
+          type: object
+          properties:
+            test: string
+          required:
+          - test
+      required:
+      - t
+      - c
+    - type: object
+      properties:
+        t:
+          type: string
+          enum:
+          - B
+          - E
+      required:
+      - type
+  untagged:
+    oneOf:
+    - type: integer
+    - type: object
+      properties:
+        test: integer
+      required:
+      - test
+    - type: object
+      properties:
+        test: string
+      required:
+      - test
+    - type: string
+      enum:
+      - B
+      - E
+required:
+- externally_tagged
+- internally_tagged
+- adjacently_tagged
+- untagged

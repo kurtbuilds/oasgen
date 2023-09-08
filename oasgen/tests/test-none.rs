@@ -6,4 +6,5 @@ fn run_tests() {
     t.pass("tests/test-none/03-newtype.rs");
     t.pass("tests/test-none/04-enum.rs");
     t.pass("tests/test-none/05-serde-attrs.rs");
+    t.pass("tests/test-none/06-complex-enum.rs");
 }
