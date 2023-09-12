@@ -2,8 +2,9 @@ use oasgen::OaSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(OaSchema, Serialize, Deserialize)]
-pub struct Bar {
-    test: String,
+pub enum Duration {
+    Days(u32),
+    Months(u32),
 }
 
 #[derive(OaSchema, Serialize, Deserialize)]
@@ -11,7 +12,7 @@ pub enum ExternallyTagged {
     A(i32),
     B,
     C { test: i32 },
-    D(Bar),
+    D(Duration),
     E,
 }
 
@@ -21,7 +22,7 @@ pub enum InternallyTagged {
     // A(i32), internally tagged does not support tuple variants that do not contain a struct
     B,
     C { test: i32 },
-    D(Bar),
+    D(Duration),
     E,
 }
 
@@ -31,7 +32,7 @@ pub enum AdjacentlyTagged {
     A(i32),
     B,
     C { test: i32 },
-    D(Bar),
+    D(Duration),
     E,
 }
 
@@ -41,7 +42,7 @@ pub enum Untagged {
     A(i32),
     B,
     C { test: i32 },
-    D(Bar),
+    D(Duration),
     E,
 }
 

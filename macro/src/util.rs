@@ -121,9 +121,31 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType) 
                         }},
                         TagType::Internal { tag } => quote! {{
                             let mut o = #schema;
-                            o.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()])).unwrap();
-                            o.required_mut().unwrap().push(#tag.to_string());
-                            o
+
+                            match o.schema_kind {
+                                ::oasgen::SchemaKind::Type(_) => {
+                                    o.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()])).unwrap();
+                                    o.required_mut().unwrap().push(#tag.to_string());
+                                    o
+                                }
+                                _ => {
+                                    let mut t = ::oasgen::Schema::new_object();
+                                    t.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()])).unwrap();
+                                    t.required_mut().unwrap().push(#tag.to_string());
+
+                                    ::oasgen::Schema {
+                                        schema_data: ::oasgen::SchemaData::default(),
+                                        schema_kind: ::oasgen::SchemaKind::AllOf {
+                                            all_of: vec![
+                                                ::oasgen::ReferenceOr::item(t),
+                                                ::oasgen::ReferenceOr::item(o)
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+
+                            
                         }},
                         TagType::Adjacent { tag, content } => quote! {{
                             let mut o = ::oasgen::Schema::new_object();
