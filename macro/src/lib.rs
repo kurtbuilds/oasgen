@@ -1,9 +1,9 @@
 #![allow(non_snake_case)]
 
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, DeriveInput, ReturnType, Token};
-use quote::{quote};
-use oasgen_core::OpenApiAttributes;
+use quote::quote;
+use syn::{Data::Struct, *};
+use util::{derive_oaschema_newtype, derive_oaschema_struct};
 
 mod util;
 
@@ -11,56 +11,18 @@ mod util;
 pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(item as DeriveInput);
     let id = &ast.ident;
-    let fields = util::get_fields(&ast);
 
-    let fields: Vec<(&syn::Field, OpenApiAttributes)> = fields.into_iter().map(|f| {
-        (f, OpenApiAttributes::try_from(&f.attrs).unwrap())
-    }).collect::<Vec<_>>();
-
-    let properties = fields.iter().map(|(f, attr)| {
-        if attr.skip {
-            return quote! {};
-        }
-        let name = f.ident.as_ref().unwrap().to_string();
-        let ty = &f.ty;
-        quote! {
-            o.add_property(#name, <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))).unwrap();
-        }
-    });
-
-    let required = fields.iter().map(|(f, attr)| {
-        if attr.skip || attr.skip_serializing_if.is_some() {
-            return quote! {};
-        }
-        let name = f.ident.as_ref().unwrap().to_string();
-        quote! { #name.to_string(), }
-    });
-    let required = quote! { vec! [ #(#required)* ] };
-
-    let name = id.to_string();
-    let ref_name = format!("#/components/schemas/{}", id);
-    let expanded = quote! {
-        impl ::oasgen::OaSchema for #id {
-            fn schema_name() -> Option<&'static str> {
-                Some(#name)
+    match &ast.data {
+        Struct(DataStruct { ref fields, .. }) => match fields {
+            Fields::Named(FieldsNamed { named: fields, .. }) => derive_oaschema_struct(id, fields),
+            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) if unnamed.len() == 1 => {
+                derive_oaschema_newtype(id, unnamed.first().unwrap())
             }
-
-            fn schema_ref() -> Option<::oasgen::ReferenceOr<::oasgen::Schema>> {
-                Some(::oasgen::ReferenceOr::ref_(#ref_name))
-            }
-
-            fn schema() -> Option<::oasgen::Schema> {
-                let mut o = ::oasgen::Schema::new_object();
-                #(#properties)*
-                let req = o.required_mut().unwrap();
-                *req = #required;
-                Some(o)
-            }
-        }
-    };
-    TokenStream::from(expanded)
+            _ => panic!("#[ormlite] can only be used on structs with named fields or newtypes"),
+        },
+        _ => panic!("#[ormlite] can only be used on structs"),
+    }
 }
-
 
 #[proc_macro_attribute]
 pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
@@ -82,9 +44,12 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
     );
 
     let block = &ast.block;
-    ast.block = Box::new(syn::parse2(quote!({
-        ::oasgen::TypedResponseFuture::new(async move #block)
-    })).expect("parsing empty block"));
+    ast.block = Box::new(
+        syn::parse2(quote!({
+            ::oasgen::TypedResponseFuture::new(async move #block)
+        }))
+        .expect("parsing empty block"),
+    );
 
     let public = ast.vis.clone();
 

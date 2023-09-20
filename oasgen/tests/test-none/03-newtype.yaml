@@ -1,0 +1,22 @@
+type: object
+properties:
+  id:
+    type: integer
+  prop_a:
+    type: object
+    properties:
+      test:
+        type: integer
+    required:
+    - test
+  prop_b:
+    type: object
+    properties:
+      test:
+        type: integer
+    required:
+    - test
+required:
+- id
+- prop_a
+- prop_b
