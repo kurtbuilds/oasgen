@@ -2,7 +2,11 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, *};
+use serde_derive_internals::{
+    ast::{Container, Data, Style},
+    Ctxt, Derive,
+};
+use syn::*;
 use util::{derive_oaschema_enum, derive_oaschema_newtype, derive_oaschema_struct};
 
 mod util;
@@ -10,18 +14,25 @@ mod util;
 #[proc_macro_derive(OaSchema, attributes(openapi))]
 pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(item as DeriveInput);
-    let id = &ast.ident;
 
-    match &ast.data {
-        Data::Struct(DataStruct { ref fields, .. }) => match fields {
-            Fields::Named(FieldsNamed { named: fields, .. }) => derive_oaschema_struct(id, fields),
-            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) if unnamed.len() == 1 => {
-                derive_oaschema_newtype(id, unnamed.first().unwrap())
-            }
-            _ => panic!("#[ormlite] can only be used on structs with named fields or newtypes"),
-        },
-        Data::Enum(DataEnum { variants, .. }) => derive_oaschema_enum(id, variants),
-        Data::Union(_) => panic!("#[ormlite] can not be used on unions"),
+    let cont = {
+        let ctxt = Ctxt::new();
+        let cont = Container::from_ast(&ctxt, &ast, Derive::Deserialize);
+        ctxt.check().unwrap();
+        cont.unwrap()
+    };
+
+    let id = &cont.ident;
+
+    match &cont.data {
+        Data::Struct(Style::Struct, fields) => derive_oaschema_struct(id, fields),
+        Data::Struct(Style::Newtype, fields) => {
+            derive_oaschema_newtype(id, fields.first().unwrap())
+        }
+        Data::Struct(_, _) => {
+            panic!("#[ormlite] can only be used on structs with named fields or newtypes")
+        }
+        Data::Enum(variants) => derive_oaschema_enum(id, variants),
     }
 }
 
