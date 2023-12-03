@@ -15,11 +15,11 @@ pub struct StructNewType(Struct);
 #[derive(OaSchema, Serialize, Deserialize)]
 pub struct Foo {
     id: IntegerNewType,
-    #[openapi(inline)]
+    #[oasgen(inline)]
     prop_a: Struct,
-    #[openapi(inline)]
+    #[oasgen(inline)]
     prop_b: StructNewType,
-    #[openapi(skip)]
+    #[oasgen(skip)]
     prop_c: StructNewType,
 }
 

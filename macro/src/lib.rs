@@ -13,7 +13,7 @@ use crate::attr::{get_docstring, OperationAttributes};
 mod util;
 mod attr;
 
-#[proc_macro_derive(OaSchema, attributes(openapi))]
+#[proc_macro_derive(OaSchema, attributes(oasgen))]
 pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(item as DeriveInput);
 
@@ -44,7 +44,7 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
 
 
 #[proc_macro_attribute]
-pub fn openapi(attr: TokenStream, input: TokenStream) -> TokenStream {
+pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::ItemFn);
     let mut attr = syn::parse::<OperationAttributes>(attr).expect("Failed to parse operation attributes");
     attr.merge_attributes(&ast.attrs);

@@ -12,7 +12,7 @@ pub struct SendCodeResponse {
     pub found_account: bool,
 }
 
-#[openapi]
+#[oasgen]
 async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
     Json(SendCodeResponse { found_account: false })
 }

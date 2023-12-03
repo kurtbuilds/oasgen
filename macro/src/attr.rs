@@ -6,11 +6,13 @@ use syn::spanned::Spanned;
 
 /// Available attributes on a struct
 /// For attributes that have the same name as `serde` attributes, you can use either one.
-/// For example, `skip` will be applied with either `#[openapi(skip)]` or `#[serde(skip)]`.
+/// For example, `skip` will be applied with either `#[oasgen(skip)]` or `#[serde(skip)]`.
 #[derive(StructMeta, Default)]
 pub struct FieldAttributes {
     pub skip: bool,
     pub skip_serializing_if: Option<LitStr>,
+    /// By default, oasgen will use references when possible
+    /// If you want to inline the schema, use `#[oasgen(inline)]`
     pub inline: bool,
 }
 
@@ -42,7 +44,7 @@ impl TryFrom<&Vec<syn::Attribute>> for FieldAttributes {
 
     fn try_from(attrs: &Vec<syn::Attribute>) -> Result<Self, Self::Error> {
         let attrs = attrs.into_iter()
-            .filter(|a| a.path().get_ident().map(|i| i == "openapi").unwrap_or(false))
+            .filter(|a| a.path().get_ident().map(|i| i == "oasgen").unwrap_or(false))
             .map(|a| a.parse_args())
             .collect::<Result<Vec<FieldAttributes>, syn::Error>>()?;
         let mut attrs = attrs.into_iter();
@@ -54,7 +56,7 @@ impl TryFrom<&Vec<syn::Attribute>> for FieldAttributes {
     }
 }
 
-/// available parameters for #[openapi] attribute.
+/// available parameters for #[oasgen] attribute.
 #[derive(StructMeta, Default)]
 pub struct OperationAttributes {
     pub summary: Option<LitStr>,

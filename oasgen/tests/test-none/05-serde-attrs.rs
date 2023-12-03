@@ -17,16 +17,16 @@ pub enum Duration {
     #[serde(rename = "renamedWeek")]
     Week,
     Month,
-    #[openapi(skip)]
+    #[oasgen(skip)]
     Year,
 }
 
 #[derive(OaSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Foo {
-    #[openapi(inline)]
+    #[oasgen(inline)]
     camel_bar: Bar,
-    #[openapi(inline)]
+    #[oasgen(inline)]
     camel_duration: Duration,
     #[serde(flatten)]
     flattened: Bar,

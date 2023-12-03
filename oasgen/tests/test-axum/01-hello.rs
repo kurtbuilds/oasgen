@@ -14,7 +14,7 @@ pub struct SendCodeResponse {
 }
 
 /// Endpoint to login by sending a code to the given mobile number
-#[openapi(tags("auth"), summary = "A shorter description")]
+#[oasgen(tags("auth"), summary = "A shorter description")]
 async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
     Json(SendCodeResponse { found_account: false })
 }
