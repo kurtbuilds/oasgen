@@ -10,7 +10,7 @@ pub struct Foo {
     #[allow(dead_code)]
     #[serde(skip)]
     is_not_on_schema: String,
-    #[openapi(skip)]
+    #[oasgen(skip)]
     is_also_not_on_schema: String,
 }
 

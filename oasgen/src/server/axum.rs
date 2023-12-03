@@ -9,7 +9,7 @@ use openapiv3::OpenAPI;
 use axum::routing::MethodRouter;
 use axum::body::{Body, Full};
 
-use oasgen_core::{OaOperation, OaSchema};
+use oasgen_core::{OaSchema};
 
 use crate::Format;
 
@@ -45,33 +45,33 @@ impl<S> Server<Router<S>, OpenAPI>
         }
     }
 
-    pub fn get<F, T, Signature>(mut self, path: &str, handler: F) -> Self
+    pub fn get<F, T>(mut self, path: &str, handler: F) -> Self
         where
             F: Handler<T, S, Body>,
             T: 'static,
-            F: OaOperation<Signature> + Copy + Send,
+            F: Copy + Send,
     {
         self.add_handler_to_spec(path, Method::GET, &handler);
         self.add_route(path, routing::get(handler));
         self
     }
 
-    pub fn post<F, T, Signature>(mut self, path: &str, handler: F) -> Self
+    pub fn post<F, T>(mut self, path: &str, handler: F) -> Self
         where
             F: Handler<T, S, Body>,
             T: 'static,
-            F: OaOperation<Signature> + Copy + Send,
+            F: Copy + Send,
     {
         self.add_handler_to_spec(path, Method::POST, &handler);
         self.add_route(path, routing::post(handler));
         self
     }
 
-    pub fn put<F, T, Signature>(mut self, path: &str, handler: F) -> Self
+    pub fn put<F, T>(mut self, path: &str, handler: F) -> Self
         where
             F: Handler<T, S, Body>,
             T: 'static,
-            F: OaOperation<Signature> + Copy + Send,
+            F: Copy + Send,
     {
         self.add_handler_to_spec(path, Method::PUT, &handler);
         self.add_route(path, routing::put(handler));

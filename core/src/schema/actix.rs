@@ -1,12 +1,15 @@
 use openapiv3 as oa;
-use openapiv3::{ReferenceOr};
-use crate::{impl_oa_schema_none, impl_oa_schema_passthrough, OaSchema};
+use openapiv3::ReferenceOr;
 
-impl_oa_schema_passthrough!(actix_web::web::Json<T>);
+use crate::{impl_oa_schema_none, OaSchema};
 
-impl<T> OaSchema for actix_web::web::Data<T> {
-
+impl<T: OaSchema> OaSchema for actix_web::web::Json<T> {
+    fn body_schema() -> Option<ReferenceOr<oa::Schema>> {
+        T::schema_ref()
+    }
 }
+
+impl<T> OaSchema for actix_web::web::Data<T> {}
 
 impl_oa_schema_none!(actix_web::HttpRequest);
 impl_oa_schema_none!(actix_web::HttpResponse);
@@ -26,9 +29,7 @@ macro_rules! construct_path {
                                 description: None,
                                 required: true,
                                 deprecated: None,
-                                format: oa::ParameterSchemaOrContent::Schema(ReferenceOr::Item(
-                                    $arg::schema().unwrap(),
-                                )),
+                                format: oa::ParameterSchemaOrContent::Schema($arg::schema_ref().unwrap()),
                                 example: None,
                                 examples: Default::default(),
                                 explode: None,
@@ -55,9 +56,7 @@ impl<T: OaSchema> OaSchema for actix_web::web::Query<T> {
                 description: None,
                 required: false,
                 deprecated: None,
-                format: oa::ParameterSchemaOrContent::Schema(ReferenceOr::Item(
-                    T::schema().unwrap(),
-                )),
+                format: oa::ParameterSchemaOrContent::Schema(T::schema_ref().unwrap()),
                 example: None,
                 examples: Default::default(),
                 explode: None,

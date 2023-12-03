@@ -1,6 +1,6 @@
 [package]
 name = "oasgen-core"
-version = "0.13.0"
+version = "0.15.0"
 edition = "2021"
 authors = ["Kurt Wolf <kurtwolfbuilds@gmail.com>"]
 description = "Dependency of oasgen. Generates OpenAPI 3.0 spec based on Rust code. Works with actix-web, but architected to easily extend to other frameworks (or no framework)."
@@ -12,23 +12,23 @@ documentation = "https://docs.rs/oasgen"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+inventory = "0.3.13"
+indexmap = "2"
+openapiv3-extended = { version = "3" }
+structmeta = { version = "0.2.0" }
+syn = "2"
+serde_json = "1.0.100"
+http = "0.2.9"
 actix-web = { version = "4.3.1", optional = true }
 axum = { version = "0.6.18", optional = true }
-indexmap = "2"
-openapiv3 = { version = "3", package = "openapiv3-extended" }
 uuid = { optional = true, version = "1.4.0" }
 chrono = { optional = true, version = "0.4.26" }
 time = { optional = true, version = "0.3.23" }
 phonenumber = { optional = true, version = "0.3.2" }
-pin-project-lite = "0.2.10"
 sqlx = { version = "0.7", optional = true }
 sqlx-core = { version = "0.7", optional = true }
-structmeta = { version = "0.2.0" }
-syn = "2"
-serde_json = "1.0.100"
 tower-cookies = { version = "0.9.0", optional = true }
-http = "0.2.9"
-sid = { version = "0.3.0", optional = true, package = "sid2" }
+sid = { version = "0.4.0", optional = true, package = "sid2" }
 
 [features]
 actix = ["actix-web"]
