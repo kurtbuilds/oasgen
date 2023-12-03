@@ -4,7 +4,7 @@ use futures::future::{Ready, ok};
 use http::Method;
 use openapiv3::OpenAPI;
 
-use oasgen_core::{OaOperation, OaSchema};
+use oasgen_core::{OaSchema};
 
 use crate::Format;
 
@@ -55,22 +55,22 @@ impl Server<ActixRouter> {
         Self::new()
     }
 
-    pub fn get<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
+    pub fn get<F, Args>(mut self, path: &str, handler: F) -> Self
         where
             F: actix_web::Handler<Args>,
             Args: actix_web::FromRequest + 'static,
             F::Output: actix_web::Responder + 'static,
             <F as actix_web::Handler<Args>>::Output: OaSchema,
-            F: OaOperation<Signature> + Copy + Send,
+            F: Copy + Send,
     {
         self.add_handler_to_spec(path, Method::GET, &handler);
         self.router.0.push(build_inner_resource(path.to_string(), Method::GET, handler));
         self
     }
 
-    pub fn post<F, Args, Signature>(mut self, path: &str, handler: F) -> Self
+    pub fn post<F, Args>(mut self, path: &str, handler: F) -> Self
         where
-            F: actix_web::Handler<Args> + OaOperation<Signature> + Copy + Send,
+            F: actix_web::Handler<Args> + Copy + Send,
             Args: actix_web::FromRequest + 'static,
             F::Output: actix_web::Responder + 'static,
             <F as actix_web::Handler<Args>>::Output: OaSchema,

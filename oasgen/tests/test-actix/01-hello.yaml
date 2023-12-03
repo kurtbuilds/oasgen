@@ -1,0 +1,37 @@
+openapi: 3.0.3
+info:
+  title: ''
+  version: ''
+paths:
+  /hello:
+    post:
+      operationId: send_code
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCode'
+        required: true
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendCodeResponse'
+components:
+  schemas:
+    SendCode:
+      type: object
+      properties:
+        mobile:
+          type: string
+      required:
+      - mobile
+    SendCodeResponse:
+      type: object
+      properties:
+        found_account:
+          type: boolean
+      required:
+      - found_account

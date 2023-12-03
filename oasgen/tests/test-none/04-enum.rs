@@ -6,12 +6,13 @@ pub enum Duration {
     Day,
     Week,
     Month,
-    #[openapi(skip)]
+    #[oasgen(skip)]
     Year,
 }
 
 #[derive(OaSchema, Serialize, Deserialize)]
 pub struct Foo {
+    #[oasgen(inline)]
     duration: Duration,
 }
 

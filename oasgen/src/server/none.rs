@@ -1,5 +1,5 @@
 use http::Method;
-use oasgen_core::{OaOperation, OaSchema};
+use oasgen_core::{OaSchema};
 use crate::Server;
 
 
@@ -8,18 +8,12 @@ impl Server<()> {
         Self::new()
     }
 
-    pub fn get<F, Signature>(mut self, path: &str, handler: F) -> Self
-        where
-            F: OaOperation<Signature>,
-    {
+    pub fn get<F>(mut self, path: &str, handler: F) -> Self {
         self.add_handler_to_spec(path, Method::GET, &handler);
         self
     }
 
-    pub fn post<F, Signature>(mut self, path: &str, handler: F) -> Self
-        where
-            F: OaOperation<Signature>
-    {
+    pub fn post<F>(mut self, path: &str, handler: F) -> Self {
         self.add_handler_to_spec(path, Method::POST, &handler);
         self
     }
