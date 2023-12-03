@@ -112,8 +112,8 @@ async fn main() {
 
 ```toml
 [dependencies]
-# For actix-web support
-oasgen = ".."
+# At minimum, you probably want a server feature installed (axum, actix) to support that framework
+oasgen = { version = "..", features = []}
 ```
 
 There are several features for activating other libraries:
