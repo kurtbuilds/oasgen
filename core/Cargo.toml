@@ -28,12 +28,16 @@ phonenumber = { optional = true, version = "0.3.2" }
 sqlx = { version = "0.7", optional = true }
 sqlx-core = { version = "0.7", optional = true }
 tower-cookies = { version = "0.9.0", optional = true }
-sid = { version = "0.4.0", optional = true, package = "sid2" }
+sid2 = { version = "0.4.0", optional = true }
+serde_qs = { version = "0.12", optional = true }
 
 [features]
-actix = ["actix-web"]
+actix = ["actix-web", "serde_qs?/actix4"]
 json = ["sqlx-core/json", "sqlx-core"]
 cookies = ["tower-cookies"]
+qs = ["serde_qs"]
+sid = ["sid2"]
+axum = ["dep:axum", "serde_qs?/axum"]
 
 [dev-dependencies]
 assert_matches = "1.5.0"

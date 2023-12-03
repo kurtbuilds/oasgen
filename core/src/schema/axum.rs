@@ -23,22 +23,8 @@ impl OaSchema for axum::http::HeaderMap {}
 
 impl<T: OaSchema> OaSchema for axum::extract::Query<T> {
     fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
-        Some(vec![ReferenceOr::Item(oa::Parameter::Query {
-            parameter_data: oa::ParameterData {
-                name: "query".to_string(),
-                description: None,
-                required: false,
-                deprecated: None,
-                format: oa::ParameterSchemaOrContent::Schema(T::schema_ref().unwrap()),
-                example: None,
-                examples: Default::default(),
-                explode: None,
-                extensions: Default::default(),
-            },
-            allow_reserved: false,
-            style: oa::QueryStyle::Form,
-            allow_empty_value: None,
-        })])
+        let p = oa::Parameter::query("query", T::schema_ref().unwrap());
+        Some(vec![ReferenceOr::Item(p)])
     }
 }
 
@@ -51,20 +37,7 @@ macro_rules! construct_path {
             fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
                 Some(vec![
                     $(
-                        ReferenceOr::Item(oa::Parameter::Path {
-                            parameter_data: oa::ParameterData {
-                                name: stringify!($arg).to_string(),
-                                description: None,
-                                required: true,
-                                deprecated: None,
-                                format: oa::ParameterSchemaOrContent::Schema($arg::schema_ref().unwrap()),
-                                example: None,
-                                examples: Default::default(),
-                                explode: None,
-                                extensions: Default::default(),
-                            },
-                            style: oa::PathStyle::Simple,
-                        })
+                        ReferenceOr::Item(oa::Parameter::path(stringify!($arg), $arg::schema_ref().unwrap()))
                     ),+
                 ])
             }
@@ -77,3 +50,11 @@ construct_path!(A1, A2);
 construct_path!(A1, A2, A3);
 
 impl OaSchema for axum::http::request::Parts {}
+
+#[cfg(feature = "qs")]
+impl<T: OaSchema> OaSchema for serde_qs::axum::QsQuery<T> {
+    fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
+        let p = oa::Parameter::query("query", T::schema_ref().unwrap());
+        Some(vec![ReferenceOr::Item(p)])
+    }
+}
