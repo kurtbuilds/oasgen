@@ -23,11 +23,6 @@ mod http;
 mod sid;
 
 pub trait OaSchema {
-    // #[deprecated]
-    fn schema_name() -> Option<&'static str> {
-        None
-    }
-
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
         None
     }
@@ -36,8 +31,11 @@ pub trait OaSchema {
         None
     }
 
-    // #[deprecated]
     fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
+        None
+    }
+
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
         None
     }
 }
@@ -68,10 +66,6 @@ macro_rules! impl_oa_schema {
 macro_rules! impl_oa_schema_passthrough {
     ($t:ty) => {
         impl<T> $crate::OaSchema for $t where T: $crate::OaSchema {
-            fn schema_name() -> Option<&'static str> {
-                T::schema_name()
-            }
-
             fn schema_ref() -> Option<$crate::ReferenceOr<$crate::Schema>> {
                 T::schema_ref()
             }
@@ -129,10 +123,6 @@ impl<T> OaSchema for Vec<T> where T: OaSchema {
 
 
 impl<T> OaSchema for Option<T> where T: OaSchema {
-    fn schema_name() -> Option<&'static str> {
-        T::schema_name()
-    }
-
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
         let mut schema = T::schema_ref();
         let Some(s) = &mut schema else {
@@ -157,10 +147,6 @@ impl<T, E> OaSchema for Result<T, E>
     where
         T: OaSchema,
 {
-    fn schema_name() -> Option<&'static str> {
-        T::schema_name()
-    }
-
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
         T::schema_ref()
     }

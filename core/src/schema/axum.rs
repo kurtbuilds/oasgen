@@ -1,6 +1,12 @@
-use crate::{impl_oa_schema_passthrough, OaSchema};
+use openapiv3::{ReferenceOr, Schema};
 
-impl_oa_schema_passthrough!(axum::Json<T>);
+use crate::OaSchema;
+
+impl<T: OaSchema> OaSchema for axum::extract::Json<T> {
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        T::schema_ref()
+    }
+}
 
 impl<T> OaSchema for axum::extract::Extension<T> {}
 

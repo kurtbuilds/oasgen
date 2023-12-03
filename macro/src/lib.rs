@@ -8,6 +8,7 @@ use serde_derive_internals::{
 };
 use syn::*;
 use util::{derive_oaschema_enum, derive_oaschema_newtype, derive_oaschema_struct};
+use crate::attr::{get_docstring, OperationAttributes};
 
 mod util;
 mod attr;
@@ -24,122 +25,132 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     };
 
     let id = &cont.ident;
-
+    let docstring = get_docstring(&ast.attrs).expect("Failed to parse docstring");
     match &cont.data {
-        Data::Struct(Style::Struct, fields) => derive_oaschema_struct(id, fields),
-        Data::Struct(Style::Newtype, fields) => {
-            derive_oaschema_newtype(id, fields.first().unwrap())
+        Data::Struct(Style::Struct, fields) => {
+            derive_oaschema_struct(id, fields, docstring)
         }
-        Data::Enum(variants) => derive_oaschema_enum(id, variants),
+        Data::Struct(Style::Newtype, fields) => {
+            derive_oaschema_newtype(id, fields.first().unwrap(), docstring)
+        }
+        Data::Enum(variants) => {
+            derive_oaschema_enum(id, variants, docstring)
+        }
         Data::Struct(_, _) => {
             panic!("#[derive(OaSchema)] can only be used on structs with named fields or newtypes")
         }
     }
 }
 
-// #[proc_macro_attribute]
-// pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
-//     // quote! {
-//     //     #input
-//     // }
-//     input
-// }
 
 #[proc_macro_attribute]
-pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let span = proc_macro2::Span::call_site();
-
-    let mut ast = parse_macro_input!(input as syn::ItemFn);
-    let name = &ast.sig.ident;
-    let marker_struct_name = syn::Ident::new(&format!("__{}__metadata", name), name.span());
-
-    ast.sig.asyncness = None;
-    let output_type = match std::mem::replace(&mut ast.sig.output, ReturnType::Default) {
-        ReturnType::Type(_, ty) => ty,
-        ReturnType::Default => Box::new(syn::parse2(quote!(())).unwrap()),
-    };
-    ast.sig.output = ReturnType::Type(
-        Token![->](span),
-        Box::new(syn::parse2(quote!(::oasgen::TypedResponseFuture<impl std::future::Future<Output=#output_type>, #marker_struct_name>)).expect("parsing empty type")),
-    );
-
-    let block = &ast.block;
-    ast.block = Box::new(
-        syn::parse2(quote!({
-            ::oasgen::TypedResponseFuture::new(async move #block)
-        }))
-            .expect("parsing empty block"),
-    );
-
-    let public = ast.vis.clone();
-
-    let bounds = ast.sig.inputs.iter().map(|input| {
-        let ty = match input {
-            syn::FnArg::Receiver(_) => panic!("receiver not supported"),
-            syn::FnArg::Typed(ty) => &ty.ty,
-        };
-        quote! { #ty: ::oasgen::OaSchema }
-    });
-
-    // Leaving this code in, because we want to do something like this, but I can't figure out
-    // how to deal with the generic S on axum::extract::FromRequest<S>.
-    // However, if we figure this out, it'll give much nicer error messages.
-
-    // Right now, if you're missing a FromRequest/FromRequestParts impl on a parameter's type, you'll get an error message like this:
-    // --> server/src/bin/server.rs:137:30
-    //     |
-    //     137 |         .post("/auth/login", auth::login)
-    //     |          ----                ^^^^^^^^^^^ the trait `Handler<_, Pool<Postgres>>` is not implemented for fn item `fn(axum::extract::State<Pool<Postgres>>,
-    // RequestId, Uri, axum::Json<EmailPassword>) -> TypedResponseFuture<impl std::future::Future<Output = Result<hyper::Response<http_body::combinators::box_body::UnsyncBoxBody<axum::body::Bytes, axum::Error>>, server::prelude::Error>>, __login__metadata> {login}`
-
-    // which is... not great. We'd like to just assert at compile time that all fn arguments 1..n-1 implement FromRequestParts, and argument n implements FromRequest.
-
-    // let axum_bounds = if cfg!(feature = "axum") {
-    //     let bounds = ast.sig.inputs.iter().map(|input| {
-    //         let ty = match input {
-    //             syn::FnArg::Receiver(_) => panic!("receiver not supported"),
-    //             syn::FnArg::Typed(ty) => &ty.ty,
-    //         };
-    //         quote! { impl<S, B> ::oasgen::axum::CompileCheckImplementsExtract<S, B> for #ty {
-    //             type S;
-    //             type B;
-    //         } }
-    //     });
-    //     quote! {
-    //         #(#bounds )*
-    //     }
-    // } else {
-    //     TokenStream2::new()
-    // };
-
-    // println!("{}", ast.to_token_stream());
-    let marker_struct_impl_FunctionMetadata = quote! {
-        impl ::oasgen::FunctionMetadata for #marker_struct_name where
-            #output_type: OaSchema
-            #(, #bounds )*
-        {
-            fn operation_id() -> Option<&'static str> {
-                None
-            }
-
-            fn summary() -> Option<&'static str> {
-                None
-            }
-
-            fn description() -> Option<&'static str> {
-                None
-            }
+pub fn openapi(attr: TokenStream, input: TokenStream) -> TokenStream {
+    let ast = parse_macro_input!(input as syn::ItemFn);
+    let mut attr = syn::parse::<OperationAttributes>(attr).expect("Failed to parse operation attributes");
+    attr.merge_attributes(&ast.attrs);
+    let args = ast.sig.inputs.iter().map(|arg| {
+        match arg {
+            FnArg::Receiver(_) => panic!("Receiver arguments are not supported"),
+            FnArg::Typed(pat) => turbofish(pat.ty.as_ref().clone()),
         }
+    }).collect::<Vec<_>>();
+    let ret = match &ast.sig.output {
+        ReturnType::Default => None,
+        ReturnType::Type(_, ty) => Some(turbofish(ty.as_ref().clone())),
     };
-    let expanded = quote! {
-        // #axum_bounds
-
+    let body = args.last().map(|t| {
+        quote! {
+            op.add_request_body_json(#t::body_schema());
+        }
+    }).unwrap_or_default();
+    let comment = attr.description.as_ref().map(|s| s.value()).map(|c| {
+        quote! {
+            op.description = Some(#c.to_string());
+        }
+    }).unwrap_or_default();
+    let ret = ret.map(|t| {
+        quote! {
+            op.add_response_success_json(#t::body_schema());
+        }
+    }).unwrap_or_default();
+    let tags = attr.tags.iter().flatten().map(|s| {
+        quote! {
+            op.tags.push(#s.to_string());
+        }
+    }).collect::<Vec<_>>();
+    let summary = attr.summary.as_ref().map(|s| s.value()).map(|c| {
+        quote! {
+            op.summary = Some(#c.to_string());
+        }
+    }).unwrap_or_default();
+    let name = ast.sig.ident.to_string();
+    let submit = quote! {
+        ::oasgen::register_operation!(concat!(module_path!(), "::", #name), || {
+            let parameters: Vec<Option<Vec<::oasgen::ReferenceOr<::oasgen::Parameter>>>> = vec![
+                #( #args::parameters(), )*
+            ];
+            let parameters = parameters
+                .into_iter()
+                .flatten()
+                .flatten()
+                .collect::<Vec<::oasgen::ReferenceOr<::oasgen::Parameter>>>();
+            let mut op = ::oasgen::Operation::default();
+            op.operation_id = ::oasgen::__private::fn_path_to_op_id(concat!(module_path!(), "::", #name));
+            op.parameters = parameters;
+            #body
+            #ret
+            #comment
+            #summary
+            #(#tags)*
+            op
+        });
+    };
+    quote! {
         #ast
+        #submit
+    }.into()
+}
 
-        #[allow(non_camel_case_types)]
-        #public struct #marker_struct_name;
+/// insert the turbofish :: into a syn::Type
+/// example: axum::Json<User> becomes axum::Json::<User>
+fn turbofish(mut ty: Type) -> Type {
+    fn inner(ty: &mut Type) {
+        match ty {
+            Type::Path(TypePath { path, .. }) => {
+                let Some(last) = path.segments.last_mut() else {
+                    return;
+                };
+                match &mut last.arguments {
+                    PathArguments::AngleBracketed(args) => {
+                        args.colon2_token = Some(Default::default());
+                        for arg in args.args.iter_mut() {
+                            match arg {
+                                GenericArgument::Type(ty) => {
+                                    inner(ty);
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+    inner(&mut ty);
+    ty
+}
 
-        #marker_struct_impl_FunctionMetadata
-    };
-    TokenStream::from(expanded)
+#[cfg(test)]
+mod tests {
+    use quote::ToTokens;
+    use super::*;
+
+    #[test]
+    fn test_pathed_ty() {
+        let ty = syn::parse_str::<Type>("axum::Json<SendCode>").unwrap();
+        let ty = turbofish(ty);
+        assert_eq!(ty.to_token_stream().to_string(), "axum :: Json :: < SendCode >");
+    }
 }

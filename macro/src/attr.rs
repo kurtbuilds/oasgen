@@ -2,6 +2,7 @@ use quote::ToTokens;
 use structmeta::StructMeta;
 use syn::LitStr;
 use serde_derive_internals::ast::{Field};
+use syn::spanned::Spanned;
 
 /// Available attributes on a struct
 /// For attributes that have the same name as `serde` attributes, you can use either one.
@@ -51,4 +52,54 @@ impl TryFrom<&Vec<syn::Attribute>> for FieldAttributes {
         }
         Ok(result)
     }
+}
+
+/// available parameters for #[openapi] attribute.
+#[derive(StructMeta, Default)]
+pub struct OperationAttributes {
+    pub summary: Option<LitStr>,
+    pub description: Option<LitStr>,
+    pub tags: Option<Vec<LitStr>>,
+    pub operation_id: Option<LitStr>,
+    pub deprecated: bool,
+}
+
+impl OperationAttributes {
+    pub fn merge_attributes(&mut self, attrs: &[syn::Attribute]) {
+        let docstring = get_docstring(attrs).expect("Failed to parse docstring");
+        if let Some(docstring) = docstring {
+            self.description = Some(LitStr::new(&docstring, proc_macro2::Span::call_site()));
+        }
+    }
+}
+
+pub(crate) fn get_docstring(attrs: &[syn::Attribute]) -> syn::Result<Option<String>> {
+    let string_literals = attrs
+        .iter()
+        .filter_map(|attr| match attr.meta {
+            syn::Meta::NameValue(ref name_value) if name_value.path.is_ident("doc") => {
+                Some(&name_value.value)
+            }
+            _ => None,
+        })
+        .map(|expr| match expr {
+            syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(s), .. }) => Ok(s.value()),
+            other => Err(syn::Error::new(
+                other.span(),
+                "Doc comment is not a string literal",
+            )),
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    if string_literals.is_empty() {
+        return Ok(None);
+    }
+
+    let trimmed: Vec<_> = string_literals
+        .iter()
+        .flat_map(|lit| lit.split('\n').collect::<Vec<_>>())
+        .map(|line| line.trim().to_string())
+        .collect();
+
+    Ok(Some(trimmed.join("\n")))
 }

@@ -2,6 +2,7 @@ use oasgen::{OaSchema, Server, openapi};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 
+/// Send a code to a mobile number
 #[derive(Deserialize, OaSchema)]
 pub struct SendCode {
     pub mobile: String,
@@ -12,7 +13,8 @@ pub struct SendCodeResponse {
     pub found_account: bool,
 }
 
-#[openapi]
+/// Endpoint to login by sending a code to the given mobile number
+#[openapi(tags("auth"), summary = "A shorter description")]
 async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
     Json(SendCodeResponse { found_account: false })
 }
@@ -24,9 +26,10 @@ fn main() {
         .freeze()
         ;
 
-    let spec = server.openapi.clone();
-    let spec = serde_yaml::to_string(&spec).unwrap();
-    assert_eq!(spec.trim(), include_str!("01-hello.yaml"));
+    let spec = server.openapi.as_ref().clone();
+    let other = include_str!("01-hello.yaml");
+    let other = serde_yaml::from_str::<oasgen::OpenAPI>(other).unwrap();
+    assert_eq!(spec, other);
     let router = axum::Router::new()
         .merge(server.into_router());
     router.into_make_service();

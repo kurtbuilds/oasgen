@@ -6,6 +6,10 @@ paths:
   /hello:
     post:
       operationId: send_code
+      tags:
+        - auth
+      description: Endpoint to login by sending a code to the given mobile number
+      summary: A shorter description
       requestBody:
         content:
           application/json:
@@ -23,6 +27,7 @@ components:
   schemas:
     SendCode:
       type: object
+      description: Send a code to a mobile number
       properties:
         mobile:
           type: string

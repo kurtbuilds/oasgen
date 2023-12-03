@@ -1,3 +1,15 @@
+use std::collections::HashMap;
+use std::env::var;
+use std::future::Future;
+use std::path::Path;
+use std::sync::Arc;
+
+use http::Method;
+use once_cell::sync::Lazy;
+use openapiv3::{OpenAPI, Operation, ReferenceOr};
+
+use oasgen_core::{OaSchema};
+
 #[cfg_attr(docsrs, doc(cfg(feature = "actix")))]
 #[cfg(feature = "actix")]
 mod actix;
@@ -6,15 +18,14 @@ mod actix;
 mod axum;
 mod none;
 
-use std::env::var;
-use std::future::Future;
-use std::marker::PhantomData;
-use std::path::Path;
-use std::sync::Arc;
-use http::Method;
-use openapiv3::{Components, OpenAPI, ReferenceOr};
-
-use oasgen_core::{OaOperation, OaSchema};
+static OPERATION_LOOKUP: Lazy<HashMap<&'static str, &'static (dyn Fn() -> Operation + Send + Sync)>> = Lazy::new(|| {
+    let mut map = HashMap::new();
+    for flag in inventory::iter::<oasgen_core::OperationRegister> {
+        let z: &'static (dyn Fn() -> Operation + Send + Sync) = flag.constructor;
+        map.insert(flag.name, z);
+    }
+    map
+});
 
 pub struct Server<Router, Mutability = OpenAPI> {
     router: Router,
@@ -57,11 +68,14 @@ impl<Router: Clone> Clone for Server<Router, Arc<OpenAPI>> {
 
 impl<Router: Default> Server<Router, OpenAPI> {
     pub fn new() -> Self {
+        let mut openapi = OpenAPI::default();
+        let c = openapi.components_mut();
+        for flag in inventory::iter::<oasgen_core::SchemaRegister> {
+            let schema = (flag.constructor)();
+            c.schemas.insert(flag.name.to_string(), ReferenceOr::Item(schema));
+        }
         Self {
-            openapi: OpenAPI {
-                components: Some(Components::default()),
-                ..OpenAPI::default()
-            },
+            openapi,
             router: Router::default(),
             json_route: None,
             yaml_route: None,
@@ -74,9 +88,8 @@ impl<Router: Default> Server<Router, OpenAPI> {
     }
 
     /// Add a handler to the OpenAPI spec (which is different than mounting it to a server).
-    fn add_handler_to_spec<F, Signature>(&mut self, path: &str, method: Method, _handler: &F)
+    fn add_handler_to_spec<F>(&mut self, path: &str, method: Method, _handler: &F)
         where
-            F: OaOperation<Signature>,
     {
         let mut path = path.to_string();
         if path.contains(':') {
@@ -88,23 +101,20 @@ impl<Router: Default> Server<Router, OpenAPI> {
         }
         let item = self.openapi.paths.paths.entry(path.to_string()).or_default();
         let item = item.as_mut().expect("Currently don't support references for PathItem");
-        match method.as_str() {
-            "GET" => item.get = Some(F::operation()),
-            "POST" => item.post = Some(F::operation()),
-            "PUT" => item.put = Some(F::operation()),
-            "DELETE" => item.delete = Some(F::operation()),
-            "OPTIONS" => item.options = Some(F::operation()),
-            "HEAD" => item.head = Some(F::operation()),
-            "PATCH" => item.patch = Some(F::operation()),
-            "TRACE" => item.trace = Some(F::operation()),
-            _ => panic!("Unsupported method: {}", method),
-        }
+        let type_name = std::any::type_name::<F>();
+        let operation = OPERATION_LOOKUP.get(type_name)
 
-        for reference in F::references() {
-            if !self.openapi.schemas().contains_key(reference) {
-                let schema = F::referenced_schema(reference);
-                self.openapi.schemas_mut().insert(reference.to_string(), ReferenceOr::Item(schema));
-            }
+            .expect(&format!("Operation {} not found in OpenAPI spec.", type_name))();
+        match method.as_str() {
+            "GET" => item.get = Some(operation),
+            "POST" => item.post = Some(operation),
+            "PUT" => item.put = Some(operation),
+            "DELETE" => item.delete = Some(operation),
+            "OPTIONS" => item.options = Some(operation),
+            "HEAD" => item.head = Some(operation),
+            "PATCH" => item.patch = Some(operation),
+            "TRACE" => item.trace = Some(operation),
+            _ => panic!("Unsupported method: {}", method),
         }
     }
 

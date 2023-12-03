@@ -5,7 +5,7 @@ use quote::quote;
 use serde_derive_internals::ast::{Field, Variant};
 
 /// Create OaSchema derive token stream for a struct from ident and fields
-pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
+pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field], docstring: Option<String>) -> TokenStream {
     let properties = fields
         .into_iter()
         .map(|f| {
@@ -59,18 +59,20 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
     let submit = quote! {
         ::oasgen::register_schema!(#name, || <#ident as ::oasgen::OaSchema>::schema().unwrap());
     };
+    let description = docstring.map(|s| {
+        quote! {
+            o.schema_data.description = Some(#s.into());
+        }
+    }).unwrap_or_default();
     quote! {
         impl ::oasgen::OaSchema for #ident {
-            fn schema_name() -> Option<&'static str> {
-                Some(#name)
-            }
-
             fn schema_ref() -> Option<::oasgen::ReferenceOr<::oasgen::Schema>> {
                 Some(::oasgen::ReferenceOr::schema_ref(#name))
             }
 
             fn schema() -> Option<::oasgen::Schema> {
                 let mut o = ::oasgen::Schema::new_object();
+                #description
                 #(#properties)*
                 Some(o)
             }
@@ -80,24 +82,27 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
 }
 
 /// Create OaSchema derive token stream for a newtype struct from ident and a single inner field
-pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
+pub fn derive_oaschema_newtype(ident: &Ident, field: &Field, docstring: Option<String>) -> TokenStream {
     let ty = &field.ty;
     let name = ident.to_string();
     let submit = quote! {
         ::oasgen::register_schema!(#name, || <#ident as ::oasgen::OaSchema>::schema().unwrap());
     };
+    let docstring = docstring.map(|s| {
+        quote! {
+            o.schema_data.description = Some(#s.into());
+        }
+    }).unwrap_or_default();
     quote! {
         impl ::oasgen::OaSchema for #ident {
-            fn schema_name() -> Option<&'static str> {
-                Some(<#ty as OaSchema>::schema_name().expect(concat!("No schema name found for ", #name)))
-            }
-
             fn schema_ref() -> Option<::oasgen::ReferenceOr<::oasgen::Schema>> {
                 Some(<#ty as OaSchema>::schema_ref().expect(concat!("No schema ref found for ", #name)))
             }
 
             fn schema() -> Option<::oasgen::Schema> {
-                Some(<#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name)))
+                let mut o = <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name));
+                #docstring
+                Some(o)
             }
         }
         #submit
@@ -105,7 +110,7 @@ pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
 }
 
 /// Create OaSchema derive token stream for an enum from ident and variants
-pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream {
+pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], docstring: Option<String>) -> TokenStream {
     let str_variants = variants
         .into_iter()
         .map(|v| {
@@ -124,18 +129,21 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream 
     let submit = quote! {
         ::oasgen::register_schema!(#name, || <#ident as ::oasgen::OaSchema>::schema().unwrap());
     };
+    let docstring = docstring.map(|s| {
+        quote! {
+            o.schema_data.description = Some(#s.into());
+        }
+    }).unwrap_or_default();
     quote! {
         impl ::oasgen::OaSchema for #ident {
-            fn schema_name() -> Option<&'static str> {
-                Some(#name)
-            }
-
             fn schema_ref() -> Option<::oasgen::ReferenceOr<::oasgen::Schema>> {
                 Some(::oasgen::ReferenceOr::schema_ref(#name))
             }
 
             fn schema() -> Option<::oasgen::Schema> {
-                Some(::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]))
+                let o = ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]);
+                #docstring
+                Some(o)
             }
         }
         #submit
