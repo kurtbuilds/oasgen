@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
+use oa::AdditionalProperties;
 use openapiv3 as oa;
-use openapiv3::{ReferenceOr, Schema};
+use openapiv3::{ObjectType, ReferenceOr, Schema, SchemaData, SchemaKind, Type};
 
 #[cfg(feature = "actix")]
 mod actix;
@@ -7,16 +10,16 @@ mod actix;
 #[cfg(feature = "axum")]
 mod axum;
 
-#[cfg(feature = "sqlx")]
-mod sqlx;
-#[cfg(feature = "time")]
-mod time;
 #[cfg(feature = "chrono")]
 mod chrono;
 #[cfg(feature = "cookies")]
 mod cookies;
 #[cfg(feature = "phonenumber")]
 mod phonenumber;
+#[cfg(feature = "sqlx")]
+mod sqlx;
+#[cfg(feature = "time")]
+mod time;
 
 mod http;
 #[cfg(feature = "sid")]
@@ -80,8 +83,7 @@ macro_rules! impl_oa_schema_passthrough {
 #[macro_export]
 macro_rules! impl_oa_schema_none {
     ($t:ty) => {
-        impl $crate::OaSchema for $t {
-        }
+        impl $crate::OaSchema for $t {}
     };
 }
 
@@ -121,7 +123,6 @@ impl<T> OaSchema for Vec<T> where T: OaSchema {
     }
 }
 
-
 impl<T> OaSchema for Option<T> where T: OaSchema {
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
         let mut schema = T::schema_ref();
@@ -144,8 +145,8 @@ impl<T> OaSchema for Option<T> where T: OaSchema {
 }
 
 impl<T, E> OaSchema for Result<T, E>
-    where
-        T: OaSchema,
+where
+    T: OaSchema,
 {
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
         T::schema_ref()
@@ -153,6 +154,34 @@ impl<T, E> OaSchema for Result<T, E>
 
     fn schema() -> Option<Schema> {
         T::schema()
+    }
+}
+
+impl<K, V> OaSchema for HashMap<K, V>
+where
+    V: OaSchema,
+{
+    fn schema_ref() -> Option<ReferenceOr<Schema>> {
+        Some(ReferenceOr::Item(Schema {
+            schema_data: SchemaData::default(),
+            schema_kind: SchemaKind::Type(Type::Object(ObjectType {
+                additional_properties: Some(AdditionalProperties::Schema(Box::new(
+                    V::schema_ref()?
+                ))),
+                ..ObjectType::default()
+            })),
+        }))
+    }
+
+    fn schema() -> Option<Schema> {
+        Some(Schema {
+            schema_data: SchemaData::default(),
+            schema_kind: SchemaKind::Type(Type::Object(ObjectType {
+                additional_properties: V::schema()
+                    .map(|s| AdditionalProperties::Schema(Box::new(ReferenceOr::Item(s)))),
+                ..ObjectType::default()
+            })),
+        })
     }
 }
 
