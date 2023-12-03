@@ -43,3 +43,18 @@ macro_rules! register_operation {
         });
     };
 }
+
+/// Use this function if you just want the OpenAPI spec and don't need the server machinery.
+/// Note the server machinery is what registers the operations, so this schema only contains
+/// the schemas.
+pub fn generate_openapi() -> OpenAPI {
+    let mut openapi = OpenAPI::default();
+    let c = openapi.components.as_mut().unwrap();
+    for flag in inventory::iter::<oasgen_core::SchemaRegister> {
+        let schema = (flag.constructor)();
+        c.schemas.insert(flag.name.to_string(), ReferenceOr::Item(schema));
+    }
+    // This is required to have stable diffing between builds
+    c.schemas.sort_keys();
+    openapi
+}

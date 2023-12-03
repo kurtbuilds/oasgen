@@ -1,0 +1,13 @@
+oneOf:
+- type: object
+  properties:
+    Days:
+      type: integer
+  required:
+  - Days
+- type: object
+  properties:
+    Months:
+      type: integer
+  required:
+  - Months

@@ -24,6 +24,10 @@ name = "oasgen_test_no_framework"
 path = "tests/test-none.rs"
 
 [[test]]
+name = "test-enum"
+path = "tests/test-enum.rs"
+
+[[test]]
 name = "oasgen_test_actix"
 path = "tests/test-actix.rs"
 required-features = ["actix"]

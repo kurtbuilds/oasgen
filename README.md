@@ -161,8 +161,8 @@ pub struct User {
 impl OaSchema for User {
     fn schema() -> Option<Schema> {
         let mut schema = Schema::new_object();
-        schema.add_property("id", Schema::new_integer());
-        schema.add_property("name", Schema::new_string());
+        schema.add_property("id", ReferenceOr::Item(Schema::new_integer()));
+        schema.add_property("name", ReferenceOr::Item(Schema::new_string()));
         Some(schema)
     }
 }

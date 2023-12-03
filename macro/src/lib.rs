@@ -6,9 +6,10 @@ use serde_derive_internals::{
     ast::{Container, Data, Style},
     Ctxt, Derive,
 };
-use syn::*;
-use util::{derive_oaschema_enum, derive_oaschema_newtype, derive_oaschema_struct};
+use syn::{PathArguments, GenericArgument, TypePath, Type, ReturnType, FnArg, parse_macro_input, DeriveInput};
+use util::{derive_oaschema_enum, derive_oaschema_struct};
 use crate::attr::{get_docstring, OperationAttributes};
+use crate::util::derive_oaschema_newtype;
 
 mod util;
 mod attr;
@@ -31,13 +32,13 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
             derive_oaschema_struct(id, fields, docstring)
         }
         Data::Struct(Style::Newtype, fields) => {
-            derive_oaschema_newtype(id, fields.first().unwrap(), docstring)
+            derive_oaschema_newtype(id, fields.first().unwrap())
         }
         Data::Enum(variants) => {
-            derive_oaschema_enum(id, variants, docstring)
+            derive_oaschema_enum(id, variants, &cont.attrs.tag(), docstring)
         }
-        Data::Struct(_, _) => {
-            panic!("#[derive(OaSchema)] can only be used on structs with named fields or newtypes")
+        Data::Struct(Style::Tuple | Style::Unit, _) => {
+            panic!("#[derive(OaSchema)] can not be used on tuple structs")
         }
     }
 }
