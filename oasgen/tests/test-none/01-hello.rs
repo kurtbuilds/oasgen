@@ -1,4 +1,4 @@
-use oasgen::{OaSchema, Server, openapi};
+use oasgen::{OaSchema, Server, oasgen};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, OaSchema)]

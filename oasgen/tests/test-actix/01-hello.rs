@@ -1,4 +1,4 @@
-use oasgen::{OaSchema, Server, openapi};
+use oasgen::{OaSchema, Server, oasgen};
 use actix_web::web::Json;
 use serde::{Deserialize, Serialize};
 
