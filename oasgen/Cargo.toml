@@ -29,12 +29,13 @@ path = "tests/test-actix.rs"
 required-features = ["actix"]
 
 [dependencies]
+inventory = "0.3.13"
 actix-web = { version = "4.3.1", optional = true }
 axum = { version = "0.6.18", optional = true }
 futures = "0.3.28"
 http = "0.2.9"
 indexmap = "2"
-openapiv3 = { version = "3", package = "openapiv3-extended" }
+openapiv3-extended = { git = "https://github.com/kurtbuilds/openapiv3"}
 oasgen-core = { path = "../core", version = "0.14.0"}
 oasgen-macro = { path = "../macro", version = "0.14.0"}
 serde = { version = "1.0.171", features = ["derive"] }

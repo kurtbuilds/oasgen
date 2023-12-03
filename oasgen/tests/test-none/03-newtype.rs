@@ -15,7 +15,9 @@ pub struct StructNewType(Struct);
 #[derive(OaSchema, Serialize, Deserialize)]
 pub struct Foo {
     id: IntegerNewType,
+    #[openapi(inline)]
     prop_a: Struct,
+    #[openapi(inline)]
     prop_b: StructNewType,
     #[openapi(skip)]
     prop_c: StructNewType,

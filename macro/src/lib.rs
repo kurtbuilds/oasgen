@@ -10,6 +10,7 @@ use syn::*;
 use util::{derive_oaschema_enum, derive_oaschema_newtype, derive_oaschema_struct};
 
 mod util;
+mod attr;
 
 #[proc_macro_derive(OaSchema, attributes(openapi))]
 pub fn derive_oaschema(item: TokenStream) -> TokenStream {
@@ -29,19 +30,26 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
         Data::Struct(Style::Newtype, fields) => {
             derive_oaschema_newtype(id, fields.first().unwrap())
         }
-        Data::Struct(_, _) => {
-            panic!("#[ormlite] can only be used on structs with named fields or newtypes")
-        }
         Data::Enum(variants) => derive_oaschema_enum(id, variants),
+        Data::Struct(_, _) => {
+            panic!("#[derive(OaSchema)] can only be used on structs with named fields or newtypes")
+        }
     }
 }
+
+// #[proc_macro_attribute]
+// pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
+//     // quote! {
+//     //     #input
+//     // }
+//     input
+// }
 
 #[proc_macro_attribute]
 pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
     let span = proc_macro2::Span::call_site();
 
     let mut ast = parse_macro_input!(input as syn::ItemFn);
-    // println!("{:#?}", _args);
     let name = &ast.sig.ident;
     let marker_struct_name = syn::Ident::new(&format!("__{}__metadata", name), name.span());
 
@@ -60,7 +68,7 @@ pub fn openapi(_args: TokenStream, input: TokenStream) -> TokenStream {
         syn::parse2(quote!({
             ::oasgen::TypedResponseFuture::new(async move #block)
         }))
-        .expect("parsing empty block"),
+            .expect("parsing empty block"),
     );
 
     let public = ast.vis.clone();

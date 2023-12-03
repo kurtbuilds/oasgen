@@ -1,4 +1,4 @@
-use oasgen_core::OpenApiAttributes;
+use crate::attr::FieldAttributes;
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::quote;
@@ -9,16 +9,16 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
     let properties = fields
         .into_iter()
         .map(|f| {
-            let openapi_attrs = OpenApiAttributes::try_from(&f.original.attrs).unwrap();
-
-            if openapi_attrs.skip {
+            let mut attr = FieldAttributes::try_from(&f.original.attrs).unwrap();
+            attr.merge_serde(&f);
+            if attr.skip || f.attrs.skip_serializing() {
                 return quote! {};
             }
 
             let name = f.attrs.name().deserialize_name();
             let ty = f.ty;
             let schema = quote! {
-                <#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name))
+                <#ty as ::oasgen::OaSchema>::schema().expect(concat!("No schema found for ", #name))
             };
 
             if f.attrs.flatten() {
@@ -26,23 +26,29 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
                     if let ::oasgen::SchemaKind::Type(::oasgen::Type::Object(::oasgen::ObjectType { properties, required, .. }))
                             = #schema.schema_kind {
                         for (name, schema) in properties.into_iter() {
-                            match schema {
-                                ::oasgen::ReferenceOr::Item(mut item) => o.add_property(&name, item.clone()).unwrap(),
-                                ::oasgen::ReferenceOr::Reference {..} => panic!("Cannot flatten a reference")
-                            }
+                            let schema = schema.into_item().expect("Cannot flatten a reference");
+                            o.add_property(&name, ::oasgen::ReferenceOr::Item(schema)).unwrap();
                         }
                         o.required_mut().unwrap().extend_from_slice(&required);
                     }
                 }
             } else {
-                let required = if openapi_attrs.skip || openapi_attrs.skip_serializing_if.is_some() {
+                let required = if attr.skip || attr.skip_serializing_if.is_some() {
                     quote! {}
                 } else {
                     quote! { o.required_mut().unwrap().push(#name.to_string()); }
                 };
-
+                let schema_ref = if attr.inline {
+                    quote! {
+                        ::oasgen::ReferenceOr::Item(<#ty as ::oasgen::OaSchema>::schema().expect(concat!("No schema ref found for ", #name)))
+                    }
+                } else {
+                    quote! {
+                        <#ty as ::oasgen::OaSchema>::schema_ref().expect(concat!("No schema ref found for ", #name))
+                    }
+                };
                 quote! {
-                    o.add_property(#name, #schema).unwrap();
+                    o.add_property(#name, #schema_ref).unwrap();
                     #required
                 }
             }
@@ -50,15 +56,17 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
         .collect::<Vec<_>>();
 
     let name = ident.to_string();
-    let ref_name = format!("#/components/schemas/{}", ident);
-    let expanded = quote! {
+    let submit = quote! {
+        ::oasgen::register_schema!(#name, || <#ident as ::oasgen::OaSchema>::schema().unwrap());
+    };
+    quote! {
         impl ::oasgen::OaSchema for #ident {
             fn schema_name() -> Option<&'static str> {
                 Some(#name)
             }
 
             fn schema_ref() -> Option<::oasgen::ReferenceOr<::oasgen::Schema>> {
-                Some(::oasgen::ReferenceOr::ref_(#ref_name))
+                Some(::oasgen::ReferenceOr::schema_ref(#name))
             }
 
             fn schema() -> Option<::oasgen::Schema> {
@@ -67,15 +75,18 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field]) -> TokenStream {
                 Some(o)
             }
         }
-    };
-    TokenStream::from(expanded)
+        #submit
+    }.into()
 }
 
 /// Create OaSchema derive token stream for a newtype struct from ident and a single inner field
 pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
     let ty = &field.ty;
     let name = ident.to_string();
-    let expanded = quote! {
+    let submit = quote! {
+        ::oasgen::register_schema!(#name, || <#ident as ::oasgen::OaSchema>::schema().unwrap());
+    };
+    quote! {
         impl ::oasgen::OaSchema for #ident {
             fn schema_name() -> Option<&'static str> {
                 Some(<#ty as OaSchema>::schema_name().expect(concat!("No schema name found for ", #name)))
@@ -89,8 +100,8 @@ pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
                 Some(<#ty as OaSchema>::schema().expect(concat!("No schema found for ", #name)))
             }
         }
-    };
-    TokenStream::from(expanded)
+        #submit
+    }.into()
 }
 
 /// Create OaSchema derive token stream for an enum from ident and variants
@@ -98,7 +109,7 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream 
     let str_variants = variants
         .into_iter()
         .map(|v| {
-            let openapi_attrs = OpenApiAttributes::try_from(&v.original.attrs).unwrap();
+            let openapi_attrs = FieldAttributes::try_from(&v.original.attrs).unwrap();
 
             if openapi_attrs.skip {
                 return quote! {};
@@ -110,23 +121,23 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant]) -> TokenStream 
         .collect::<Vec<_>>();
 
     let name = ident.to_string();
-    let ref_name = format!("#/components/schemas/{}", ident);
-    let expanded = quote! {
+    let submit = quote! {
+        ::oasgen::register_schema!(#name, || <#ident as ::oasgen::OaSchema>::schema().unwrap());
+    };
+    quote! {
         impl ::oasgen::OaSchema for #ident {
             fn schema_name() -> Option<&'static str> {
                 Some(#name)
             }
 
             fn schema_ref() -> Option<::oasgen::ReferenceOr<::oasgen::Schema>> {
-                Some(::oasgen::ReferenceOr::ref_(#ref_name))
+                Some(::oasgen::ReferenceOr::schema_ref(#name))
             }
 
             fn schema() -> Option<::oasgen::Schema> {
-                let mut o = ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]);
-                Some(o)
+                Some(::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]))
             }
         }
-    };
-
-    TokenStream::from(expanded)
+        #submit
+    }.into()
 }

@@ -12,6 +12,7 @@ pub enum Duration {
 
 #[derive(OaSchema, Serialize, Deserialize)]
 pub struct Foo {
+    #[openapi(inline)]
     duration: Duration,
 }
 

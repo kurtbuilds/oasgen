@@ -24,7 +24,9 @@ pub enum Duration {
 #[derive(OaSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Foo {
+    #[openapi(inline)]
     camel_bar: Bar,
+    #[openapi(inline)]
     camel_duration: Duration,
     #[serde(flatten)]
     flattened: Bar,

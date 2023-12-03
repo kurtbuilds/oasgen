@@ -15,10 +15,33 @@ pub use server::Server;
 #[cfg_attr(docsrs, doc(cfg(feature = "swagger-ui")))]
 pub use swagger_ui;
 
-// #[cfg(feature = "axum")]
-// pub mod axum {
-//     pub trait CompileCheckImplementsExtract<S, B>: axum::extract::FromRequest<S, B> {
-//         type S;
-//         type B;
-//     }
-// }
+pub mod __private {
+    pub use inventory;
+    pub use oasgen_core::{SchemaRegister, OperationRegister};
+}
+
+pub fn build_schema() -> OpenAPI {
+    let mut s = OpenAPI::default();
+    let c = s.components_mut();
+
+    for flag in inventory::iter::<oasgen_core::SchemaRegister> {
+        let schema = (flag.constructor)();
+        c.schemas.insert(flag.name.to_string(), ReferenceOr::Item(schema));
+    }
+    s
+}
+
+pub fn build_yaml() -> String {
+    let s = build_schema();
+    serde_yaml::to_string(&s).unwrap()
+}
+
+#[macro_export]
+macro_rules! register_schema {
+    ($name:literal, $constructor:expr) => {
+        ::oasgen::__private::inventory::submit!(::oasgen::__private::SchemaRegister {
+            name: $name,
+            constructor: &$constructor,
+        });
+    };
+}
