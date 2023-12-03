@@ -28,10 +28,15 @@ name = "oasgen_test_actix"
 path = "tests/test-actix.rs"
 required-features = ["actix"]
 
+[[test]]
+name = "oasgen_test_axum"
+path = "tests/test-axum.rs"
+required-features = ["axum"]
+
 [dependencies]
 inventory = "0.3.13"
 actix-web = { version = "4.3.1", optional = true }
-axum = { version = "0.6.18", optional = true }
+axum = { version = "0.6.18", optional = true, features = ["json"] }
 futures = "0.3.28"
 http = "0.2.9"
 indexmap = "2"
