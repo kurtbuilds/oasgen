@@ -74,6 +74,8 @@ impl<Router: Default> Server<Router, OpenAPI> {
             let schema = (flag.constructor)();
             c.schemas.insert(flag.name.to_string(), ReferenceOr::Item(schema));
         }
+        // This is required to have stable diffing between builds
+        c.schemas.sort_keys();
         Self {
             openapi,
             router: Router::default(),

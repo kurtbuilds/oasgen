@@ -23,14 +23,12 @@ fn main() {
     use pretty_assertions::assert_eq;
     let server = Server::axum()
         .post("/hello", send_code)
-        .freeze()
         ;
 
-    let spec = server.openapi.as_ref().clone();
-    let other = include_str!("01-hello.yaml");
-    let other = serde_yaml::from_str::<oasgen::OpenAPI>(other).unwrap();
-    assert_eq!(spec, other);
+    let spec = &server.openapi;
+    let other = serde_yaml::from_str::<oasgen::OpenAPI>(include_str!("01-hello.yaml")).unwrap();
+    assert_eq!(spec, &other);
     let router = axum::Router::new()
-        .merge(server.into_router());
+        .merge(server.freeze().into_router());
     router.into_make_service();
 }

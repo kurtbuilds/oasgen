@@ -60,17 +60,23 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     };
     let body = args.last().map(|t| {
         quote! {
-            op.add_request_body_json(#t::body_schema());
+            let body = #t::body_schema();
+            if body.is_some() {
+                op.add_request_body_json(#t::body_schema());
+            }
         }
     }).unwrap_or_default();
-    let comment = attr.description.as_ref().map(|s| s.value()).map(|c| {
+    let description = attr.description.as_ref().map(|s| s.value()).map(|c| {
         quote! {
             op.description = Some(#c.to_string());
         }
     }).unwrap_or_default();
     let ret = ret.map(|t| {
         quote! {
-            op.add_response_success_json(#t::body_schema());
+            let body = #t::body_schema();
+            if body.is_some() {
+                op.add_response_success_json(body);
+            }
         }
     }).unwrap_or_default();
     let tags = attr.tags.iter().flatten().map(|s| {
@@ -99,7 +105,7 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
             op.parameters = parameters;
             #body
             #ret
-            #comment
+            #description
             #summary
             #(#tags)*
             op
