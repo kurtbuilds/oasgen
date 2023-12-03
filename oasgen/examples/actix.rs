@@ -4,7 +4,7 @@
 // forwarding to an inner mod fixes the issue.
 #[cfg(feature = "actix")]
 mod inner {
-    use oasgen::{OaSchema, Server, openapi};
+    use oasgen::{OaSchema, Server, oasgen};
     use actix_web::web::Json;
     use serde::{Deserialize, Serialize};
 
@@ -24,12 +24,12 @@ mod inner {
         pub found_account: bool,
     }
 
-    #[openapi]
+    #[oasgen]
     async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
         Json(SendCodeResponse { found_account: false })
     }
 
-    #[openapi]
+    #[oasgen]
     async fn verify_code(_body: Json<VerifyCode>) -> Json<()> {
         Json(())
     }

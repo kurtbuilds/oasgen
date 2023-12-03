@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: ''
+  version: ''
+paths:
+  /tasks:
+    get:
+      operationId: list_tasks
+      parameters:
+        - in: query
+          name: query
+          schema:
+            $ref: '#/components/schemas/TaskFilter'
+          style: form
+      responses: {}
+components:
+  schemas:
+    TaskFilter:
+      description: Send a code to a mobile number
+      type: object
+      properties:
+        completed:
+          type: boolean
+        assigned_to:
+          type: integer
+      required:
+        - completed
+        - assigned_to

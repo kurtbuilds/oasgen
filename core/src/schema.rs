@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use oa::AdditionalProperties;
 use openapiv3 as oa;
-use openapiv3::{ArrayType, ObjectType, ReferenceOr, Schema, SchemaData, SchemaKind, Type};
+use openapiv3::{ObjectType, ReferenceOr, Schema, SchemaData, SchemaKind, Type};
 
 #[cfg(feature = "actix")]
 mod actix;
@@ -26,10 +26,6 @@ mod http;
 mod sid;
 
 pub trait OaSchema {
-    fn schema_name() -> Option<&'static str> {
-        None
-    }
-
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
         None
     }
@@ -41,7 +37,18 @@ pub trait OaSchema {
     fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
         None
     }
+
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        None
+    }
 }
+
+pub struct SchemaRegister {
+    pub name: &'static str,
+    pub constructor: &'static (dyn Sync + Send + Fn() -> Schema),
+}
+
+inventory::collect!(SchemaRegister);
 
 #[macro_export]
 macro_rules! impl_oa_schema {
@@ -61,14 +68,7 @@ macro_rules! impl_oa_schema {
 #[macro_export]
 macro_rules! impl_oa_schema_passthrough {
     ($t:ty) => {
-        impl<T> $crate::OaSchema for $t
-        where
-            T: $crate::OaSchema,
-        {
-            fn schema_name() -> Option<&'static str> {
-                T::schema_name()
-            }
-
+        impl<T> $crate::OaSchema for $t where T: $crate::OaSchema {
             fn schema_ref() -> Option<$crate::ReferenceOr<$crate::Schema>> {
                 T::schema_ref()
             }
@@ -103,45 +103,37 @@ impl_oa_schema!(f64, Schema::new_number());
 
 impl_oa_schema!(String, Schema::new_string());
 
-impl<T> OaSchema for Vec<T>
-where
-    T: OaSchema,
-{
+impl<T> OaSchema for Vec<T> where T: OaSchema {
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
-        Some(ReferenceOr::Item(Schema {
-            schema_data: SchemaData::default(),
-            schema_kind: SchemaKind::Type(Type::Array(ArrayType {
-                items: T::schema_ref().map(|r| r.boxed()),
-                ..ArrayType::default()
-            })),
-        }))
+        let schema = if let Some(schema) = T::schema_ref() {
+            Schema::new_array(schema)
+        } else {
+            Schema::new_any_array()
+        };
+        Some(ReferenceOr::Item(schema))
     }
 
     fn schema() -> Option<Schema> {
-        if let Some(schema) = T::schema() {
-            Some(Schema::new_array(schema))
+        let schema = if let Some(schema) = T::schema() {
+            Schema::new_array(ReferenceOr::Item(schema))
         } else {
-            Some(Schema {
-                schema_data: SchemaData::default(),
-                schema_kind: SchemaKind::Type(Type::Array(ArrayType {
-                    items: None,
-                    ..ArrayType::default()
-                })),
-            })
-        }
+            Schema::new_any_array()
+        };
+        Some(schema)
     }
 }
 
-impl<T> OaSchema for Option<T>
-where
-    T: OaSchema,
-{
-    fn schema_name() -> Option<&'static str> {
-        T::schema_name()
-    }
-
+impl<T> OaSchema for Option<T> where T: OaSchema {
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
-        T::schema_ref()
+        let mut schema = T::schema_ref();
+        let Some(s) = &mut schema else {
+            return schema
+        };
+        let Some(s) = s.as_mut() else {
+            return schema
+        };
+        s.schema_data.nullable = true;
+        schema
     }
 
     fn schema() -> Option<Schema> {
@@ -156,10 +148,6 @@ impl<T, E> OaSchema for Result<T, E>
 where
     T: OaSchema,
 {
-    fn schema_name() -> Option<&'static str> {
-        T::schema_name()
-    }
-
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
         T::schema_ref()
     }

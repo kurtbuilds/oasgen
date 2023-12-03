@@ -1,5 +1,6 @@
 use oasgen::OaSchema;
 use serde::{Deserialize, Serialize};
+use oasgen::generate_openapi;
 
 #[derive(OaSchema, Serialize, Deserialize)]
 pub enum Duration {
@@ -49,14 +50,25 @@ pub enum Untagged {
 #[derive(OaSchema, Serialize, Deserialize)]
 pub struct Foo {
     externally_tagged: ExternallyTagged,
+    #[oasgen(inline)]
+    externally_tagged_inline: ExternallyTagged,
+
     internally_tagged: InternallyTagged,
+    #[oasgen(inline)]
+    internally_tagged_inline: InternallyTagged,
+
     adjacently_tagged: AdjacentlyTagged,
+    #[oasgen(inline)]
+    adjacently_tagged_inline: AdjacentlyTagged,
+
     untagged: Untagged,
+    #[oasgen(inline)]
+    untagged_inline: Untagged,
 }
 
 fn main() {
     use pretty_assertions::assert_eq;
-    let schema = Foo::schema().unwrap();
+    let schema = generate_openapi();
     let spec = serde_yaml::to_string(&schema).unwrap();
-    assert_eq!(spec.trim(), include_str!("06-complex-enum.yaml"));
+    assert_eq!(spec, include_str!("06-complex-enum.yaml"));
 }

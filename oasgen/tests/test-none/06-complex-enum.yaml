@@ -1,28 +1,337 @@
-type: object
-properties:
-  externally_tagged:
-    oneOf:
-    - type: object
+openapi: 3.0.3
+info:
+  title: ''
+  version: ''
+paths: {}
+components:
+  schemas:
+    AdjacentlyTagged:
+      oneOf:
+      - type: object
+        properties:
+          t:
+            type: string
+            enum:
+            - A
+          c:
+            type: integer
+        required:
+        - t
+        - c
+      - type: object
+        properties:
+          t:
+            type: string
+            enum:
+            - C
+          c:
+            type: object
+            properties:
+              test:
+                type: integer
+            required:
+            - test
+        required:
+        - t
+        - c
+      - type: object
+        properties:
+          t:
+            type: string
+            enum:
+            - D
+          c:
+            oneOf:
+            - type: object
+              properties:
+                Days:
+                  type: integer
+              required:
+              - Days
+            - type: object
+              properties:
+                Months:
+                  type: integer
+              required:
+              - Months
+        required:
+        - t
+        - c
+      - type: object
+        properties:
+          t:
+            type: string
+            enum:
+            - B
+            - E
+        required:
+        - t
+    Duration:
+      oneOf:
+      - type: object
+        properties:
+          Days:
+            type: integer
+        required:
+        - Days
+      - type: object
+        properties:
+          Months:
+            type: integer
+        required:
+        - Months
+    ExternallyTagged:
+      oneOf:
+      - type: object
+        properties:
+          A:
+            type: integer
+        required:
+        - A
+      - type: object
+        properties:
+          C:
+            type: object
+            properties:
+              test:
+                type: integer
+            required:
+            - test
+        required:
+        - C
+      - type: object
+        properties:
+          D:
+            oneOf:
+            - type: object
+              properties:
+                Days:
+                  type: integer
+              required:
+              - Days
+            - type: object
+              properties:
+                Months:
+                  type: integer
+              required:
+              - Months
+        required:
+        - D
+      - type: string
+        enum:
+        - B
+        - E
+    Foo:
+      type: object
       properties:
-        A:
-          type: integer
-      required:
-      - A
-    - type: object
-      properties:
-        C:
-          type: object
-          properties:
-            test:
-              type: integer
-          required:
-          - test
-      required:
-      - C
-    - type: object
-      properties:
-        D:
+        externally_tagged:
+          $ref: '#/components/schemas/ExternallyTagged'
+        externally_tagged_inline:
           oneOf:
+          - type: object
+            properties:
+              A:
+                type: integer
+            required:
+            - A
+          - type: object
+            properties:
+              C:
+                type: object
+                properties:
+                  test:
+                    type: integer
+                required:
+                - test
+            required:
+            - C
+          - type: object
+            properties:
+              D:
+                oneOf:
+                - type: object
+                  properties:
+                    Days:
+                      type: integer
+                  required:
+                  - Days
+                - type: object
+                  properties:
+                    Months:
+                      type: integer
+                  required:
+                  - Months
+            required:
+            - D
+          - type: string
+            enum:
+            - B
+            - E
+        internally_tagged:
+          $ref: '#/components/schemas/InternallyTagged'
+        internally_tagged_inline:
+          oneOf:
+          - type: object
+            properties:
+              test:
+                type: integer
+              type:
+                type: string
+                enum:
+                - C
+            required:
+            - test
+            - type
+          - allOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - D
+              required:
+              - type
+            - oneOf:
+              - type: object
+                properties:
+                  Days:
+                    type: integer
+                required:
+                - Days
+              - type: object
+                properties:
+                  Months:
+                    type: integer
+                required:
+                - Months
+          - type: object
+            properties:
+              type:
+                type: string
+                enum:
+                - B
+                - E
+            required:
+            - type
+        adjacently_tagged:
+          $ref: '#/components/schemas/AdjacentlyTagged'
+        adjacently_tagged_inline:
+          oneOf:
+          - type: object
+            properties:
+              t:
+                type: string
+                enum:
+                - A
+              c:
+                type: integer
+            required:
+            - t
+            - c
+          - type: object
+            properties:
+              t:
+                type: string
+                enum:
+                - C
+              c:
+                type: object
+                properties:
+                  test:
+                    type: integer
+                required:
+                - test
+            required:
+            - t
+            - c
+          - type: object
+            properties:
+              t:
+                type: string
+                enum:
+                - D
+              c:
+                oneOf:
+                - type: object
+                  properties:
+                    Days:
+                      type: integer
+                  required:
+                  - Days
+                - type: object
+                  properties:
+                    Months:
+                      type: integer
+                  required:
+                  - Months
+            required:
+            - t
+            - c
+          - type: object
+            properties:
+              t:
+                type: string
+                enum:
+                - B
+                - E
+            required:
+            - t
+        untagged:
+          $ref: '#/components/schemas/Untagged'
+        untagged_inline:
+          oneOf:
+          - type: integer
+          - type: object
+            properties:
+              test:
+                type: integer
+            required:
+            - test
+          - oneOf:
+            - type: object
+              properties:
+                Days:
+                  type: integer
+              required:
+              - Days
+            - type: object
+              properties:
+                Months:
+                  type: integer
+              required:
+              - Months
+      required:
+      - externally_tagged
+      - externally_tagged_inline
+      - internally_tagged
+      - internally_tagged_inline
+      - adjacently_tagged
+      - adjacently_tagged_inline
+      - untagged
+      - untagged_inline
+    InternallyTagged:
+      oneOf:
+      - type: object
+        properties:
+          test:
+            type: integer
+          type:
+            type: string
+            enum:
+            - C
+        required:
+        - test
+        - type
+      - allOf:
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+              - D
+          required:
+          - type
+        - oneOf:
           - type: object
             properties:
               Days:
@@ -35,34 +344,24 @@ properties:
                 type: integer
             required:
             - Months
-      required:
-      - D
-    - type: string
-      enum:
-      - B
-      - E
-  internally_tagged:
-    oneOf:
-    - type: object
-      properties:
-        test:
-          type: integer
-        type:
-          type: string
-          enum:
-          - C
-      required:
-      - test
-      - type
-    - allOf:
       - type: object
         properties:
           type:
             type: string
             enum:
-            - D
+            - B
+            - E
         required:
         - type
+    Untagged:
+      oneOf:
+      - type: integer
+      - type: object
+        properties:
+          test:
+            type: integer
+        required:
+        - test
       - oneOf:
         - type: object
           properties:
@@ -76,100 +375,3 @@ properties:
               type: integer
           required:
           - Months
-    - type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - B
-          - E
-      required:
-      - type
-  adjacently_tagged:
-    oneOf:
-    - type: object
-      properties:
-        t:
-          type: string
-          enum:
-          - A
-        c:
-          type: integer
-      required:
-      - t
-      - c
-    - type: object
-      properties:
-        t:
-          type: string
-          enum:
-          - C
-        c:
-          type: object
-          properties:
-            test:
-              type: integer
-          required:
-          - test
-      required:
-      - t
-      - c
-    - type: object
-      properties:
-        t:
-          type: string
-          enum:
-          - D
-        c:
-          oneOf:
-          - type: object
-            properties:
-              Days:
-                type: integer
-            required:
-            - Days
-          - type: object
-            properties:
-              Months:
-                type: integer
-            required:
-            - Months
-      required:
-      - t
-      - c
-    - type: object
-      properties:
-        t:
-          type: string
-          enum:
-          - B
-          - E
-      required:
-      - t
-  untagged:
-    oneOf:
-    - type: integer
-    - type: object
-      properties:
-        test:
-          type: integer
-      required:
-      - test
-    - oneOf:
-      - type: object
-        properties:
-          Days:
-            type: integer
-        required:
-        - Days
-      - type: object
-        properties:
-          Months:
-            type: integer
-        required:
-        - Months
-required:
-- externally_tagged
-- internally_tagged
-- adjacently_tagged
-- untagged

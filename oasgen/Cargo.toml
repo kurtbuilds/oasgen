@@ -1,6 +1,6 @@
 [package]
 name = "oasgen"
-version = "0.13.0"
+version = "0.15.0"
 edition = "2021"
 authors = ["Kurt Wolf <kurtwolfbuilds@gmail.com>"]
 description = "Generates OpenAPI 3.0 spec based on Rust code. Works with axum, actix-web, or independent of a web framework."
@@ -24,19 +24,29 @@ name = "oasgen_test_no_framework"
 path = "tests/test-none.rs"
 
 [[test]]
+name = "test-enum"
+path = "tests/test-enum.rs"
+
+[[test]]
 name = "oasgen_test_actix"
 path = "tests/test-actix.rs"
 required-features = ["actix"]
 
+[[test]]
+name = "oasgen_test_axum"
+path = "tests/test-axum.rs"
+required-features = ["axum"]
+
 [dependencies]
+inventory = "0.3.13"
 actix-web = { version = "4.3.1", optional = true }
-axum = { version = "0.6.18", optional = true }
+axum = { version = "0.6.18", optional = true, features = ["json"] }
 futures = "0.3.28"
 http = "0.2.9"
 indexmap = "2"
-openapiv3 = { version = "3", package = "openapiv3-extended" }
-oasgen-core = { path = "../core", version = "0.13.0" }
-oasgen-macro = { path = "../macro", version = "0.13.0" }
+openapiv3-extended = { version = "3" }
+oasgen-core = { path = "../core", version = "0.15.0"}
+oasgen-macro = { path = "../macro", version = "0.15.0"}
 serde = { version = "1.0.171", features = ["derive"] }
 serde_json = "1.0.100"
 serde_yaml = "0.9.22"
