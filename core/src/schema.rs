@@ -27,7 +27,7 @@ mod sid;
 
 pub trait OaSchema {
     fn schema_ref() -> Option<ReferenceOr<Schema>> {
-        None
+        Self::schema().map(ReferenceOr::Item)
     }
 
     fn schema() -> Option<Schema> {
