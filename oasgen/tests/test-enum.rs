@@ -10,7 +10,7 @@ pub enum Duration {
 
 #[test]
 fn test_duration() {
-    let schema = Duration::schema().unwrap();
+    let schema = Duration::schema();
     let spec = serde_yaml::to_string(&schema).unwrap();
     let output = include_str!("test-enum/duration.yaml");
     assert_eq!(spec, output)

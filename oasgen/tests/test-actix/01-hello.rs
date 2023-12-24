@@ -22,7 +22,7 @@ fn main() {
     let server = Server::actix()
         .post("/hello", send_code)
         ;
-    let spec = server.openapi;
-    let other = serde_yaml::from_str::<oasgen::OpenAPI>(include_str!("01-hello.yaml")).unwrap();
-    assert_eq!(spec, other);
+    let spec = serde_yaml::to_string(&server.openapi).unwrap();
+    let other = include_str!("01-hello.yaml");
+    assert_eq!(spec.trim(), other);
 }

@@ -69,13 +69,12 @@ impl<Router: Clone> Clone for Server<Router, Arc<OpenAPI>> {
 impl<Router: Default> Server<Router, OpenAPI> {
     pub fn new() -> Self {
         let mut openapi = OpenAPI::default();
-        let c = openapi.components_mut();
         for flag in inventory::iter::<oasgen_core::SchemaRegister> {
             let schema = (flag.constructor)();
-            c.schemas.insert(flag.name.to_string(), ReferenceOr::Item(schema));
+            openapi.schemas.insert(flag.name.to_string(), ReferenceOr::Item(schema));
         }
         // This is required to have stable diffing between builds
-        c.schemas.sort_keys();
+        openapi.schemas.sort_keys();
         Self {
             openapi,
             router: Router::default(),

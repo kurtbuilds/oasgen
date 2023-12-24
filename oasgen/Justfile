@@ -32,14 +32,14 @@ expand-run:
     printf '#![feature(fmt_helpers_for_derive)]\n' >> examples/expand.rs
     printf '#![feature(print_internals)]\n' >> examples/expand.rs
     printf '#![feature(core_panic)]\n' >> examples/expand.rs
-    cargo expand --example test >> examples/expand.rs
+    cargo expand --all-features --example test >> examples/expand.rs
     sd '::alloc::' '::std::' examples/expand.rs -f
     sd '# ?\[serde.*' '' examples/expand.rs -f
-    sd '# ?\[openapi.*' '' examples/expand.rs -f
+    sd '# ?\[oasgen.*' '' examples/expand.rs -f
     sd -s '#[rustc_box]' '' examples/expand.rs -f
     @just rerun
 alias er := expand-run
 
 rerun:
-    cargo +nightly run --example expand
+    cargo +nightly run --all-features --example expand
 alias rr := expand-run

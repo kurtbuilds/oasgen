@@ -93,14 +93,13 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     let name = ast.sig.ident.to_string();
     let submit = quote! {
         ::oasgen::register_operation!(concat!(module_path!(), "::", #name), || {
-            let parameters: Vec<Option<Vec<::oasgen::ReferenceOr<::oasgen::Parameter>>>> = vec![
+            let parameters: Vec<Vec<::oasgen::RefOr<::oasgen::Parameter>>> = vec![
                 #( #args::parameters(), )*
             ];
             let parameters = parameters
                 .into_iter()
                 .flatten()
-                .flatten()
-                .collect::<Vec<::oasgen::ReferenceOr<::oasgen::Parameter>>>();
+                .collect::<Vec<::oasgen::RefOr<::oasgen::Parameter>>>();
             let mut op = ::oasgen::Operation::default();
             op.operation_id = ::oasgen::__private::fn_path_to_op_id(concat!(module_path!(), "::", #name));
             op.parameters = parameters;

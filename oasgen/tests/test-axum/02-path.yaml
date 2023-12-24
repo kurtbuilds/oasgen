@@ -7,11 +7,11 @@ paths:
     get:
       operationId: list_tasks
       parameters:
-        - in: query
-          name: query
-          schema:
-            $ref: '#/components/schemas/TaskFilter'
-          style: form
+      - name: query
+        schema:
+          $ref: '#/components/schemas/TaskFilter'
+        in: query
+        style: form
       responses: {}
 components:
   schemas:
@@ -24,5 +24,5 @@ components:
         assigned_to:
           type: integer
       required:
-        - completed
-        - assigned_to
+      - completed
+      - assigned_to

@@ -1,17 +1,35 @@
 use openapiv3 as oa;
-use openapiv3::ReferenceOr;
-use crate::{impl_oa_schema_none, OaSchema};
+use openapiv3::{ReferenceOr, Schema};
+
+use crate::OaSchema;
 
 impl<T: OaSchema> OaSchema for actix_web::web::Json<T> {
-    fn body_schema() -> Option<ReferenceOr<oa::Schema>> {
-        T::schema_ref()
+    fn schema() -> Schema {
+        panic!("Call body_schema() for Json, not schema().")
+    }
+
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        T::body_schema()
     }
 }
 
-impl<T> OaSchema for actix_web::web::Data<T> {}
+impl<T> OaSchema for actix_web::web::Data<T> {
+    fn schema() -> Schema {
+        panic!("Call parameters() for Data, not schema().");
+    }
+}
 
-impl_oa_schema_none!(actix_web::HttpRequest);
-impl_oa_schema_none!(actix_web::HttpResponse);
+impl OaSchema for actix_web::HttpRequest {
+    fn schema() -> Schema {
+        panic!("Call parameters() for HttpRequest, not schema().");
+    }
+}
+
+impl OaSchema for actix_web::HttpResponse {
+    fn schema() -> Schema {
+        panic!("Call body_schema() for HttpResponse, not schema().");
+    }
+}
 
 macro_rules! construct_path {
     ($($arg:ident),+) => {
@@ -19,25 +37,16 @@ macro_rules! construct_path {
             where
                 $($arg: OaSchema),+
         {
-            fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
-                Some(vec![
+            fn schema() -> Schema {
+                panic!("Call parameters() for Path, not schema().");
+            }
+
+            fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
+                vec![
                     $(
-                        ReferenceOr::Item(oa::Parameter::Path {
-                            parameter_data: oa::ParameterData {
-                                name: stringify!($arg).to_string(),
-                                description: None,
-                                required: true,
-                                deprecated: None,
-                                format: oa::ParameterSchemaOrContent::Schema($arg::schema_ref().unwrap()),
-                                example: None,
-                                examples: Default::default(),
-                                explode: None,
-                                extensions: Default::default(),
-                            },
-                            style: oa::PathStyle::Simple,
-                        })
+                        ReferenceOr::Item(oa::Parameter::path(stringify!($arg), $arg::schema_ref()))
                     ),+
-                ])
+                ]
             }
         }
     };
@@ -48,16 +57,24 @@ construct_path!(A1, A2);
 construct_path!(A1, A2, A3);
 
 impl<T: OaSchema> OaSchema for actix_web::web::Query<T> {
-    fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
-        let p = oa::Parameter::query("query", T::schema_ref().unwrap());
-        Some(vec![ReferenceOr::Item(p)])
+    fn schema() -> Schema {
+        panic!("Call parameters() for Query, not schema().");
+    }
+
+    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
+        let p = oa::Parameter::query("query", T::schema_ref());
+        vec![ReferenceOr::Item(p)]
     }
 }
 
 #[cfg(feature = "qs")]
 impl<T: OaSchema> OaSchema for serde_qs::actix::QsQuery<T> {
-    fn parameters() -> Option<Vec<ReferenceOr<oa::Parameter>>> {
-        let p = oa::Parameter::query("query", T::schema_ref().unwrap());
-        Some(vec![ReferenceOr::Item(p)])
+    fn schema() -> Schema {
+        panic!("Call parameters() for QsQuery, not schema().");
+    }
+
+    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
+        let p = oa::Parameter::query("query", T::schema_ref());
+        vec![ReferenceOr::Item(p)]
     }
 }

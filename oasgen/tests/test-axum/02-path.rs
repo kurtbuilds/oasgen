@@ -20,9 +20,9 @@ fn main() {
         .get("/tasks", list_tasks)
         ;
 
-    let spec = &server.openapi;
-    let other = serde_yaml::from_str::<oasgen::OpenAPI>(include_str!("02-path.yaml")).unwrap();
-    assert_eq!(spec, &other);
+    let spec = serde_yaml::to_string(&server.openapi).unwrap();
+    let other = include_str!("02-path.yaml");
+    assert_eq!(spec.trim(), other);
     let router = axum::Router::new()
         .merge(server.freeze().into_router());
     router.into_make_service();

@@ -16,7 +16,7 @@ pub struct Foo {
 
 fn main() {
     use pretty_assertions::assert_eq;
-    let schema = Foo::schema().unwrap();
+    let schema = Foo::schema();
     let spec = serde_yaml::to_string(&schema).unwrap();
     assert_eq!(spec.trim(), include_str!("02-required.yaml"));
 }
