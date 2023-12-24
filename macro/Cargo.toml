@@ -1,6 +1,6 @@
 [package]
 name = "oasgen-macro"
-version = "0.17.0"
+version = "0.18.0"
 edition = "2021"
 authors = ["Kurt Wolf <kurtwolfbuilds@gmail.com>"]
 description = "Dependency of oasgen. Generates OpenAPI 3.0 spec based on Rust code. Works with actix-web, but architected to easily extend to other frameworks (or no framework)."
@@ -18,7 +18,7 @@ proc-macro = true
 syn = { version = "2", features = ["full"] }
 quote = "1.0"
 proc-macro2 = "1.0.64"
-oasgen-core = { path = "../core" , version = "0.17.0"}
+oasgen-core = { path = "../core" , version = "0.18.0"}
 structmeta = "0.2.0"
 serde_derive_internals = "0.29.0"
 
