@@ -166,7 +166,7 @@ impl OaSchema for User {
         Some(schema)
     }
 }
-register_schema!("User", &|| User::schema().unwrap());
+register_schema!("User", &|| User::schema());
 ```
 
 Technically speaking, you don't need to implement OaSchema at all.
