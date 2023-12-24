@@ -69,6 +69,7 @@ cookies = ["tower-cookies", "oasgen-core/cookies"]
 phonenumber = ["oasgen-core/phonenumber"]
 sid = ["oasgen-core/sid"]
 serde_qs = ["oasgen-core/qs"]
+bigdecimal = ["oasgen-core/bigdecimal"]
 
 [dev-dependencies]
 trybuild = "1.0.81"
