@@ -23,6 +23,7 @@ mod time;
 mod http;
 #[cfg(feature = "sid")]
 mod sid;
+mod tuple;
 
 pub trait OaSchema {
     fn schema() -> Schema;

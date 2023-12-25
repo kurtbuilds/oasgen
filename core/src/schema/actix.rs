@@ -31,30 +31,19 @@ impl OaSchema for actix_web::HttpResponse {
     }
 }
 
-macro_rules! construct_path {
-    ($($arg:ident),+) => {
-        impl< $($arg),+ > OaSchema for actix_web::web::Path<( $($arg),+,)>
-            where
-                $($arg: OaSchema),+
-        {
-            fn schema() -> Schema {
-                panic!("Call parameters() for Path, not schema().");
-            }
+impl<T: OaSchema> OaSchema for actix_web::web::Path<T> {
+    fn schema() -> Schema {
+        panic!("Call parameters() for Path, not schema().");
+    }
 
-            fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-                vec![
-                    $(
-                        ReferenceOr::Item(oa::Parameter::path(stringify!($arg), $arg::schema_ref()))
-                    ),+
-                ]
-            }
-        }
-    };
+    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
+        T::parameters()
+    }
+
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        None
+    }
 }
-
-construct_path!(A1);
-construct_path!(A1, A2);
-construct_path!(A1, A2, A3);
 
 impl<T: OaSchema> OaSchema for actix_web::web::Query<T> {
     fn schema() -> Schema {
