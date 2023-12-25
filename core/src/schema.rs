@@ -25,6 +25,7 @@ mod http;
 mod sid;
 #[cfg(feature = "bigdecimal")]
 mod bigdecimal;
+mod tuple;
 
 pub trait OaSchema {
     fn schema() -> Schema;
