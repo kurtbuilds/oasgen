@@ -24,6 +24,10 @@ impl<T> OaSchema for axum::extract::State<T> {
     fn schema() -> Schema {
         panic!("Call parameters() for State, not schema().")
     }
+
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        None
+    }
 }
 
 impl<T> OaSchema for http::Response<T> {

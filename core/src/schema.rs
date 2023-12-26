@@ -145,6 +145,10 @@ impl<T, E> OaSchema for Result<T, E>
     fn schema() -> Schema {
         T::schema()
     }
+
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        T::body_schema()
+    }
 }
 
 impl<K, V> OaSchema for HashMap<K, V>
