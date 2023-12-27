@@ -51,8 +51,10 @@ impl<T: OaSchema> OaSchema for actix_web::web::Query<T> {
     }
 
     fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        let p = oa::Parameter::query("query", T::schema_ref());
-        vec![ReferenceOr::Item(p)]
+        T::parameters()
+    }
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        None
     }
 }
 
