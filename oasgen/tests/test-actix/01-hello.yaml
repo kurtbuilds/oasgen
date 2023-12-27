@@ -19,8 +19,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SendCodeResponse'
+  /get-code:
+    get:
+      operationId: get_code
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeResponse'
 components:
   schemas:
+    CodeResponse:
+      type: object
+      properties:
+        found_code:
+          type: boolean
+      required:
+      - found_code
+    GetCode:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+      - code
     SendCode:
       type: object
       properties:
