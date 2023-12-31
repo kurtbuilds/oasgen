@@ -258,7 +258,6 @@ let mut server = oasgen::Server::axum()
     .post("/auth/register_password", auth::register_password) // example route
     .freeze();
 let spec = server.openapi.clone();
-// customize spec here
 let router = axum::Router::new()
     .merge(server.into_router())
     .route("/alt/route/to/openapi.yaml", get(|| {
