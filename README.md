@@ -33,8 +33,9 @@ Contributions to support other web frameworks are welcome!
 
 ```rust
 // Actix-web example
-use oasgen::{OaSchema, Server, oasgen};
 use actix_web::web::Json;
+use actix_web::{App, HttpServer};
+use oasgen::{oasgen, OaSchema, Server};
 use serde::{Deserialize, Serialize};
 
 #[derive(OaSchema, Deserialize)]
@@ -49,23 +50,20 @@ pub struct SendCodeResponse {
 
 #[oasgen]
 async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
-    Json(SendCodeResponse { found_account: false })
+    Json(SendCodeResponse {
+        found_account: false,
+    })
 }
 
 #[tokio::main]
 async fn main() {
-    let server = Server::new()
-        .post("/send-code", send_code)
-        .freeze();
-    
-    HttpServer::new(move || {
-        App::new()
-            .service(server.clone().into_service())
-    })
-        .bind("0.0.0.0:5000")
+    let server = Server::actix().post("/send-code", send_code).freeze();
+
+    HttpServer::new(move || App::new().service(server.clone().into_service()))
+        .bind(("127.0.0.1", 5000))
         .unwrap()
         .run()
-        .await 
+        .await
         .unwrap()
 }
 ```
@@ -120,6 +118,7 @@ There are several features for activating other libraries:
 
 - `actix` - actix-web
 - `axum` - axum
+- `swagger-ui` - swagger ui
 - `uuid` - uuid
 - `chrono` - chrono
 - `time` - time
@@ -240,6 +239,9 @@ to start the server normally.
 
 # Route that displays the spec
 
+> [!NOTE]  
+> Requires the `swagger-ui` feature 
+
 There are built-in functions to create routes that display the raw spec, or display a Swagger UI 
 page for the spec.
 
@@ -248,7 +250,8 @@ let mut server = oasgen::Server::axum()
     .post("/auth/register_password", auth::register_password) // example route
     .route_yaml_spec("/openapi.yaml") // the spec will be available at /openapi.yaml
     .route_json_spec("/openapi.json") // the spec will be available at /openapi.json
-    .swagger_ui("/openapi/"); // the swagger UI will be available at /openapi/. The trailing slash is required.
+    .swagger_ui("/openapi/"); // the swagger UI will be available at /openapi/.
+                              // NOTE: The trailing slash is required, as is calling either `route_yaml_spec()` or `route_json_spec()` before `swagger_ui()`.
 ```
 
 If you need to customize these routes, you have directly use a clone of the OpenAPI struct. It's in an Arc, so it's cheap to clone.
@@ -265,5 +268,5 @@ let router = axum::Router::new()
         async { 
             serde_yaml::to_string(spec).unwrap()
         }
-    ))
+    }))
 ;

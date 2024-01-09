@@ -1,7 +1,6 @@
-use oasgen::{OaSchema, Server, oasgen};
 use actix_web::web::{Json, Query};
+use oasgen::{oasgen, OaSchema, Server};
 use serde::{Deserialize, Serialize};
-
 
 #[derive(Deserialize, OaSchema)]
 pub struct SendCode {
@@ -15,7 +14,9 @@ pub struct SendCodeResponse {
 
 #[oasgen]
 async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
-    Json(SendCodeResponse { found_account: false })
+    Json(SendCodeResponse {
+        found_account: false,
+    })
 }
 
 #[derive(Deserialize, OaSchema)]
@@ -39,10 +40,8 @@ fn main() {
     use pretty_assertions::assert_eq;
     let server = Server::actix()
         .post("/hello", send_code)
-        .get("/get-code", get_code)
-        ;
+        .get("/get-code", get_code);
     let spec = serde_yaml::to_string(&server.openapi).unwrap();
-    println!("{}", spec);
     let other = include_str!("01-hello.yaml");
     assert_eq!(spec.trim(), other);
 }
