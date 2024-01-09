@@ -268,5 +268,5 @@ let router = axum::Router::new()
         async { 
             serde_yaml::to_string(spec).unwrap()
         }
-    ))
+    }))
 ;
