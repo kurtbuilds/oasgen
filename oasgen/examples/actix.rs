@@ -3,9 +3,10 @@
 // We have to wrap the example in `mod` beacuse examples fail compilation without a `main`, and
 // forwarding to an inner mod fixes the issue.
 #[cfg(feature = "actix")]
+#[cfg(feature = "swagger-ui")]
 mod inner {
-    use oasgen::{OaSchema, Server, oasgen};
     use actix_web::web::Json;
+    use oasgen::{oasgen, OaSchema, Server};
     use serde::{Deserialize, Serialize};
 
     #[derive(OaSchema, Deserialize)]
@@ -26,7 +27,9 @@ mod inner {
 
     #[oasgen]
     async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
-        Json(SendCodeResponse { found_account: false })
+        Json(SendCodeResponse {
+            found_account: false,
+        })
     }
 
     #[oasgen]
@@ -36,36 +39,34 @@ mod inner {
 
     #[tokio::main]
     pub async fn main() -> std::io::Result<()> {
-        use std::fs::File;
-        use actix_web::{HttpResponse, web, HttpServer, App};
+        use actix_web::{web, App, HttpResponse, HttpServer};
 
-        let host = "0.0.0.0";
-        let port = 5000;
-        let host = format!("{}:{}", host, port);
+        let host = ("0.0.0.0", 5000);
 
         let server = Server::actix()
             .post("/send-code", send_code)
             .post("/verify-code", verify_code)
-            .route_yaml_spec("/openapi.yaml")
+            .route_json_spec("/docs/openapi.json")
+            .route_yaml_spec("/docs/openapi.yaml")
+            .swagger_ui("/docs/")
             .write_and_exit_if_env_var_set("./openapi.yaml")
-            .freeze()
-            ;
+            .freeze();
 
-        println!("Listening on {}", host);
+        println!("Listening on {:?}", host);
         HttpServer::new(move || {
-            let spec = server.openapi.clone();
             App::new()
-                // App::new()
-                .route("/healthcheck", web::get().to(|| async { HttpResponse::Ok().body("Ok") }))
+                .route(
+                    "/healthcheck",
+                    web::get().to(|| async { HttpResponse::Ok().body("Ok") }),
+                )
                 .service(server.clone().into_service())
         })
-            .bind(host)?
-            .run()
-            .await
+        .bind(host)?
+        .run()
+        .await
     }
 }
 
 fn main() {
-    #[cfg(feature = "actix")]
     inner::main().unwrap()
 }

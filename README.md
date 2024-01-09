@@ -248,7 +248,8 @@ let mut server = oasgen::Server::axum()
     .post("/auth/register_password", auth::register_password) // example route
     .route_yaml_spec("/openapi.yaml") // the spec will be available at /openapi.yaml
     .route_json_spec("/openapi.json") // the spec will be available at /openapi.json
-    .swagger_ui("/openapi/"); // the swagger UI will be available at /openapi/. The trailing slash is required.
+    .swagger_ui("/openapi/"); // the swagger UI will be available at /openapi/.
+                              // NOTE: The trailing slash is required, as is calling either `route_yaml_spec()` or `route_json_spec()` before `swagger_ui()`.
 ```
 
 If you need to customize these routes, you have directly use a clone of the OpenAPI struct. It's in an Arc, so it's cheap to clone.
