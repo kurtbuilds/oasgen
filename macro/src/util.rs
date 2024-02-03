@@ -42,15 +42,15 @@ pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> Toke
                     if let ::oasgen::SchemaKind::Type(::oasgen::Type::Object(::oasgen::ObjectType { properties, required, .. })) = #schema.kind {
                         for (name, schema) in properties {
                             let schema = schema.into_item().expect("Cannot flatten a reference");
-                            o.add_property(&name, schema);
+                            o.properties_mut().insert(name, schema);
                         }
-                        o.required_mut().unwrap().extend_from_slice(&required);
+                        o.required_mut().extend_from_slice(&required);
                     }
                 }
             } else {
                 let required = !(attr.skip || attr.skip_serializing_if.is_some());
                 let required = required.then(|| {
-                    quote! { o.required_mut().unwrap().push(#name.to_string()); }
+                    quote! { o.required_mut().push(#name.to_string()); }
                 }).unwrap_or_default();
                 let schema_ref = if attr.inline {
                     quote! {
@@ -62,7 +62,7 @@ pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> Toke
                     }
                 };
                 quote! {
-                    o.add_property(#name, #schema_ref);
+                    o.properties_mut().insert(#name, #schema_ref);
                     #required
                 }
             }
@@ -120,8 +120,8 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, 
                 TagType::External => quote! {
                     {
                         let mut o = ::oasgen::Schema::new_object();
-                        o.add_property(#name, #schema);
-                        o.required_mut().unwrap().push(#name.to_string());
+                        o.properties_mut().insert(#name, #schema);
+                        o.required_mut().push(#name.to_string());
                         o
                     }
                 },
@@ -130,14 +130,14 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, 
                         let mut o = #schema;
                         match o.kind {
                             ::oasgen::SchemaKind::Type(_) => {
-                                o.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()]));
-                                o.required_mut().unwrap().push(#tag.to_string());
+                                o.properties_mut().insert(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()]));
+                                o.required_mut().push(#tag.to_string());
                                 o
                             }
                             _ => {
                                 let mut t = ::oasgen::Schema::new_object();
-                                t.add_property(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()]));
-                                t.required_mut().unwrap().push(#tag.to_string());
+                                t.properties_mut().insert(#tag, ::oasgen::Schema::new_str_enum(vec![#name.to_string()]));
+                                t.required_mut().push(#tag.to_string());
 
                                 ::oasgen::Schema {
                                     data: ::oasgen::SchemaData::default(),
@@ -156,9 +156,9 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, 
                     {
                         let mut o = ::oasgen::Schema::new_object();
                         let values = vec![#name.to_string()];
-                        o.add_property(#tag, ::oasgen::Schema::new_str_enum(values));
-                        o.add_property(#content, #schema);
-                        let required = o.required_mut().unwrap();
+                        o.properties_mut().insert(#tag, ::oasgen::Schema::new_str_enum(values));
+                        o.properties_mut().insert(#content, #schema);
+                        let required = o.required_mut();
                         required.push(#tag.to_string());
                         required.push(#content.to_string());
                         o
@@ -176,8 +176,8 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, 
             TagType::Internal { tag } | TagType::Adjacent { tag, .. } => complex_variants.push(quote! {{
                 let mut o = ::oasgen::Schema::new_object();
                 let values = vec![#(#str_variants)*];
-                o.add_property(#tag, ::oasgen::Schema::new_str_enum(values));
-                o.required_mut().unwrap().push(#tag.to_string());
+                o.properties_mut().insert(#tag, ::oasgen::Schema::new_str_enum(values));
+                o.required_mut().push(#tag.to_string());
                 o
             }}),
             _ => () // a null case should be handled, which will deserialize to the first unit
