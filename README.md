@@ -70,8 +70,8 @@ async fn main() {
 
 ```rust
 // axum example
-use oasgen::{OaSchema, Server, openapi};
-use axum::Json;
+use oasgen::{OaSchema, Server, oasgen};
+use axum::{Json, routing};
 use serde::{Deserialize, Serialize};
 
 #[derive(OaSchema, Deserialize)]
@@ -99,11 +99,21 @@ async fn main() {
         .route("/healthcheck", routing::get(|| async { "OK" }))
         .merge(server.into_router());
 
-    axum::Server::bind("0.0.0.0:5000".parse().unwrap())
+    axum::Server::bind(&"0.0.0.0:5000".parse().unwrap())
         .serve(router.into_make_service())
         .await
         .unwrap();
 }
+```
+
+To compile the axum example, use the following dependencies:
+
+```toml
+[dependencies]
+axum = "0.6"
+oasgen = { version = "0.19.0", features = ["axum"] }
+serde = { version = "1.0.196", features = ["derive"] }
+tokio = { version = "1.36.0", features = ["full"] }
 ```
 
 # Installation
