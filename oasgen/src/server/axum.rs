@@ -131,7 +131,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
         if let Some(mut path) = self.swagger_ui_route {
 
             let swagger = self.swagger_ui.expect("Swagger UI route set but no Swagger UI is configured.");
-            let handler = routing::get(|uri: axum::http::Uri| async move {
+            let handler = routing::get(|uri: http::Uri| async move {
                 match swagger.handle_url(&uri) {
                     Some(response) => {
                         let (headers, body) = response.into_parts();
