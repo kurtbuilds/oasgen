@@ -16,6 +16,7 @@ async fn send_code(_body: SendCode) -> SendCodeResponse {
     SendCodeResponse { found_account: false }
 }
 
+#[allow(unused)]
 #[oasgen]
 async fn no_params() -> SendCodeResponse {
     SendCodeResponse { found_account: false }

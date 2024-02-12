@@ -1,17 +1,15 @@
 use std::borrow::Borrow;
-use std::sync::{Arc};
+use std::sync::Arc;
+
+use axum::body::Body;
 use axum::handler::Handler;
 use axum::routing;
-use futures::future::{Ready, ok};
+use axum::routing::MethodRouter;
 use http::Method;
 use indexmap::IndexMap;
 use openapiv3::OpenAPI;
-use axum::routing::MethodRouter;
-use axum::body::{Body, Full};
 
-use oasgen_core::{OaSchema};
-
-use crate::Format;
+use http_body_util::{BodyExt, Full};
 
 use super::Server;
 
@@ -47,7 +45,7 @@ impl<S> Server<Router<S>, OpenAPI>
 
     pub fn get<F, T>(mut self, path: &str, handler: F) -> Self
         where
-            F: Handler<T, S, Body>,
+            F: Handler<T, S>,
             T: 'static,
             F: Copy + Send,
     {
@@ -58,7 +56,7 @@ impl<S> Server<Router<S>, OpenAPI>
 
     pub fn post<F, T>(mut self, path: &str, handler: F) -> Self
         where
-            F: Handler<T, S, Body>,
+            F: Handler<T, S>,
             T: 'static,
             F: Copy + Send,
     {
@@ -69,12 +67,23 @@ impl<S> Server<Router<S>, OpenAPI>
 
     pub fn put<F, T>(mut self, path: &str, handler: F) -> Self
         where
-            F: Handler<T, S, Body>,
+            F: Handler<T, S>,
             T: 'static,
             F: Copy + Send,
     {
         self.add_handler_to_spec(path, Method::PUT, &handler);
         self.add_route(path, routing::put(handler));
+        self
+    }
+
+    pub fn delete<F, T>(mut self, path: &str, handler: F) -> Self
+        where
+            F: Handler<T, S>,
+            T: 'static,
+            F: Copy + Send,
+    {
+        self.add_handler_to_spec(path, Method::DELETE, &handler);
+        self.add_route(path, routing::delete(handler));
         self
     }
 }
@@ -126,12 +135,12 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
                 match swagger.handle_url(&uri) {
                     Some(response) => {
                         let (headers, body) = response.into_parts();
-                        axum::response::Response::from_parts(headers, axum::body::boxed(Full::from(body)))
+                        axum::response::Response::from_parts(headers, Body::from(body.to_vec()))
                     }
                     None => {
                         axum::response::Response::builder()
                             .status(http::StatusCode::NOT_FOUND)
-                            .body(axum::body::boxed(Body::empty()))
+                            .body(Body::empty())
                             .unwrap()
                     }
                 }

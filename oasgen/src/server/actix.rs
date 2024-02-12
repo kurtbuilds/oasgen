@@ -1,8 +1,9 @@
+use std::str::FromStr;
 #[cfg(feature = "swagger-ui")]
 use actix_web::HttpRequest;
 use actix_web::{web, Error, FromRequest, Handler, HttpResponse, Resource, Responder, Scope};
+use actix_web::http::Method;
 use futures::future::{ok, Ready};
-use http::Method;
 use openapiv3::OpenAPI;
 use std::sync::Arc;
 
@@ -52,8 +53,8 @@ where
     F::Output: Responder + 'static,
 {
     Box::new(move || {
-        actix_web::Resource::new(path.clone())
-            .route(actix_web::web::route().method(method.clone()).to(handler))
+        Resource::new(path.clone())
+            .route(web::route().method(method.clone()).to(handler))
     })
 }
 
@@ -64,13 +65,13 @@ impl Server<ActixRouter> {
 
     pub fn get<F, Args>(mut self, path: &str, handler: F) -> Self
     where
-        F: actix_web::Handler<Args>,
-        Args: actix_web::FromRequest + 'static,
-        F::Output: actix_web::Responder + 'static,
-        <F as actix_web::Handler<Args>>::Output: OaSchema,
+        F: Handler<Args>,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaSchema,
         F: Copy + Send,
     {
-        self.add_handler_to_spec(path, Method::GET, &handler);
+        self.add_handler_to_spec(path, http::Method::GET, &handler);
         self.router
             .0
             .push(build_inner_resource(path.to_string(), Method::GET, handler));
@@ -79,12 +80,12 @@ impl Server<ActixRouter> {
 
     pub fn post<F, Args>(mut self, path: &str, handler: F) -> Self
     where
-        F: actix_web::Handler<Args> + Copy + Send,
-        Args: actix_web::FromRequest + 'static,
-        F::Output: actix_web::Responder + 'static,
-        <F as actix_web::Handler<Args>>::Output: OaSchema,
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaSchema,
     {
-        self.add_handler_to_spec(path, Method::POST, &handler);
+        self.add_handler_to_spec(path, http::Method::POST, &handler);
         self.router.0.push(build_inner_resource(
             path.to_string(),
             Method::POST,
@@ -156,9 +157,15 @@ async fn handler_swagger(
 ) -> impl Responder {
     let url = req.path();
     if let Some(mut response) = data.handle_url(url) {
-        let mut builder = HttpResponse::build(response.status());
+        let status = response.status().as_u16();
+        // actix still using http=0.2
+        let status = actix_web::http::StatusCode::from_u16(status).expect("Invalid status code");
+        let mut builder = HttpResponse::build(status);
 
         response.headers().iter().for_each(|(k, v)| {
+            // actix still using http=0.2
+            let k = actix_web::http::header::HeaderName::from_str(k.as_str()).expect("Invalid header name");
+            let v = actix_web::http::header::HeaderValue::from_bytes(v.as_bytes()).expect("Invalid header value");
             builder.append_header((k, v));
         });
         builder.body(response.body_mut().to_owned())
