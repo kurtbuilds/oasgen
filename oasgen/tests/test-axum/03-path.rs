@@ -1,4 +1,4 @@
-use axum::extract::{Query, Json};
+use axum::extract::{Path, Json};
 use oasgen::{OaSchema, oasgen, Server};
 use serde::{Deserialize};
 
@@ -10,18 +10,18 @@ pub struct TaskFilter {
 }
 
 #[oasgen]
-async fn list_tasks(Query(_filter): Query<TaskFilter>) -> Json<()> {
+async fn get_task(Path(_id): Path<u64>) -> Json<()> {
     Json(())
 }
 
 fn main() {
     use pretty_assertions::assert_eq;
     let server = Server::axum()
-        .get("/tasks", list_tasks)
+        .get("/tasks/:id/", get_task)
         ;
 
     let spec = serde_yaml::to_string(&server.openapi).unwrap();
-    let other = include_str!("02-path.yaml");
+    let other = include_str!("03-path.yaml");
     assert_eq!(spec.trim(), other);
     let router = axum::Router::new()
         .merge(server.freeze().into_router());
