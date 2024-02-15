@@ -238,7 +238,7 @@ fn replace_path_params(path: &str) -> String {
         return path.to_string();
     }
     use once_cell::sync::OnceCell;
-    use regex::Regex;
+    use regex_lite::Regex;
     static REMAP: OnceCell<Regex> = OnceCell::new();
     let remap = REMAP.get_or_init(|| Regex::new("/:([a-zA-Z0-9_]+)").unwrap());
     remap.replace_all(&path, "/{$1}").to_string()
