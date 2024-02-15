@@ -21,7 +21,7 @@ fn main() {
         ;
 
     let spec = serde_yaml::to_string(&server.openapi).unwrap();
-    let other = include_str!("02-path.yaml");
+    let other = include_str!("02-query.yaml");
     assert_eq!(spec.trim(), other);
     let router = axum::Router::new()
         .merge(server.freeze().into_router());
