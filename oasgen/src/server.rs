@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use http::Method;
 use once_cell::sync::Lazy;
-use openapiv3::{OpenAPI, Operation, ReferenceOr};
+use openapiv3::{OpenAPI, Operation, ReferenceOr, Parameter, ParameterKind};
 
 use oasgen_core::{OaSchema};
 
@@ -89,32 +89,25 @@ impl<Router: Default> Server<Router, OpenAPI> {
     }
 
     /// Add a handler to the OpenAPI spec (which is different than mounting it to a server).
-    fn add_handler_to_spec<F>(&mut self, path: &str, method: Method, _handler: &F)
-        where
-    {
-        let mut path = path.to_string();
-        if path.contains(':') {
-            use once_cell::sync::OnceCell;
-            use regex::Regex;
-            static REMAP: OnceCell<Regex> = OnceCell::new();
-            let remap = REMAP.get_or_init(|| Regex::new("/:([a-zA-Z0-9_]+)/").unwrap());
-            path = remap.replace_all(&path, "/{$1}/").to_string();
-        }
-        let item = self.openapi.paths.paths.entry(path.to_string()).or_default();
+    fn add_handler_to_spec<F>(&mut self, path: &str, method: Method, _handler: &F) {
+        use http::Method;
+        let path = replace_path_params(path);
+        let item = self.openapi.paths.paths.entry(path.clone()).or_default();
         let item = item.as_mut().expect("Currently don't support references for PathItem");
         let type_name = std::any::type_name::<F>();
-        let operation = OPERATION_LOOKUP.get(type_name)
+        let mut operation = OPERATION_LOOKUP.get(type_name)
 
             .expect(&format!("Operation {} not found in OpenAPI spec.", type_name))();
-        match method.as_str() {
-            "GET" => item.get = Some(operation),
-            "POST" => item.post = Some(operation),
-            "PUT" => item.put = Some(operation),
-            "DELETE" => item.delete = Some(operation),
-            "OPTIONS" => item.options = Some(operation),
-            "HEAD" => item.head = Some(operation),
-            "PATCH" => item.patch = Some(operation),
-            "TRACE" => item.trace = Some(operation),
+        modify_parameter_names(&mut operation, &path);
+        match method {
+            Method::GET => item.get = Some(operation),
+            Method::POST => item.post = Some(operation),
+            Method::PUT => item.put = Some(operation),
+            Method::DELETE => item.delete = Some(operation),
+            Method::OPTIONS => item.options = Some(operation),
+            Method::HEAD => item.head = Some(operation),
+            Method::PATCH => item.patch = Some(operation),
+            Method::TRACE => item.trace = Some(operation),
             _ => panic!("Unsupported method: {}", method),
         }
     }
@@ -219,5 +212,62 @@ impl<Router: Default> Server<Router, OpenAPI> {
             #[cfg(feature = "swagger-ui")]
             swagger_ui: self.swagger_ui,
         }
+    }
+}
+
+// Note: this takes an OpenAPI url, which parameterizes like: /path/{param}
+fn modify_parameter_names(operation: &mut Operation, path: &str) {
+    if !path.contains("{") {
+        return;
+    }
+    let path_parts = path.split("/")
+        .filter(|part| part.starts_with("{"))
+        .map(|part| &part[1..part.len() - 1]);
+    let path_params = operation.parameters.iter_mut()
+        .filter_map(|mut p| p.as_mut())
+        .filter(|p| matches!(p.kind, ParameterKind::Path { .. }));
+
+    for (part, param) in path_parts.zip(path_params) {
+        param.name = part.to_string();
+    }
+}
+
+// Note: this takes an axum/actix url, which parameterizes like: /path/:param
+fn replace_path_params(path: &str) -> String {
+    if !path.contains(':') {
+        return path.to_string();
+    }
+    use once_cell::sync::OnceCell;
+    use regex::Regex;
+    static REMAP: OnceCell<Regex> = OnceCell::new();
+    let remap = REMAP.get_or_init(|| Regex::new("/:([a-zA-Z0-9_]+)").unwrap());
+    remap.replace_all(&path, "/{$1}").to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use openapiv3 as oa;
+
+    #[test]
+    fn test_modify_parameter_names() {
+        let path = "/api/v1/pet/{id}/";
+        let mut operation = Operation::default();
+        operation.parameters.push(Parameter::path("path", oa::Schema::new_number()).into());
+        operation.parameters.push(Parameter::query("query", oa::Schema::new_number()).into());
+        modify_parameter_names(&mut operation, path);
+        assert_eq!(operation.parameters[0].as_item().unwrap().name, "id", "path param name is updated");
+        assert_eq!(operation.parameters[1].as_item().unwrap().name, "query", "leave query param alone");
+    }
+
+    #[test]
+    fn test_replace_path_params() {
+        let path = "/api/v1/pet/:id/";
+        let path = replace_path_params(path);
+        assert_eq!(path, "/api/v1/pet/{id}/");
+
+        let path = "/api/v1/pet/:id";
+        let path = replace_path_params(path);
+        assert_eq!(path, "/api/v1/pet/{id}");
     }
 }

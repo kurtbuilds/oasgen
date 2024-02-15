@@ -76,7 +76,7 @@ impl<T: OaSchema> OaSchema for axum::extract::Path<T> {
     }
 
     fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        let p = oa::Parameter::path("WHERE?", T::schema_ref());
+        let p = oa::Parameter::path("path", T::schema_ref());
         vec![ReferenceOr::Item(p)]
     }
 
