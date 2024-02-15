@@ -40,7 +40,7 @@ required-features = ["axum"]
 [dependencies]
 inventory = "0.3.13"
 actix-web = { version = "4.3.1", optional = true }
-axum = { version = "0.7.4", optional = true, features = ["json"] }
+axum = { version = "0.7.4", optional = true, default-features = false, features = ["json"] }
 futures = "0.3.28"
 http = "1.0.0"
 indexmap = "2"
@@ -50,7 +50,6 @@ oasgen-macro = { path = "../macro", version = "0.20.1"}
 serde = { version = "1.0.171", features = ["derive"] }
 serde_json = "1.0.100"
 serde_yaml = "0.9.22"
-tokio = { version = "1.29.1", features = ["full"] }
 swagger-ui2 = { version = "0.6", optional = true, path = "../swagger-ui" }
 tower-cookies = { version = "0.10.0", optional = true }
 regex-lite = "0.1.5"
@@ -77,3 +76,4 @@ bigdecimal = ["oasgen-core/bigdecimal"]
 trybuild = "1.0.81"
 actix-web = { version = "4.3.1" }
 pretty_assertions = "1.4.0"
+tokio = { version = "1.29.1", features = ["full"] }
