@@ -1,0 +1,20 @@
+type: object
+properties:
+  addresses:
+    type: object
+    properties:
+      ip:
+        type: string
+      ip6:
+        type: string
+      ip4:
+        type: string
+      sock:
+        type: string
+    required:
+    - ip
+    - ip6
+    - ip4
+    - sock
+required:
+- addresses
