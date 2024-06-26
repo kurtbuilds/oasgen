@@ -76,6 +76,17 @@ impl<S> Server<Router<S>, OpenAPI>
         self
     }
 
+    pub fn patch<F, T>(mut self, path: &str, handler: F) -> Self
+        where
+            F: Handler<T, S>,
+            T: 'static,
+            F: Copy + Send,
+    {
+        self.add_handler_to_spec(path, Method::PATCH, &handler);
+        self.add_route(path, routing::patch(handler));
+        self
+    }
+
     pub fn delete<F, T>(mut self, path: &str, handler: F) -> Self
         where
             F: Handler<T, S>,
