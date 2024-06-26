@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
+};
 
 use openapiv3 as oa;
 use openapiv3::{ReferenceOr, Schema};
@@ -104,6 +107,11 @@ impl_oa_schema!(f32, Schema::new_number());
 impl_oa_schema!(f64, Schema::new_number());
 
 impl_oa_schema!(String, Schema::new_string());
+
+impl_oa_schema!(IpAddr, Schema::new_string());
+impl_oa_schema!(Ipv6Addr, Schema::new_string());
+impl_oa_schema!(Ipv4Addr, Schema::new_string());
+impl_oa_schema!(SocketAddr, Schema::new_string());
 
 impl<T> OaSchema for Vec<T> where T: OaSchema {
     fn schema_ref() -> ReferenceOr<Schema> {
