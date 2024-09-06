@@ -1,6 +1,6 @@
 [package]
 name = "oasgen"
-version = "0.20.1"
+version = "0.20.2"
 edition = "2021"
 authors = ["Kurt Wolf <kurtwolfbuilds@gmail.com>"]
 description = "Generates OpenAPI 3.0 spec based on Rust code. Works with axum, actix-web, or independent of a web framework."
