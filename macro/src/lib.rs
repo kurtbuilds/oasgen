@@ -91,6 +91,17 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
         }
     }).unwrap_or_default();
     let name = ast.sig.ident.to_string();
+    let deprecated = attr.deprecated;
+    let operation_id = if let Some(id) = attr.operation_id {
+        let id = id.value();
+        quote! {
+            op.operation_id = Some(#id.to_string())
+        }
+    } else {
+        quote! {
+            ::oasgen::__private::fn_path_to_op_id(concat!(module_path!(), "::", #name))
+        }
+    };
     let submit = quote! {
         ::oasgen::register_operation!(concat!(module_path!(), "::", #name), || {
             let parameters: Vec<Vec<::oasgen::RefOr<::oasgen::Parameter>>> = vec![
@@ -101,8 +112,9 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
                 .flatten()
                 .collect::<Vec<::oasgen::RefOr<::oasgen::Parameter>>>();
             let mut op = ::oasgen::Operation::default();
-            op.operation_id = ::oasgen::__private::fn_path_to_op_id(concat!(module_path!(), "::", #name));
+            op.operation_id = #operation_id;
             op.parameters = parameters;
+            op.deprecated = #deprecated;
             #body
             #ret
             #description

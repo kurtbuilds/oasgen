@@ -20,15 +20,16 @@ mod sqlx;
 #[cfg(feature = "time")]
 mod time;
 
+#[cfg(feature = "bigdecimal")]
+mod bigdecimal;
 mod http;
 #[cfg(feature = "sid")]
 mod sid;
-#[cfg(feature = "bigdecimal")]
-mod bigdecimal;
 mod tuple;
 
 pub trait OaSchema {
     fn schema() -> Schema;
+
     fn schema_ref() -> ReferenceOr<Schema> {
         ReferenceOr::Item(Self::schema())
     }
@@ -63,7 +64,10 @@ macro_rules! impl_oa_schema {
 #[macro_export]
 macro_rules! impl_oa_schema_passthrough {
     ($t:ty) => {
-        impl<T> $crate::OaSchema for $t where T: $crate::OaSchema {
+        impl<T> $crate::OaSchema for $t
+        where
+            T: $crate::OaSchema,
+        {
             fn schema_ref() -> $crate::ReferenceOr<$crate::Schema> {
                 T::schema_ref()
             }
@@ -80,7 +84,9 @@ impl OaSchema for () {
         panic!("Call body_schema() for (), not schema().")
     }
 
-    fn body_schema() -> Option<ReferenceOr<Schema>> { None }
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        None
+    }
 }
 
 impl_oa_schema!(bool, Schema::new_bool());
@@ -105,7 +111,10 @@ impl_oa_schema!(f64, Schema::new_number());
 
 impl_oa_schema!(String, Schema::new_string());
 
-impl<T> OaSchema for Vec<T> where T: OaSchema {
+impl<T> OaSchema for Vec<T>
+where
+    T: OaSchema,
+{
     fn schema_ref() -> ReferenceOr<Schema> {
         let inner = T::schema_ref();
         ReferenceOr::Item(Schema::new_array(inner))
@@ -117,7 +126,10 @@ impl<T> OaSchema for Vec<T> where T: OaSchema {
     }
 }
 
-impl<T> OaSchema for Option<T> where T: OaSchema {
+impl<T> OaSchema for Option<T>
+where
+    T: OaSchema,
+{
     fn schema_ref() -> ReferenceOr<Schema> {
         let mut schema = T::schema_ref();
         let Some(s) = schema.as_mut() else {
@@ -135,8 +147,8 @@ impl<T> OaSchema for Option<T> where T: OaSchema {
 }
 
 impl<T, E> OaSchema for Result<T, E>
-    where
-        T: OaSchema,
+where
+    T: OaSchema,
 {
     fn schema_ref() -> ReferenceOr<Schema> {
         T::schema_ref()
@@ -152,8 +164,8 @@ impl<T, E> OaSchema for Result<T, E>
 }
 
 impl<K, V> OaSchema for HashMap<K, V>
-    where
-        V: OaSchema,
+where
+    V: OaSchema,
 {
     fn schema_ref() -> ReferenceOr<Schema> {
         ReferenceOr::Item(Schema::new_map(V::schema_ref()))

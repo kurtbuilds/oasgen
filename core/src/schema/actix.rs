@@ -17,6 +17,9 @@ impl<T> OaSchema for actix_web::web::Data<T> {
     fn schema() -> Schema {
         panic!("Call parameters() for Data, not schema().");
     }
+    fn body_schema() -> Option<ReferenceOr<Schema>> {
+        None
+    }
 }
 
 impl OaSchema for actix_web::HttpRequest {

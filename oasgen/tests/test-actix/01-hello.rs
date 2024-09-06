@@ -1,4 +1,4 @@
-use actix_web::web::{Json, Query};
+use actix_web::web::{Json, Query, Data};
 use oasgen::{oasgen, OaSchema, Server};
 use serde::{Deserialize, Serialize};
 
@@ -30,7 +30,7 @@ pub struct CodeResponse {
 }
 
 #[oasgen]
-async fn get_code(Query(GetCode { code }): Query<GetCode>) -> Json<CodeResponse> {
+async fn get_code(Query(GetCode { code }): Query<GetCode>, _data: Data<String>) -> Json<CodeResponse> {
     Json(CodeResponse {
         found_code: matches!(&*code, "1234" | "5678"),
     })

@@ -1,8 +1,8 @@
 use quote::ToTokens;
+use serde_derive_internals::ast::Field;
 use structmeta::StructMeta;
-use syn::LitStr;
-use serde_derive_internals::ast::{Field};
 use syn::spanned::Spanned;
+use syn::LitStr;
 
 /// Available attributes on a struct
 /// For attributes that have the same name as `serde` attributes, you can use either one.
@@ -34,7 +34,10 @@ impl FieldAttributes {
             self.skip = true;
         }
         if let Some(skip_serializing_if) = other.attrs.skip_serializing_if() {
-            self.skip_serializing_if = Some(LitStr::new(&skip_serializing_if.to_token_stream().to_string(), proc_macro2::Span::call_site()));
+            self.skip_serializing_if = Some(LitStr::new(
+                &skip_serializing_if.to_token_stream().to_string(),
+                proc_macro2::Span::call_site(),
+            ));
         }
     }
 }
@@ -43,7 +46,8 @@ impl TryFrom<&Vec<syn::Attribute>> for FieldAttributes {
     type Error = syn::Error;
 
     fn try_from(attrs: &Vec<syn::Attribute>) -> Result<Self, Self::Error> {
-        let attrs = attrs.into_iter()
+        let attrs = attrs
+            .into_iter()
             .filter(|a| a.path().get_ident().map(|i| i == "oasgen").unwrap_or(false))
             .map(|a| a.parse_args())
             .collect::<Result<Vec<FieldAttributes>, syn::Error>>()?;
@@ -85,7 +89,10 @@ pub(crate) fn get_docstring(attrs: &[syn::Attribute]) -> syn::Result<Option<Stri
             _ => None,
         })
         .map(|expr| match expr {
-            syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(s), .. }) => Ok(s.value()),
+            syn::Expr::Lit(syn::ExprLit {
+                lit: syn::Lit::Str(s),
+                ..
+            }) => Ok(s.value()),
             other => Err(syn::Error::new(
                 other.span(),
                 "Doc comment is not a string literal",
