@@ -10,6 +10,7 @@ pub use oasgen_macro::{OaSchema, oasgen};
 pub use oasgen_core::{OaSchema};
 pub use oasgen_core as core;
 pub use server::Server;
+pub use oasgen_core::{impl_parameters, impl_oa_schema, impl_oa_schema_passthrough};
 
 #[cfg(feature = "swagger-ui")]
 #[cfg_attr(docsrs, doc(cfg(feature = "swagger-ui")))]
