@@ -1,7 +1,7 @@
 use openapiv3::{ReferenceOr, Schema};
 use openapiv3 as oa;
 
-use crate::OaSchema;
+use crate::{impl_parameters, OaSchema};
 
 impl<T: OaSchema> OaSchema for axum::extract::Json<T> {
     fn schema() -> Schema {
@@ -104,3 +104,7 @@ impl<T: OaSchema> OaSchema for serde_qs::axum::QsQuery<T> {
     }
     fn body_schema() -> Option<ReferenceOr<Schema>> { None }
 }
+
+impl_parameters!(axum::extract::Path, A1);
+impl_parameters!(axum::extract::Path, A1, A2);
+impl_parameters!(axum::extract::Path, A1, A2, A3);

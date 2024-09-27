@@ -14,10 +14,16 @@ async fn get_task(Path(_id): Path<u64>) -> Json<()> {
     Json(())
 }
 
+#[oasgen]
+async fn get_stuff(Path((_id, _tu)): Path<(u64, u64)>) -> Json<()> {
+    Json(())
+}
+
 fn main() {
     use pretty_assertions::assert_eq;
     let server = Server::axum()
         .get("/tasks/:id/", get_task)
+        .get("/tasks/:id/:tu", get_stuff)
         ;
 
     let spec = serde_yaml::to_string(&server.openapi).unwrap();

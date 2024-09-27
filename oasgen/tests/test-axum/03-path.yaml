@@ -13,6 +13,21 @@ paths:
         in: path
         style: simple
       responses: {}
+  /tasks/{id}/{tu}:
+    get:
+      operationId: get_stuff
+      parameters:
+      - name: id
+        schema:
+          type: integer
+        in: path
+        style: simple
+      - name: tu
+        schema:
+          type: integer
+        in: path
+        style: simple
+      responses: {}
 components:
   schemas:
     TaskFilter:

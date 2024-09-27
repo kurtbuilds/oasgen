@@ -1,5 +1,6 @@
 set dotenv-load := true
 set positional-arguments
+set export
 
 help:
     @just --list --unsorted
@@ -18,8 +19,8 @@ fix:
 run *ARGS:
     cargo run --example actix --features actix
 
-test:
-    cargo test --all-features "$@"
+test *ARGS:
+    cargo test --all-features "$ARGS"
 
 alias r := run
 

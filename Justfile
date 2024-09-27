@@ -1,5 +1,6 @@
 set dotenv-load := true
 set positional-arguments
+set export
 
 help:
     @just --list --unsorted
@@ -8,8 +9,8 @@ build:
     cargo build
 alias b := build
 
-test:
-    @just oasgen/test
+test *ARGS:
+    @just oasgen/test "$ARGS"
 
 check:
     cargo check

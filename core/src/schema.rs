@@ -25,7 +25,6 @@ mod bigdecimal;
 mod http;
 #[cfg(feature = "sid")]
 mod sid;
-mod tuple;
 
 pub trait OaSchema {
     fn schema() -> Schema;
@@ -79,6 +78,37 @@ macro_rules! impl_oa_schema_passthrough {
     };
 }
 
+// We have to define this macro instead of defining OaSchema for tuples because
+// the Path types have to implement parameters(). parameters calls out to T::schema_ref()
+// because we need to implement something like Path<u64> : OaSchema,
+// but tuples don't work the same way, because schema doesn't return multiple schemas.
+
+// The alternative is a second trait interface like OaSchemaTuple, and we'd impl<T: OaSchemaTuple>
+// for axum::extract::Path and friends
+#[macro_export]
+macro_rules! impl_parameters {
+    // Pattern for generic axum types with tuple generics (A1, A2, etc.)
+    ($($path:ident)::+, $($A:ident),+) => {
+        impl<$($A: OaSchema),+> OaSchema for $($path)::+<($($A,)+)> {
+            fn schema() -> Schema {
+                panic!("Call parameters() for this type, not schema().");
+            }
+
+            fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
+                vec![
+                    $(
+                        ReferenceOr::Item(oa::Parameter::path(stringify!($A), $A::schema_ref())),
+                    )+
+                ]
+            }
+
+            fn body_schema() -> Option<ReferenceOr<Schema>> {
+                None
+            }
+        }
+    };
+}
+
 impl OaSchema for () {
     fn schema() -> Schema {
         panic!("Call body_schema() for (), not schema().")
@@ -115,14 +145,14 @@ impl<T> OaSchema for Vec<T>
 where
     T: OaSchema,
 {
-    fn schema_ref() -> ReferenceOr<Schema> {
-        let inner = T::schema_ref();
-        ReferenceOr::Item(Schema::new_array(inner))
-    }
-
     fn schema() -> Schema {
         let inner = T::schema();
         Schema::new_array(inner)
+    }
+
+    fn schema_ref() -> ReferenceOr<Schema> {
+        let inner = T::schema_ref();
+        ReferenceOr::Item(Schema::new_array(inner))
     }
 }
 
@@ -130,6 +160,12 @@ impl<T> OaSchema for Option<T>
 where
     T: OaSchema,
 {
+    fn schema() -> Schema {
+        let mut schema = T::schema();
+        schema.nullable = true;
+        schema
+    }
+
     fn schema_ref() -> ReferenceOr<Schema> {
         let mut schema = T::schema_ref();
         let Some(s) = schema.as_mut() else {
@@ -138,24 +174,18 @@ where
         s.nullable = true;
         schema
     }
-
-    fn schema() -> Schema {
-        let mut schema = T::schema();
-        schema.nullable = true;
-        schema
-    }
 }
 
 impl<T, E> OaSchema for Result<T, E>
 where
     T: OaSchema,
 {
-    fn schema_ref() -> ReferenceOr<Schema> {
-        T::schema_ref()
-    }
-
     fn schema() -> Schema {
         T::schema()
+    }
+
+    fn schema_ref() -> ReferenceOr<Schema> {
+        T::schema_ref()
     }
 
     fn body_schema() -> Option<ReferenceOr<Schema>> {
@@ -167,12 +197,12 @@ impl<K, V> OaSchema for HashMap<K, V>
 where
     V: OaSchema,
 {
-    fn schema_ref() -> ReferenceOr<Schema> {
-        ReferenceOr::Item(Schema::new_map(V::schema_ref()))
-    }
-
     fn schema() -> Schema {
         Schema::new_map(V::schema())
+    }
+
+    fn schema_ref() -> ReferenceOr<Schema> {
+        ReferenceOr::Item(Schema::new_map(V::schema_ref()))
     }
 }
 
