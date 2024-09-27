@@ -110,10 +110,10 @@ To compile the axum example, use the following dependencies:
 
 ```toml
 [dependencies]
-axum = "0.6"
-oasgen = { version = "0.19.0", features = ["axum"] }
-serde = { version = "1.0.196", features = ["derive"] }
-tokio = { version = "1.36.0", features = ["full"] }
+axum = ".."
+oasgen = { version = "..", features = ["axum"] }
+serde = { version = "..", features = ["derive"] }
+tokio = { version = "..", features = ["full"] }
 ```
 
 # Installation
