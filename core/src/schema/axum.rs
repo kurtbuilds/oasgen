@@ -1,34 +1,7 @@
-use openapiv3::{ReferenceOr, Schema};
+use openapiv3::{RefOr, Schema, SchemaKind, Type};
 use openapiv3 as oa;
 
-use crate::{impl_parameters, OaSchema};
-
-impl<T: OaSchema> OaSchema for axum::extract::Json<T> {
-    fn schema() -> Schema {
-        panic!("Call body_schema() for Json, not schema().")
-    }
-
-    fn body_schema() -> Option<ReferenceOr<Schema>> {
-        T::body_schema()
-    }
-}
-
-impl<T> OaSchema for axum::extract::Extension<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for Extension, not schema().")
-    }
-    fn body_schema() -> Option<ReferenceOr<Schema>> { None }
-}
-
-impl<T> OaSchema for axum::extract::State<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for State, not schema().")
-    }
-
-    fn body_schema() -> Option<ReferenceOr<Schema>> {
-        None
-    }
-}
+use crate::{OaParameter, OaSchema};
 
 impl<T> OaSchema for http::Response<T> {
     fn schema() -> Schema {
@@ -36,75 +9,48 @@ impl<T> OaSchema for http::Response<T> {
     }
 }
 
-impl<T> OaSchema for http::Request<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for Request, not schema().")
-    }
-    fn body_schema() -> Option<ReferenceOr<Schema>> { None }
-}
-
-impl<T> OaSchema for axum::extract::ConnectInfo<T> {
-    fn body_schema() -> Option<ReferenceOr<Schema>> { None }
-    fn schema() -> Schema {
-        panic!("Call parameters() for ConnectInfo, not schema().")
+impl<T: OaSchema> OaParameter for axum::extract::Json<T> {
+    fn body_schema() -> Option<RefOr<Schema>> {
+        T::body_schema()
     }
 }
+impl<T> OaParameter for axum::extract::Extension<T> {}
+impl<T> OaParameter for axum::extract::State<T> {}
+impl<T> OaParameter for http::Request<T> {}
+impl<T> OaParameter for axum::extract::ConnectInfo<T> {}
+impl OaParameter for http::HeaderMap {}
+impl OaParameter for http::request::Parts {}
 
-impl OaSchema for http::HeaderMap {
-    fn schema() -> Schema {
-        panic!("Call parameters() for HeaderMap, not schema().")
-    }
-    fn body_schema() -> Option<ReferenceOr<Schema>> { None }
-}
-
-impl<T: OaSchema> OaSchema for axum::extract::Query<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for Query, not schema().")
-    }
-
-    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        let p = oa::Parameter::query("query", T::schema_ref());
-        vec![ReferenceOr::Item(p)]
-    }
-
-    fn body_schema() -> Option<ReferenceOr<Schema>> { None }
-}
-
-impl<T: OaSchema> OaSchema for axum::extract::Path<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for Path, not schema().");
-    }
-
-    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        let p = oa::Parameter::path("path", T::schema_ref());
-        vec![ReferenceOr::Item(p)]
-    }
-
-    fn body_schema() -> Option<ReferenceOr<Schema>> {
-        None
+impl<T: OaParameter> OaParameter for axum::extract::Query<T> {
+    fn parameters() -> Vec<RefOr<oa::Parameter>> {
+        T::parameter_schemas()
+            .into_iter()
+            .flat_map(|s| s.into_item())
+            .flat_map(|s| match s.kind {
+                SchemaKind::Type(Type::Object(o)) => { Some(o.properties) }
+                _ => None
+            })
+            .flatten()
+            .map(|(k, v)| RefOr::Item(oa::Parameter::query(k, v)))
+            .collect()
     }
 }
 
-impl OaSchema for http::request::Parts {
-    fn schema() -> Schema {
-        panic!("Call parameters() for Parts, not schema().")
+impl<T: OaParameter> OaParameter for axum::extract::Path<T> {
+    fn parameters() -> Vec<RefOr<oa::Parameter>> {
+        T::parameter_schemas()
+            .into_iter()
+            .map(|s| RefOr::Item(oa::Parameter::path("path", s)))
+            .collect()
     }
-    fn body_schema() -> Option<ReferenceOr<Schema>> { None }
 }
 
 #[cfg(feature = "qs")]
-impl<T: OaSchema> OaSchema for serde_qs::axum::QsQuery<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for QsQuery, not schema().")
+impl<T: OaParameter> OaParameter for serde_qs::axum::QsQuery<T> {
+    fn parameters() -> Vec<RefOr<oa::Parameter>> {
+        T::parameter_schemas()
+            .into_iter()
+            .map(|s| RefOr::Item(oa::Parameter::query("query", s)))
+            .collect()
     }
-
-    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        let p = oa::Parameter::query("query", T::schema_ref());
-        vec![ReferenceOr::Item(p)]
-    }
-    fn body_schema() -> Option<ReferenceOr<Schema>> { None }
 }
-
-impl_parameters!(axum::extract::Path, A1);
-impl_parameters!(axum::extract::Path, A1, A2);
-impl_parameters!(axum::extract::Path, A1, A2, A3);

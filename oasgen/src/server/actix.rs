@@ -6,12 +6,12 @@ use actix_web::http::Method;
 use futures::future::{ok, Ready};
 use openapiv3::OpenAPI;
 use std::sync::Arc;
-
+use actix_web::http::header::CONTENT_TYPE;
 use crate::Format;
 
 use super::Server;
 
-use oasgen_core::OaSchema;
+use oasgen_core::{OaParameter, OaSchema};
 
 #[derive(Default)]
 pub struct ActixRouter(Vec<InnerResourceFactory<'static>>);
@@ -40,7 +40,7 @@ where
     }
 }
 
-pub type InnerResourceFactory<'a> = Box<dyn ResourceFactory<'a, Output = Resource>>;
+pub type InnerResourceFactory<'a> = Box<dyn ResourceFactory<'a, Output=Resource>>;
 
 fn build_inner_resource<F, Args>(
     path: String,
@@ -68,7 +68,7 @@ impl Server<ActixRouter> {
         F: Handler<Args>,
         Args: FromRequest + 'static,
         F::Output: Responder + 'static,
-        <F as Handler<Args>>::Output: OaSchema,
+        <F as Handler<Args>>::Output: OaParameter,
         F: Copy + Send,
     {
         self.add_handler_to_spec(path, http::Method::GET, &handler);
@@ -83,7 +83,7 @@ impl Server<ActixRouter> {
         F: Handler<Args> + Copy + Send,
         Args: FromRequest + 'static,
         F::Output: Responder + 'static,
-        <F as Handler<Args>>::Output: OaSchema,
+        <F as Handler<Args>>::Output: OaParameter,
     {
         self.add_handler_to_spec(path, http::Method::POST, &handler);
         self.router.0.push(build_inner_resource(
@@ -124,9 +124,9 @@ impl Server<ActixRouter, Arc<OpenAPI>> {
 }
 
 #[derive(Clone)]
-struct OaSpecJsonHandler(Arc<openapiv3::OpenAPI>);
+struct OaSpecJsonHandler(Arc<OpenAPI>);
 
-impl actix_web::dev::Handler<()> for OaSpecJsonHandler {
+impl Handler<()> for OaSpecJsonHandler {
     type Output = Result<HttpResponse, Error>;
     type Future = Ready<Self::Output>;
 
@@ -136,16 +136,16 @@ impl actix_web::dev::Handler<()> for OaSpecJsonHandler {
 }
 
 #[derive(Clone)]
-struct OaSpecYamlHandler(Arc<openapiv3::OpenAPI>);
+struct OaSpecYamlHandler(Arc<OpenAPI>);
 
-impl actix_web::dev::Handler<()> for OaSpecYamlHandler {
+impl Handler<()> for OaSpecYamlHandler {
     type Output = Result<HttpResponse, Error>;
     type Future = Ready<Self::Output>;
 
     fn call(&self, _: ()) -> Self::Future {
         let yaml = serde_yaml::to_string(&*self.0).unwrap();
         ok(HttpResponse::Ok()
-            .insert_header(("Content-Type", "text/yaml"))
+            .insert_header((CONTENT_TYPE, "text/yaml"))
             .body(yaml))
     }
 }

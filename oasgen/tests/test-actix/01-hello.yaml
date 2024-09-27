@@ -22,6 +22,12 @@ paths:
   /get-code:
     get:
       operationId: get_code
+      parameters:
+      - name: code
+        schema:
+          type: string
+        in: query
+        style: form
       responses:
         '200':
           description: ''

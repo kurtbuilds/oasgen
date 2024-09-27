@@ -1,74 +1,54 @@
 use openapiv3 as oa;
-use openapiv3::{ReferenceOr, Schema};
+use openapiv3::{RefOr, Schema, SchemaKind, Type};
 
-use crate::OaSchema;
+use crate::{OaParameter, OaSchema};
 
-impl<T: OaSchema> OaSchema for actix_web::web::Json<T> {
-    fn schema() -> Schema {
-        panic!("Call body_schema() for Json, not schema().")
-    }
-
-    fn body_schema() -> Option<ReferenceOr<Schema>> {
+impl<T: OaSchema> OaParameter for actix_web::web::Json<T> {
+    fn body_schema() -> Option<RefOr<Schema>> {
         T::body_schema()
-    }
-}
-
-impl<T> OaSchema for actix_web::web::Data<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for Data, not schema().");
-    }
-    fn body_schema() -> Option<ReferenceOr<Schema>> {
-        None
-    }
-}
-
-impl OaSchema for actix_web::HttpRequest {
-    fn schema() -> Schema {
-        panic!("Call parameters() for HttpRequest, not schema().");
     }
 }
 
 impl OaSchema for actix_web::HttpResponse {
     fn schema() -> Schema {
-        panic!("Call body_schema() for HttpResponse, not schema().");
+        Schema::new_any()
     }
 }
 
-impl<T: OaSchema> OaSchema for actix_web::web::Path<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for Path, not schema().");
-    }
+impl<T> OaParameter for actix_web::web::Data<T> {}
+impl OaParameter for actix_web::HttpRequest {}
 
-    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        T::parameters()
-    }
 
-    fn body_schema() -> Option<ReferenceOr<Schema>> {
-        None
+impl<T: OaParameter> OaParameter for actix_web::web::Path<T> {
+    fn parameters() -> Vec<RefOr<oa::Parameter>> {
+        T::parameter_schemas()
+            .into_iter()
+            .map(|s| RefOr::Item(oa::Parameter::path("path", s)))
+            .collect()
     }
 }
 
-impl<T: OaSchema> OaSchema for actix_web::web::Query<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for Query, not schema().");
-    }
-
-    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        T::parameters()
-    }
-    fn body_schema() -> Option<ReferenceOr<Schema>> {
-        None
+impl<T: OaParameter> OaParameter for actix_web::web::Query<T> {
+    fn parameters() -> Vec<RefOr<oa::Parameter>> {
+        T::parameter_schemas()
+            .into_iter()
+            .flat_map(|s| s.into_item())
+            .flat_map(|s| match s.kind {
+                SchemaKind::Type(Type::Object(o)) => { Some(o.properties) }
+                _ => None
+            })
+            .flatten()
+            .map(|(k, v)| RefOr::Item(oa::Parameter::query(k, v)))
+            .collect()
     }
 }
 
 #[cfg(feature = "qs")]
-impl<T: OaSchema> OaSchema for serde_qs::actix::QsQuery<T> {
-    fn schema() -> Schema {
-        panic!("Call parameters() for QsQuery, not schema().");
-    }
-
-    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        let p = oa::Parameter::query("query", T::schema_ref());
-        vec![ReferenceOr::Item(p)]
+impl<T: OaParameter> OaParameter for serde_qs::actix::QsQuery<T> {
+    fn parameters() -> Vec<RefOr<oa::Parameter>> {
+        T::parameter_schemas()
+            .into_iter()
+            .map(|s| RefOr::Item(oa::Parameter::query("query", s)))
+            .collect()
     }
 }

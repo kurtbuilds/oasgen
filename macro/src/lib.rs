@@ -61,9 +61,9 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     };
     let body = args.last().map(|t| {
         quote! {
-            let body = #t::body_schema();
+            let body = <#t as ::oasgen::OaParameter>::body_schema();
             if body.is_some() {
-                op.add_request_body_json(#t::body_schema());
+                op.add_request_body_json(body);
             }
         }
     }).unwrap_or_default();
@@ -74,7 +74,7 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     }).unwrap_or_default();
     let ret = ret.map(|t| {
         quote! {
-            let body = #t::body_schema();
+            let body = <#t as ::oasgen::OaParameter>::body_schema();
             if body.is_some() {
                 op.add_response_success_json(body);
             }
@@ -105,7 +105,7 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     let submit = quote! {
         ::oasgen::register_operation!(concat!(module_path!(), "::", #name), || {
             let parameters: Vec<Vec<::oasgen::RefOr<::oasgen::Parameter>>> = vec![
-                #( #args::parameters(), )*
+                #( <#args as ::oasgen::OaParameter>::parameters(), )*
             ];
             let parameters = parameters
                 .into_iter()

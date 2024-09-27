@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-
-use openapiv3 as oa;
 use openapiv3::{ReferenceOr, Schema};
 
 #[cfg(feature = "actix")]
@@ -25,6 +23,7 @@ mod bigdecimal;
 mod http;
 #[cfg(feature = "sid")]
 mod sid;
+mod tuple;
 
 pub trait OaSchema {
     fn schema() -> Schema;
@@ -32,11 +31,8 @@ pub trait OaSchema {
     fn schema_ref() -> ReferenceOr<Schema> {
         ReferenceOr::Item(Self::schema())
     }
-
-    fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
-        Vec::new()
-    }
-
+    /// You should rarely if ever implement this method.
+    #[doc(hidden)]
     fn body_schema() -> Option<ReferenceOr<Schema>> {
         Some(Self::schema_ref())
     }
@@ -78,46 +74,6 @@ macro_rules! impl_oa_schema_passthrough {
     };
 }
 
-// We have to define this macro instead of defining OaSchema for tuples because
-// the Path types have to implement parameters(). parameters calls out to T::schema_ref()
-// because we need to implement something like Path<u64> : OaSchema,
-// but tuples don't work the same way, because schema doesn't return multiple schemas.
-
-// The alternative is a second trait interface like OaSchemaTuple, and we'd impl<T: OaSchemaTuple>
-// for axum::extract::Path and friends
-#[macro_export]
-macro_rules! impl_parameters {
-    // Pattern for generic axum types with tuple generics (A1, A2, etc.)
-    ($($path:ident)::+, $($A:ident),+) => {
-        impl<$($A: $crate::OaSchema),+> $crate::OaSchema for $($path)::+<($($A,)+)> {
-            fn schema() -> $crate::Schema {
-                panic!("Call parameters() for this type, not schema().");
-            }
-
-            fn parameters() -> Vec<$crate::ReferenceOr<$crate::Parameter>> {
-                vec![
-                    $(
-                        $crate::ReferenceOr::Item($crate::Parameter::path(stringify!($A), $A::schema_ref())),
-                    )+
-                ]
-            }
-
-            fn body_schema() -> Option<$crate::ReferenceOr<$crate::Schema>> {
-                None
-            }
-        }
-    };
-}
-
-impl OaSchema for () {
-    fn schema() -> Schema {
-        panic!("Call body_schema() for (), not schema().")
-    }
-
-    fn body_schema() -> Option<ReferenceOr<Schema>> {
-        None
-    }
-}
 
 impl_oa_schema!(bool, Schema::new_bool());
 
@@ -176,20 +132,12 @@ where
     }
 }
 
-impl<T, E> OaSchema for Result<T, E>
-where
-    T: OaSchema,
-{
+impl OaSchema for () {
     fn schema() -> Schema {
-        T::schema()
+        panic!("Unit type has no schema")
     }
-
-    fn schema_ref() -> ReferenceOr<Schema> {
-        T::schema_ref()
-    }
-
     fn body_schema() -> Option<ReferenceOr<Schema>> {
-        T::body_schema()
+        None
     }
 }
 
