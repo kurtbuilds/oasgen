@@ -89,20 +89,20 @@ macro_rules! impl_oa_schema_passthrough {
 macro_rules! impl_parameters {
     // Pattern for generic axum types with tuple generics (A1, A2, etc.)
     ($($path:ident)::+, $($A:ident),+) => {
-        impl<$($A: OaSchema),+> OaSchema for $($path)::+<($($A,)+)> {
-            fn schema() -> Schema {
+        impl<$($A: $crate::OaSchema),+> $crate::OaSchema for $($path)::+<($($A,)+)> {
+            fn schema() -> $crate::Schema {
                 panic!("Call parameters() for this type, not schema().");
             }
 
-            fn parameters() -> Vec<ReferenceOr<oa::Parameter>> {
+            fn parameters() -> Vec<$crate::ReferenceOr<$crate::Parameter>> {
                 vec![
                     $(
-                        ReferenceOr::Item(oa::Parameter::path(stringify!($A), $A::schema_ref())),
+                        $crate::ReferenceOr::Item($crate::Parameter::path(stringify!($A), $A::schema_ref())),
                     )+
                 ]
             }
 
-            fn body_schema() -> Option<ReferenceOr<Schema>> {
+            fn body_schema() -> Option<$crate::ReferenceOr<$crate::Schema>> {
                 None
             }
         }
