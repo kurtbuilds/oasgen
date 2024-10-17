@@ -93,6 +93,22 @@ impl Server<ActixRouter> {
         ));
         self
     }
+
+    pub fn patch<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaParameter,
+    {
+        self.add_handler_to_spec(path, http::Method::PATCH, &handler);
+        self.router.0.push(build_inner_resource(
+            path.to_string(),
+            Method::PATCH,
+            handler,
+        ));
+        self
+    }
 }
 
 impl Server<ActixRouter, Arc<OpenAPI>> {
