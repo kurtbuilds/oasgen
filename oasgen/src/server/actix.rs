@@ -78,6 +78,22 @@ impl Server<ActixRouter> {
         self
     }
 
+    pub fn head<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaParameter,
+    {
+        self.add_handler_to_spec(path, http::Method::HEAD, &handler);
+        self.router.0.push(build_inner_resource(
+            path.to_string(),
+            Method::HEAD,
+            handler,
+        ));
+        self
+    }
+
     pub fn post<F, Args>(mut self, path: &str, handler: F) -> Self
     where
         F: Handler<Args> + Copy + Send,
@@ -89,6 +105,102 @@ impl Server<ActixRouter> {
         self.router.0.push(build_inner_resource(
             path.to_string(),
             Method::POST,
+            handler,
+        ));
+        self
+    }
+
+    pub fn put<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaParameter,
+    {
+        self.add_handler_to_spec(path, http::Method::PUT, &handler);
+        self.router.0.push(build_inner_resource(
+            path.to_string(),
+            Method::PUT,
+            handler,
+        ));
+        self
+    }
+
+    pub fn delete<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaParameter,
+    {
+        self.add_handler_to_spec(path, http::Method::DELETE, &handler);
+        self.router.0.push(build_inner_resource(
+            path.to_string(),
+            Method::DELETE,
+            handler,
+        ));
+        self
+    }
+
+    pub fn patch<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaParameter,
+    {
+        self.add_handler_to_spec(path, http::Method::PATCH, &handler);
+        self.router.0.push(build_inner_resource(
+            path.to_string(),
+            Method::PATCH,
+            handler,
+        ));
+        self
+    }
+
+    pub fn options<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaParameter,
+    {
+        self.add_handler_to_spec(path, http::Method::OPTIONS, &handler);
+        self.router.0.push(build_inner_resource(
+            path.to_string(),
+            Method::OPTIONS,
+            handler,
+        ));
+        self
+    }
+
+    pub fn trace<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaParameter,
+    {
+        self.add_handler_to_spec(path, http::Method::TRACE, &handler);
+        self.router.0.push(build_inner_resource(
+            path.to_string(),
+            Method::TRACE,
+            handler,
+        ));
+        self
+    }
+
+    pub fn connect<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+        <F as Handler<Args>>::Output: OaParameter,
+    {
+        self.add_handler_to_spec(path, http::Method::CONNECT, &handler);
+        self.router.0.push(build_inner_resource(
+            path.to_string(),
+            Method::CONNECT,
             handler,
         ));
         self
