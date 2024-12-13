@@ -35,7 +35,7 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
             derive_oaschema_newtype(id, fields.first().unwrap())
         }
         Data::Enum(variants) => {
-            derive_oaschema_enum(id, variants, &cont.attrs.tag(), docstring)
+            derive_oaschema_enum(id, variants, cont.attrs.tag(), docstring)
         }
         Data::Struct(Style::Tuple | Style::Unit, _) => {
             panic!("#[derive(OaSchema)] can not be used on tuple structs")
@@ -133,27 +133,18 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
 /// example: axum::Json<User> becomes axum::Json::<User>
 fn turbofish(mut ty: Type) -> Type {
     fn inner(ty: &mut Type) {
-        match ty {
-            Type::Path(TypePath { path, .. }) => {
-                let Some(last) = path.segments.last_mut() else {
-                    return;
-                };
-                match &mut last.arguments {
-                    PathArguments::AngleBracketed(args) => {
-                        args.colon2_token = Some(Default::default());
-                        for arg in args.args.iter_mut() {
-                            match arg {
-                                GenericArgument::Type(ty) => {
-                                    inner(ty);
-                                }
-                                _ => {}
-                            }
-                        }
+        if let Type::Path(TypePath { path, .. }) = ty {
+            let Some(last) = path.segments.last_mut() else {
+                return;
+            };
+            if let PathArguments::AngleBracketed(args) = &mut last.arguments {
+                args.colon2_token = Some(Default::default());
+                for arg in args.args.iter_mut() {
+                    if let GenericArgument::Type(ty) = arg {
+                        inner(ty);
                     }
-                    _ => {}
                 }
             }
-            _ => {}
         }
     }
     inner(&mut ty);

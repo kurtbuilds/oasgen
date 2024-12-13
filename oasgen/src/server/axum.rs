@@ -113,7 +113,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
         if let Some(json_route) = &self.json_route {
             let spec = self.openapi.as_ref();
             let bytes = serde_json::to_vec(spec).unwrap();
-            router = router.route(&json_route, routing::get(|| async {
+            router = router.route(json_route, routing::get(|| async {
                 (
                     [(
                         http::header::CONTENT_TYPE,
@@ -127,7 +127,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
         if let Some(yaml_route) = &self.yaml_route {
             let spec = self.openapi.as_ref();
             let yaml = serde_yaml::to_string(spec).unwrap();
-            router = router.route(&yaml_route, routing::get(|| async {
+            router = router.route(yaml_route, routing::get(|| async {
                 (
                     [(
                         http::header::CONTENT_TYPE,
@@ -157,7 +157,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
                 }
             });
             router = router
-                .route(&format!("{}", &path), handler.clone());
+                .route(&path.to_string(), handler.clone());
             router = router
                 .route(&format!("{}*rest", &path), handler)
         }

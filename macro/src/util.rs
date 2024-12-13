@@ -23,10 +23,10 @@ pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> Toke
         }
     }).unwrap_or_default();
     let properties = fields
-        .into_iter()
+        .iter()
         .map(|f| {
             let mut attr = FieldAttributes::try_from(&f.original.attrs).unwrap();
-            attr.merge_serde(&f);
+            attr.merge_serde(f);
             if attr.skip {
                 return quote! {};
             }
@@ -103,7 +103,7 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field], docstring: Option
 /// Create OaSchema derive token stream for an enum from ident and variants
 pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, _docstring: Option<String>) -> TokenStream {
     let variants = variants
-        .into_iter()
+        .iter()
         .filter(|v| {
             let openapi_attrs = FieldAttributes::try_from(&v.original.attrs).unwrap();
             !openapi_attrs.skip
@@ -112,7 +112,7 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, 
     let mut str_variants = vec![];
     for v in variants {
         let name = v.attrs.name().deserialize_name();
-        if v.fields.len() == 0 {
+        if v.fields.is_empty() {
             str_variants.push(quote! { #name.to_string(), });
         } else {
             let schema = impl_OaSchema_schema(&v.fields, None);
@@ -170,7 +170,7 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, 
         }
     }
 
-    if str_variants.len() > 0 {
+    if !str_variants.is_empty() {
         match tag {
             TagType::External => complex_variants.push(quote! { ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]) }),
             TagType::Internal { tag } | TagType::Adjacent { tag, .. } => complex_variants.push(quote! {{
