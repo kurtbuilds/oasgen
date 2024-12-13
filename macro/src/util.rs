@@ -35,10 +35,10 @@ pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> Toke
         })
         .unwrap_or_default();
     let properties = fields
-        .into_iter()
+        .iter()
         .map(|f| {
             let mut attr = FieldAttributes::try_from(&f.original.attrs).unwrap();
-            attr.merge_serde(&f);
+            attr.merge_serde(f);
             if attr.skip {
                 return quote! {};
             }
@@ -132,7 +132,7 @@ pub fn derive_oaschema_enum(
     let mut str_variants = vec![];
     for v in variants {
         let name = v.attrs.name().deserialize_name();
-        if v.fields.len() == 0 {
+        if v.fields.is_empty() {
             str_variants.push(quote! { #name.to_string(), });
         } else {
             let schema = impl_OaSchema_schema(&v.fields, None);
@@ -190,7 +190,7 @@ pub fn derive_oaschema_enum(
         }
     }
 
-    if str_variants.len() > 0 {
+    if !str_variants.is_empty() {
         match tag {
             TagType::External => complex_variants
                 .push(quote! { ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]) }),

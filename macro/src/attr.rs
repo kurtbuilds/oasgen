@@ -47,7 +47,7 @@ impl TryFrom<&Vec<syn::Attribute>> for FieldAttributes {
 
     fn try_from(attrs: &Vec<syn::Attribute>) -> Result<Self, Self::Error> {
         let attrs = attrs
-            .into_iter()
+            .iter()
             .filter(|a| a.path().get_ident().map(|i| i == "oasgen").unwrap_or(false))
             .map(|a| a.parse_args())
             .collect::<Result<Vec<FieldAttributes>, syn::Error>>()?;
