@@ -124,7 +124,7 @@ pub fn derive_oaschema_enum(
     tag: &TagType,
     _docstring: Option<String>,
 ) -> TokenStream {
-    let variants = variants.into_iter().filter(|v| {
+    let variants = variants.iter().filter(|v| {
         let openapi_attrs = FieldAttributes::try_from(&v.original.attrs).unwrap();
         !openapi_attrs.skip
     });
