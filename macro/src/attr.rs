@@ -2,7 +2,7 @@ use quote::ToTokens;
 use serde_derive_internals::ast::Field;
 use structmeta::StructMeta;
 use syn::spanned::Spanned;
-use syn::LitStr;
+use syn::{Ident, LitStr};
 
 /// Available attributes on a struct
 /// For attributes that have the same name as `serde` attributes, you can use either one.
@@ -68,6 +68,8 @@ pub struct OperationAttributes {
     pub tags: Option<Vec<LitStr>>,
     pub operation_id: Option<LitStr>,
     pub deprecated: bool,
+    pub skip: Option<Vec<Ident>>,
+    pub skip_all: bool,
 }
 
 impl OperationAttributes {
