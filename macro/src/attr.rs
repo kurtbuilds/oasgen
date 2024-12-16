@@ -14,6 +14,7 @@ pub struct FieldAttributes {
     /// By default, oasgen will use references when possible
     /// If you want to inline the schema, use `#[oasgen(inline)]`
     pub inline: bool,
+    pub rename: Option<LitStr>,
 }
 
 impl FieldAttributes {
