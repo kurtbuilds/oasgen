@@ -227,6 +227,11 @@ pub(crate) fn add_handler_to_spec<F>(
         .as_mut()
         .expect("Currently don't support references for PathItem");
     let type_name = std::any::type_name::<F>();
+
+    // Handlers are stored in `OPERATION_LOOKUP` without generics,
+    // so strip `type_name` of generic part.
+    let type_name = type_name.split('<').next().unwrap_or(type_name);
+
     let mut operation = OPERATION_LOOKUP
         .get(type_name)
         .unwrap_or_else(|| panic!("Operation {type_name} not found in OpenAPI spec."))(

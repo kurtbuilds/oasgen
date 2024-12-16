@@ -6,7 +6,10 @@ use serde_derive_internals::{
     ast::{Container, Data, Style},
     Ctxt, Derive,
 };
-use syn::{PathArguments, GenericArgument, TypePath, Type, ReturnType, FnArg, parse_macro_input, DeriveInput};
+use syn::{
+    parse_macro_input, DeriveInput, FnArg, GenericArgument, Pat, PathArguments, ReturnType, Type,
+    TypePath,
+};
 use util::{derive_oaschema_enum, derive_oaschema_struct};
 use crate::attr::{get_docstring, OperationAttributes};
 use crate::util::derive_oaschema_newtype;
@@ -43,18 +46,34 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     }
 }
 
-
 #[proc_macro_attribute]
 pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::ItemFn);
     let mut attr = syn::parse::<OperationAttributes>(attr).expect("Failed to parse operation attributes");
     attr.merge_attributes(&ast.attrs);
-    let args = ast.sig.inputs.iter().map(|arg| {
-        match arg {
-            FnArg::Receiver(_) => panic!("Receiver arguments are not supported"),
-            FnArg::Typed(pat) => turbofish(pat.ty.as_ref().clone()),
-        }
-    }).collect::<Vec<_>>();
+
+    let args = if attr.skip_all {
+        vec![]
+    } else {
+        let skip = attr.skip.unwrap_or_default();
+        ast.sig
+            .inputs
+            .iter()
+            .filter_map(|arg| match arg {
+                FnArg::Receiver(_) => panic!("Receiver arguments are not supported"),
+                FnArg::Typed(pat) => {
+                    if let Pat::Ident(name) = pat.pat.as_ref() {
+                        if skip.contains(&name.ident) {
+                            return None;
+                        }
+                    }
+
+                    Some(turbofish(pat.ty.as_ref().clone()))
+                }
+            })
+            .collect::<Vec<_>>()
+    };
+
     let ret = match &ast.sig.output {
         ReturnType::Default => None,
         ReturnType::Type(_, ty) => Some(turbofish(ty.as_ref().clone())),
