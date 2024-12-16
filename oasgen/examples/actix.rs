@@ -39,8 +39,8 @@ pub mod inner {
     }
 
     #[oasgen]
-    async fn pong() -> Json<String> {
-        Json("pong".into())
+    async fn pong() -> &'static str {
+        "pong"
     }
 
     #[tokio::main]
