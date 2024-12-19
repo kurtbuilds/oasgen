@@ -75,6 +75,16 @@ impl OaParameter for actix_files::NamedFile {
     }
 }
 
+impl<L, R> OaParameter for actix_web::Either<L, R>
+where
+    L: OaParameter,
+    R: OaParameter,
+{
+    fn body_schema() -> Option<RefOr<Schema>> {
+        L::body_schema().or_else(|| R::body_schema())
+    }
+}
+
 #[cfg(feature = "qs")]
 impl<T: OaParameter> OaParameter for serde_qs::actix::QsQuery<T> {
     fn parameters() -> Vec<RefOr<oa::Parameter>> {
