@@ -44,7 +44,7 @@ axum = { version = "0.7.4", optional = true, default-features = false, features 
 futures = "0.3.28"
 http = "1.0.0"
 indexmap = "2"
-openapiv3-extended = { version = "6" }
+openapiv3-extended = { git = "https://github.com/ZephyrCodesStuff/openapiv3", version = "6" }
 oasgen-core = { path = "../core", version = "0.21.0"}
 oasgen-macro = { path = "../macro", version = "0.21.0"}
 serde = { version = "1.0.171", features = ["derive"] }

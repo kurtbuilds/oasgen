@@ -65,6 +65,8 @@ impl TryFrom<&Vec<syn::Attribute>> for FieldAttributes {
 pub struct OperationAttributes {
     pub summary: Option<LitStr>,
     pub description: Option<LitStr>,
+    pub body: Option<LitStr>,
+    pub returns: Option<LitStr>,
     pub tags: Option<Vec<LitStr>>,
     pub operation_id: Option<LitStr>,
     pub deprecated: bool,

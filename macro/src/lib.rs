@@ -59,11 +59,15 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
         ReturnType::Default => None,
         ReturnType::Type(_, ty) => Some(turbofish(ty.as_ref().clone())),
     };
+
+    let body_content_type = attr.body.as_ref().map(|s| s.value()).unwrap_or("application/json".to_string());
+    let return_content_type = attr.returns.as_ref().map(|s| s.value()).unwrap_or("application/json".to_string());
+
     let body = args.last().map(|t| {
         quote! {
             let body = <#t as ::oasgen::OaParameter>::body_schema();
             if body.is_some() {
-                op.add_request_body_json(body);
+                op.add_request_body(body, #body_content_type.to_string());
             }
         }
     }).unwrap_or_default();
@@ -76,7 +80,7 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
         quote! {
             let body = <#t as ::oasgen::OaParameter>::body_schema();
             if body.is_some() {
-                op.add_response_success_json(body);
+                op.add_response_success(body, #return_content_type.to_string());
             }
         }
     }).unwrap_or_default();

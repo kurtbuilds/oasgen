@@ -1,4 +1,4 @@
-use openapiv3 as oa;
+use openapiv3::{self as oa};
 use openapiv3::{RefOr, Schema, SchemaKind, Type};
 
 use crate::{OaParameter, OaSchema};
@@ -40,6 +40,22 @@ impl<T: OaParameter> OaParameter for actix_web::web::Query<T> {
             .flatten()
             .map(|(k, v)| RefOr::Item(oa::Parameter::query(k, v)))
             .collect()
+    }
+}
+
+impl OaParameter for actix_web::web::Bytes {
+    fn body_schema() -> Option<RefOr<Schema>> {
+        Some(RefOr::Item(Schema {
+            data: oa::SchemaData {
+                title: Some("Release binary executabe".to_string()),
+                description: Some("Binary executable that the updater will release".to_string()),
+                ..Default::default()
+            },
+            kind: oa::SchemaKind::Type(oa::Type::String(oa::StringType {
+                format: oa::VariantOrUnknownOrEmpty::Item(oa::StringFormat::Binary),
+                ..Default::default()
+            }))
+        }))
     }
 }
 
