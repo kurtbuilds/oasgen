@@ -47,8 +47,24 @@ impl OaParameter for actix_web::web::Bytes {
     fn body_schema() -> Option<RefOr<Schema>> {
         Some(RefOr::Item(Schema {
             data: oa::SchemaData {
-                title: Some("Release binary executabe".to_string()),
-                description: Some("Binary executable that the updater will release".to_string()),
+                title: Some("Binary".to_string()),
+                description: Some("Binary content".to_string()),
+                ..Default::default()
+            },
+            kind: oa::SchemaKind::Type(oa::Type::String(oa::StringType {
+                format: oa::VariantOrUnknownOrEmpty::Item(oa::StringFormat::Binary),
+                ..Default::default()
+            }))
+        }))
+    }
+}
+
+impl OaParameter for actix_files::NamedFile {
+    fn body_schema() -> Option<RefOr<Schema>> {
+        Some(RefOr::Item(Schema {
+            data: oa::SchemaData {
+                title: Some("File".to_string()),
+                description: Some("Regular file".to_string()),
                 ..Default::default()
             },
             kind: oa::SchemaKind::Type(oa::Type::String(oa::StringType {

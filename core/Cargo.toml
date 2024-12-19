@@ -20,6 +20,7 @@ syn = "2"
 serde_json = "1.0.100"
 http = "1.0.0"
 actix-web = { version = "4.3.1", optional = true }
+actix-files = { version = "0.6.6", optional = true }
 axum = { version = "0.7.4", optional = true }
 uuid = { optional = true, version = "1.4.0" }
 chrono = { optional = true, version = "0.4.26" }
@@ -33,7 +34,7 @@ serde_qs = { version = "0.13.0", optional = true }
 bigdecimal = { version = "0.4.2", optional = true }
 
 [features]
-actix = ["actix-web", "serde_qs?/actix4"]
+actix = ["actix-web", "actix-files", "serde_qs?/actix4"]
 json = ["sqlx-core/json", "sqlx-core"]
 cookies = ["tower-cookies"]
 qs = ["serde_qs"]
