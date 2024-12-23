@@ -3,7 +3,7 @@ use openapiv3::{RefOr, Schema, SchemaKind, Type};
 
 use crate::{OaParameter, OaSchema};
 
-impl<T: OaSchema> OaParameter for actix_web::web::Json<T> {
+impl<T: OaParameter> OaParameter for actix_web::web::Json<T> {
     fn body_schema() -> Option<RefOr<Schema>> {
         T::body_schema()
     }
