@@ -7,6 +7,14 @@ impl<T: OaParameter> OaParameter for actix_web::web::Json<T> {
     fn body_schema() -> Option<RefOr<Schema>> {
         T::body_schema()
     }
+
+    fn parameter_schemas() -> Vec<RefOr<Schema>> {
+        T::parameter_schemas()
+    }
+
+    fn parameters() -> Vec<RefOr<oa::Parameter>> {
+        T::parameters()
+    }
 }
 
 impl OaSchema for actix_web::HttpResponse {
