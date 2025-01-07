@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use openapiv3::{ReferenceOr, Schema};
+
+use openapiv3::{RefOr, ReferenceOr, Schema, SchemaData, SchemaKind};
 
 #[cfg(feature = "actix")]
 mod actix;
@@ -74,7 +75,6 @@ macro_rules! impl_oa_schema_passthrough {
     };
 }
 
-
 impl_oa_schema!(bool, Schema::new_bool());
 
 impl_oa_schema!(usize, Schema::new_integer());
@@ -124,11 +124,21 @@ where
 
     fn schema_ref() -> ReferenceOr<Schema> {
         let mut schema = T::schema_ref();
-        let Some(s) = schema.as_mut() else {
-            return schema;
-        };
-        s.nullable = true;
-        schema
+        match schema.as_mut() {
+            Some(s) => {
+                s.nullable = true;
+                schema
+            }
+            None => RefOr::Item(Schema {
+                data: SchemaData {
+                    nullable: true,
+                    ..Default::default()
+                },
+                kind: SchemaKind::AllOf {
+                    all_of: vec![schema],
+                },
+            }),
+        }
     }
 }
 

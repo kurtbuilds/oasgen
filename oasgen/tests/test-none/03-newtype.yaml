@@ -16,7 +16,12 @@ properties:
         type: integer
     required:
     - test
+  prop_d:
+    nullable: true
+    allOf:
+    - $ref: '#/components/schemas/Struct'
 required:
 - id
 - prop_a
 - prop_b
+- prop_d
