@@ -30,12 +30,6 @@ version level:
    cargo set-version --bump {{ level }} --workspace --exclude swagger-ui2
    VERSION=$(toml get oasgen/Cargo.toml package.version)
 
-   toml set macro/Cargo.toml dependencies.oasgen-core.version $VERSION
-   (cd macro && cargo update)
-   toml set oasgen/Cargo.toml dependencies.oasgen-core.version $VERSION
-   toml set oasgen/Cargo.toml dependencies.oasgen-macro.version $VERSION
-   (cd oasgen && cargo update)
-
    git commit -am "Bump version {{level}} to $VERSION" && \
        git tag v$VERSION && \
        git push --tags

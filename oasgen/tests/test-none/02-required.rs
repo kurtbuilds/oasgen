@@ -1,4 +1,4 @@
-use oasgen::{OaSchema};
+use oasgen::OaSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(OaSchema, Serialize, Deserialize)]
