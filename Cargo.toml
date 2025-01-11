@@ -1,8 +1,10 @@
 [workspace]
 resolver = "2"
-members = [
-    "oasgen",
-    "core",
-    "macro",
-    "swagger-ui",
-]
+members = ["oasgen", "core", "macro", "swagger-ui"]
+
+
+[workspace.dependencies]
+oasgen = { path = "oasgen", version = "0.21" }
+oasgen-core = { path = "core", version = "0.21" }
+oasgen-macro = { path = "macro", version = "0.21" }
+swagger-ui2 = { version = "0.6", path = "swagger-ui" }
