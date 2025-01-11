@@ -28,7 +28,7 @@ version level:
    just test
 
    cargo set-version --bump {{ level }} --workspace --exclude swagger-ui2
-   VERSION=$(toml get oasgen/Cargo.toml package.version)
+   VERSION=$(rg -om1 "version = \"(.*)\"" --replace '$1' oasgen/Cargo.toml)
 
    git commit -am "Bump version {{level}} to $VERSION" && \
        git tag v$VERSION && \
