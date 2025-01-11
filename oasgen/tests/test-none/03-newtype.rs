@@ -21,6 +21,7 @@ pub struct Foo {
     prop_b: StructNewType,
     #[oasgen(skip)]
     prop_c: StructNewType,
+    prop_d: Option<Struct>,
 }
 
 fn main() {

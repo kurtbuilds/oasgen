@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use openapiv3::{ReferenceOr, Schema};
 
 #[cfg(feature = "actix")]
@@ -73,7 +74,6 @@ macro_rules! impl_oa_schema_passthrough {
         }
     };
 }
-
 
 impl_oa_schema!(bool, Schema::new_bool());
 

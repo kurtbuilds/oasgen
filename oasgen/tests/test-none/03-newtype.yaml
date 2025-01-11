@@ -16,6 +16,8 @@ properties:
         type: integer
     required:
     - test
+  prop_d:
+    $ref: '#/components/schemas/Struct'
 required:
 - id
 - prop_a
