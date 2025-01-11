@@ -7,6 +7,16 @@ use serde_derive_internals::{
     attr::TagType,
 };
 
+fn is_option(ty: &syn::Type) -> bool {
+    let syn::Type::Path(p) = ty else {
+        return false;
+    };
+    let Some(segment) = p.path.segments.first() else {
+        return false;
+    };
+    segment.ident == "Option"
+}
+
 pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> TokenStream2 {
     if fields.len() == 1 {
         let field = fields.first().unwrap();
@@ -17,11 +27,13 @@ pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> Toke
             };
         }
     }
-    let description = docstring.map(|s| {
-        quote! {
-            o.description = Some(#s.into());
-        }
-    }).unwrap_or_default();
+    let description = docstring
+        .map(|s| {
+            quote! {
+                o.description = Some(#s.into());
+            }
+        })
+        .unwrap_or_default();
     let properties = fields
         .into_iter()
         .map(|f| {
@@ -48,7 +60,7 @@ pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> Toke
                     }
                 }
             } else {
-                let required = !(attr.skip || attr.skip_serializing_if.is_some());
+                let required = !(attr.skip || attr.skip_serializing_if.is_some() || is_option(ty));
                 let required = required.then(|| {
                     quote! { o.required_mut().push(#name.to_string()); }
                 }).unwrap_or_default();
@@ -79,7 +91,11 @@ pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> Toke
 }
 
 /// Create OaSchema derive token stream for a struct from ident and fields
-pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field], docstring: Option<String>) -> TokenStream {
+pub fn derive_oaschema_struct(
+    ident: &Ident,
+    fields: &[Field],
+    docstring: Option<String>,
+) -> TokenStream {
     let schema = impl_OaSchema_schema(fields, docstring);
     let name = ident.to_string();
     let submit = quote! {
@@ -97,17 +113,21 @@ pub fn derive_oaschema_struct(ident: &Ident, fields: &[Field], docstring: Option
             }
         }
         #submit
-    }.into()
+    }
+    .into()
 }
 
 /// Create OaSchema derive token stream for an enum from ident and variants
-pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, _docstring: Option<String>) -> TokenStream {
-    let variants = variants
-        .into_iter()
-        .filter(|v| {
-            let openapi_attrs = FieldAttributes::try_from(&v.original.attrs).unwrap();
-            !openapi_attrs.skip
-        });
+pub fn derive_oaschema_enum(
+    ident: &Ident,
+    variants: &[Variant],
+    tag: &TagType,
+    _docstring: Option<String>,
+) -> TokenStream {
+    let variants = variants.into_iter().filter(|v| {
+        let openapi_attrs = FieldAttributes::try_from(&v.original.attrs).unwrap();
+        !openapi_attrs.skip
+    });
     let mut complex_variants = vec![];
     let mut str_variants = vec![];
     for v in variants {
@@ -172,19 +192,22 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, 
 
     if str_variants.len() > 0 {
         match tag {
-            TagType::External => complex_variants.push(quote! { ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]) }),
-            TagType::Internal { tag } | TagType::Adjacent { tag, .. } => complex_variants.push(quote! {{
-                let mut o = ::oasgen::Schema::new_object();
-                let values = vec![#(#str_variants)*];
-                o.properties_mut().insert(#tag, ::oasgen::Schema::new_str_enum(values));
-                o.required_mut().push(#tag.to_string());
-                o
-            }}),
-            _ => () // a null case should be handled, which will deserialize to the first unit
-            // variant, but unsure how to handle this case. I tried an enum with
-            // type: 'null', which is supported in glademiller:openapiv3, but not in
-            // kurtbuilds:openapiv3
-            // kurt: I believe null enum is handled by setting nullable: true.
+            TagType::External => complex_variants
+                .push(quote! { ::oasgen::Schema::new_str_enum(vec![#(#str_variants)*]) }),
+            TagType::Internal { tag } | TagType::Adjacent { tag, .. } => {
+                complex_variants.push(quote! {{
+                    let mut o = ::oasgen::Schema::new_object();
+                    let values = vec![#(#str_variants)*];
+                    o.properties_mut().insert(#tag, ::oasgen::Schema::new_str_enum(values));
+                    o.required_mut().push(#tag.to_string());
+                    o
+                }})
+            }
+            _ => (), // a null case should be handled, which will deserialize to the first unit
+                     // variant, but unsure how to handle this case. I tried an enum with
+                     // type: 'null', which is supported in glademiller:openapiv3, but not in
+                     // kurtbuilds:openapiv3
+                     // kurt: I believe null enum is handled by setting nullable: true.
         }
     }
 
@@ -211,7 +234,8 @@ pub fn derive_oaschema_enum(ident: &Ident, variants: &[Variant], tag: &TagType, 
             }
         }
         #submit
-    }.into()
+    }
+    .into()
 }
 
 pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
@@ -226,5 +250,6 @@ pub fn derive_oaschema_newtype(ident: &Ident, field: &Field) -> TokenStream {
                 <#ty as OaSchema>::schema()
             }
         }
-    }.into()
+    }
+    .into()
 }

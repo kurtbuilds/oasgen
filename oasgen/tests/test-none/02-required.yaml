@@ -10,4 +10,3 @@ properties:
     type: string
 required:
 - is_required
-- is_nullable
