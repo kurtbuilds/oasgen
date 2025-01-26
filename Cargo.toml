@@ -4,8 +4,8 @@ members = ["oasgen", "core", "macro", "swagger-ui"]
 
 
 [workspace.dependencies]
-oasgen = { path = "oasgen", version = "0.23" }
-oasgen-core = { path = "core", version = "0.23" }
-oasgen-macro = { path = "macro", version = "0.23" }
+oasgen = { path = "oasgen", version = "0.24" }
+oasgen-core = { path = "core", version = "0.24" }
+oasgen-macro = { path = "macro", version = "0.24" }
 swagger-ui2 = { version = "0.6", path = "swagger-ui" }
 
