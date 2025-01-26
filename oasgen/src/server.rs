@@ -91,8 +91,7 @@ impl<Router: Default> Server<Router, OpenAPI> {
     /// Add a handler to the OpenAPI spec (which is different than mounting it to a server).
     fn add_handler_to_spec<F>(&mut self, path: &str, method: Method, _handler: &F) {
         use http::Method;
-        let path = replace_path_params(path);
-        let item = self.openapi.paths.paths.entry(path.clone()).or_default();
+        let item = self.openapi.paths.paths.entry(path.to_string()).or_default();
         let item = item.as_mut().expect("Currently don't support references for PathItem");
         let type_name = std::any::type_name::<F>();
         let mut operation = OPERATION_LOOKUP.get(type_name)
@@ -232,18 +231,6 @@ fn modify_parameter_names(operation: &mut Operation, path: &str) {
     }
 }
 
-// Note: this takes an axum/actix url, which parameterizes like: /path/:param
-fn replace_path_params(path: &str) -> String {
-    if !path.contains(':') {
-        return path.to_string();
-    }
-    use once_cell::sync::OnceCell;
-    use regex_lite::Regex;
-    static REMAP: OnceCell<Regex> = OnceCell::new();
-    let remap = REMAP.get_or_init(|| Regex::new("/:([a-zA-Z0-9_]+)").unwrap());
-    remap.replace_all(&path, "/{$1}").to_string()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -258,16 +245,5 @@ mod tests {
         modify_parameter_names(&mut operation, path);
         assert_eq!(operation.parameters[0].as_item().unwrap().name, "id", "path param name is updated");
         assert_eq!(operation.parameters[1].as_item().unwrap().name, "query", "leave query param alone");
-    }
-
-    #[test]
-    fn test_replace_path_params() {
-        let path = "/api/v1/pet/:id/";
-        let path = replace_path_params(path);
-        assert_eq!(path, "/api/v1/pet/{id}/");
-
-        let path = "/api/v1/pet/:id";
-        let path = replace_path_params(path);
-        assert_eq!(path, "/api/v1/pet/{id}");
     }
 }
