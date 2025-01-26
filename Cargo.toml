@@ -8,3 +8,4 @@ oasgen = { path = "oasgen", version = "0.21" }
 oasgen-core = { path = "core", version = "0.21" }
 oasgen-macro = { path = "macro", version = "0.21" }
 swagger-ui2 = { version = "0.6", path = "swagger-ui" }
+

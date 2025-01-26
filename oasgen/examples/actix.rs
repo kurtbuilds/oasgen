@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 // We have to wrap the example in `mod` beacuse examples fail compilation without a `main`, and
 // forwarding to an inner mod fixes the issue.
 #[cfg(feature = "actix")]
@@ -68,5 +66,7 @@ mod inner {
 }
 
 fn main() {
+    #[cfg(feature = "actix")]
+    #[cfg(feature = "swagger-ui")]
     inner::main().unwrap()
 }
