@@ -2,7 +2,7 @@ use quote::ToTokens;
 use serde_derive_internals::ast::Field;
 use structmeta::StructMeta;
 use syn::spanned::Spanned;
-use syn::LitStr;
+use syn::{Ident, LitStr};
 
 /// Available attributes on a struct
 /// For attributes that have the same name as `serde` attributes, you can use either one.
@@ -14,6 +14,7 @@ pub struct FieldAttributes {
     /// By default, oasgen will use references when possible
     /// If you want to inline the schema, use `#[oasgen(inline)]`
     pub inline: bool,
+    pub rename: Option<LitStr>,
 }
 
 impl FieldAttributes {
@@ -47,7 +48,7 @@ impl TryFrom<&Vec<syn::Attribute>> for FieldAttributes {
 
     fn try_from(attrs: &Vec<syn::Attribute>) -> Result<Self, Self::Error> {
         let attrs = attrs
-            .into_iter()
+            .iter()
             .filter(|a| a.path().get_ident().map(|i| i == "oasgen").unwrap_or(false))
             .map(|a| a.parse_args())
             .collect::<Result<Vec<FieldAttributes>, syn::Error>>()?;
@@ -68,6 +69,8 @@ pub struct OperationAttributes {
     pub tags: Option<Vec<LitStr>>,
     pub operation_id: Option<LitStr>,
     pub deprecated: bool,
+    pub skip: Option<Vec<Ident>>,
+    pub skip_all: bool,
 }
 
 impl OperationAttributes {
