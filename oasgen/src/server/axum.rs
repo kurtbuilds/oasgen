@@ -156,7 +156,7 @@ impl<S> Server<Router<S>, Arc<OpenAPI>>
             router = router
                 .route(&format!("{}", &path), handler.clone());
             router = router
-                .route(&format!("{}*rest", &path), handler)
+                .route(&format!("{}{{*rest}}", &path), handler)
         }
         router
     }
