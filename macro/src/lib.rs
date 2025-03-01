@@ -95,7 +95,7 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     let operation_id = if let Some(id) = attr.operation_id {
         let id = id.value();
         quote! {
-            op.operation_id = Some(#id.to_string())
+            Some(#id.to_string())
         }
     } else {
         quote! {
