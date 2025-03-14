@@ -53,7 +53,6 @@ pub fn impl_OaSchema_schema(fields: &[Field], docstring: Option<String>) -> Toke
                 quote! {
                     if let ::oasgen::SchemaKind::Type(::oasgen::Type::Object(::oasgen::ObjectType { properties, required, .. })) = #schema.kind {
                         for (name, schema) in properties {
-                            let schema = schema.into_item().expect("Cannot flatten a reference");
                             o.properties_mut().insert(name, schema);
                         }
                         o.required_mut().extend_from_slice(&required);
