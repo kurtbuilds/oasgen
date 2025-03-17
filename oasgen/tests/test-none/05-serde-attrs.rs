@@ -3,11 +3,18 @@ use serde::{Deserialize, Serialize};
 
 #[derive(OaSchema, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct Baz {
+    value: i32,
+}
+
+#[derive(OaSchema, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Bar {
     #[serde(rename = "is_renamed")]
     is_required: i32,
     #[serde(skip_serializing_if = "Option::is_none")]
     is_not_required: Option<String>,
+    baz: Baz,
 }
 
 #[derive(OaSchema, Serialize, Deserialize)]

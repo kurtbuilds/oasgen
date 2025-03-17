@@ -8,8 +8,11 @@ properties:
       isNotRequired:
         nullable: true
         type: string
+      baz:
+        $ref: '#/components/schemas/Baz'
     required:
     - is_renamed
+    - baz
   camelDuration:
     type: string
     enum:
@@ -21,7 +24,10 @@ properties:
   isNotRequired:
     nullable: true
     type: string
+  baz:
+    $ref: '#/components/schemas/Baz'
 required:
 - camelBar
 - camelDuration
 - is_renamed
+- baz
