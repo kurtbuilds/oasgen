@@ -227,6 +227,15 @@ fn modify_parameter_names(operation: &mut Operation, path: &str) {
         .filter(|p| matches!(p.kind, ParameterKind::Path { .. }));
 
     for (part, param) in path_parts.zip(path_params) {
+        // Actix paths can use regex to match specific paths.
+        // E.g. {id:[0-9]+}, which only allows `id` to contain numbers.
+        // If so, we only want the parameter name to contain the first part.
+        let part = if let Some((first, _)) = part.split_once(':') {
+            first
+        } else {
+            part
+        };
+
         param.name = part.to_string();
     }
 }
