@@ -222,30 +222,6 @@ impl ErrorCollector {
             }
         }
     }
-
-    fn extract_formatted_message(&self, mac: &syn::ExprMacro) -> String {
-        if mac.mac.path.is_ident("format") {
-            let tokens = mac.mac.tokens.to_string();
-    
-            if let Some(first_literal) = tokens.split(',').next() {
-                let fmt_str = first_literal.trim().trim_matches('"');
-    
-                // Replace `{}` placeholders with {arg_name}
-                let mut formatted = fmt_str.to_string();
-    
-                let args: Vec<&str> = tokens.split(',').skip(1).map(|s| s.trim()).collect();
-                for arg in args {
-                    // Use the argument name if possible
-                    let var_name = arg.split_whitespace().last().unwrap_or("");
-                    formatted = formatted.replacen("{}", &format!("{{{}}}", var_name), 1);
-                }
-    
-                return formatted;
-            }
-        }
-        String::new()
-        
-    }
     
 }
 
@@ -314,10 +290,6 @@ impl<'ast> Visit<'ast> for ErrorCollector {
         }
     }
 }
-
-
-
-
 
 
 
