@@ -227,13 +227,60 @@ impl ErrorCollector {
 
 fn status_code_from_str(code: &str) -> StatusCode {
     match code {
-        "BAD_REQUEST" => StatusCode::BAD_REQUEST,
-        "NOT_FOUND" => StatusCode::NOT_FOUND,
-        "INTERNAL_SERVER_ERROR" => StatusCode::INTERNAL_SERVER_ERROR,
-        "FORBIDDEN" => StatusCode::FORBIDDEN,
-        "OK" => StatusCode::OK,
-        // add more variants 
-        _ => StatusCode::INTERNAL_SERVER_ERROR, // fallback
+       // 3xx Redirection
+        "MULTIPLE_CHOICES" => StatusCode::MULTIPLE_CHOICES,   // 300
+        "MOVED_PERMANENTLY" => StatusCode::MOVED_PERMANENTLY, // 301
+        "FOUND" => StatusCode::FOUND,                         // 302
+        "SEE_OTHER" => StatusCode::SEE_OTHER,                 // 303
+        "NOT_MODIFIED" => StatusCode::NOT_MODIFIED,           // 304
+        "USE_PROXY" => StatusCode::USE_PROXY,                 // 305 (deprecated)
+        "TEMPORARY_REDIRECT" => StatusCode::TEMPORARY_REDIRECT, // 307
+        "PERMANENT_REDIRECT" => StatusCode::PERMANENT_REDIRECT, // 308
+
+        // 4xx Client Errors
+        "BAD_REQUEST" => StatusCode::BAD_REQUEST,             // 400
+        "UNAUTHORIZED" => StatusCode::UNAUTHORIZED,           // 401
+        "PAYMENT_REQUIRED" => StatusCode::PAYMENT_REQUIRED,   // 402
+        "FORBIDDEN" => StatusCode::FORBIDDEN,                 // 403
+        "NOT_FOUND" => StatusCode::NOT_FOUND,                 // 404
+        "METHOD_NOT_ALLOWED" => StatusCode::METHOD_NOT_ALLOWED, // 405
+        "NOT_ACCEPTABLE" => StatusCode::NOT_ACCEPTABLE,       // 406
+        "PROXY_AUTHENTICATION_REQUIRED" => StatusCode::PROXY_AUTHENTICATION_REQUIRED, // 407
+        "REQUEST_TIMEOUT" => StatusCode::REQUEST_TIMEOUT,     // 408
+        "CONFLICT" => StatusCode::CONFLICT,                   // 409
+        "GONE" => StatusCode::GONE,                           // 410
+        "LENGTH_REQUIRED" => StatusCode::LENGTH_REQUIRED,     // 411
+        "PRECONDITION_FAILED" => StatusCode::PRECONDITION_FAILED, // 412
+        "PAYLOAD_TOO_LARGE" => StatusCode::PAYLOAD_TOO_LARGE, // 413
+        "URI_TOO_LONG" => StatusCode::URI_TOO_LONG,           // 414
+        "UNSUPPORTED_MEDIA_TYPE" => StatusCode::UNSUPPORTED_MEDIA_TYPE, // 415
+        "RANGE_NOT_SATISFIABLE" => StatusCode::RANGE_NOT_SATISFIABLE, // 416
+        "EXPECTATION_FAILED" => StatusCode::EXPECTATION_FAILED, // 417
+        "IM_A_TEAPOT" => StatusCode::IM_A_TEAPOT,             // 418
+        "MISDIRECTED_REQUEST" => StatusCode::MISDIRECTED_REQUEST, // 421
+        "UNPROCESSABLE_ENTITY" => StatusCode::UNPROCESSABLE_ENTITY, // 422
+        "LOCKED" => StatusCode::LOCKED,                       // 423
+        "FAILED_DEPENDENCY" => StatusCode::FAILED_DEPENDENCY, // 424
+        "TOO_EARLY" => StatusCode::TOO_EARLY,                 // 425
+        "UPGRADE_REQUIRED" => StatusCode::UPGRADE_REQUIRED,   // 426
+        "PRECONDITION_REQUIRED" => StatusCode::PRECONDITION_REQUIRED, // 428
+        "TOO_MANY_REQUESTS" => StatusCode::TOO_MANY_REQUESTS, // 429
+        "REQUEST_HEADER_FIELDS_TOO_LARGE" => StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE, // 431
+        "UNAVAILABLE_FOR_LEGAL_REASONS" => StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS, // 451
+
+        // 5xx Server Errors
+        "INTERNAL_SERVER_ERROR" => StatusCode::INTERNAL_SERVER_ERROR, // 500
+        "NOT_IMPLEMENTED" => StatusCode::NOT_IMPLEMENTED,             // 501
+        "BAD_GATEWAY" => StatusCode::BAD_GATEWAY,                     // 502
+        "SERVICE_UNAVAILABLE" => StatusCode::SERVICE_UNAVAILABLE,     // 503
+        "GATEWAY_TIMEOUT" => StatusCode::GATEWAY_TIMEOUT,             // 504
+        "HTTP_VERSION_NOT_SUPPORTED" => StatusCode::HTTP_VERSION_NOT_SUPPORTED, // 505
+        "VARIANT_ALSO_NEGOTIATES" => StatusCode::VARIANT_ALSO_NEGOTIATES,       // 506
+        "INSUFFICIENT_STORAGE" => StatusCode::INSUFFICIENT_STORAGE,             // 507
+        "LOOP_DETECTED" => StatusCode::LOOP_DETECTED,                         // 508
+        "NOT_EXTENDED" => StatusCode::NOT_EXTENDED,                           // 510
+        "NETWORK_AUTHENTICATION_REQUIRED" => StatusCode::NETWORK_AUTHENTICATION_REQUIRED, // 511
+        _ => StatusCode::INTERNAL_SERVER_ERROR, // fallback for unknown codes
     }
 }
 

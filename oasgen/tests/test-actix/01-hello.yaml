@@ -14,7 +14,7 @@ paths:
         required: true
       responses:
         '200':
-          description: ''
+          description: OK
           content:
             application/json:
               schema:
@@ -30,7 +30,7 @@ paths:
         style: form
       responses:
         '200':
-          description: ''
+          description: OK
           content:
             application/json:
               schema:
