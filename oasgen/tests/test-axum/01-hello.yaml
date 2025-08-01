@@ -5,11 +5,11 @@ info:
 paths:
   /hello:
     post:
-      operationId: send_code
       tags:
         - auth
-      description: Endpoint to login by sending a code to the given mobile number
       summary: A shorter description
+      description: Endpoint to login by sending a code to the given mobile number
+      operationId: send_code
       requestBody:
         content:
           application/json:
@@ -23,11 +23,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SendCodeResponse'
+        '400':
+          description: Mobile number cannot be empty or invalid
+        '403':
+          description: This account {_body.0.mobile} is blocke
+        '404':
+          description: Invalid vault ID
+        '500':
+          description: Database error occurred
+ components:
 components:
   schemas:
     SendCode:
-      type: object
       description: Send a code to a mobile number
+      type: object
       properties:
         mobile:
           type: string

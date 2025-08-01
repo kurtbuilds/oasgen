@@ -15,7 +15,12 @@ pub trait OaParameter {
     fn parameters() -> Vec<RefOr<Parameter>> {
         Vec::new()
     }
+    // New method for error schemas — returns vec of (status_code, schema)
+    fn error_schemas() -> Vec<(u16, RefOr<Schema>)> {
+        Vec::new()
+    }
 }
+
 
 impl<T, E> OaParameter for Result<T, E>
 where
@@ -23,7 +28,9 @@ where
 {
     fn body_schema() -> Option<RefOr<Schema>> {
         T::body_schema()
+        
     }
 }
+
 
 inventory::collect!(OperationRegister);

@@ -40,13 +40,11 @@ required-features = ["axum"]
 [dependencies]
 inventory = "0.3.13"
 actix-web = { version = "4.3.1", optional = true }
-axum = { version = "0.8.1", optional = true, default-features = false, features = [
-    "json",
-] }
+axum = { version = "0.8.1", optional = true, default-features = false, features = ["json"] }
 futures = "0.3.28"
 http = "1.0.0"
 indexmap = "2"
-openapiv3-extended = { version = "6" }
+openapiv3-extended = {path = "/Users/isabell/openapiv3" }
 oasgen-core.workspace = true
 oasgen-macro.workspace = true
 serde = { version = "1.0.171", features = ["derive"] }
@@ -58,6 +56,7 @@ regex-lite = "0.1.5"
 once_cell = "1.18.0"
 http-body = "1.0.0"
 http-body-util = "0.1.0"
+tracing = "0.1.41"
 
 [features]
 actix = ["actix-web", "oasgen-core/actix"]
@@ -79,3 +78,6 @@ trybuild = "1.0.81"
 actix-web = { version = "4.3.1" }
 pretty_assertions = "1.4.0"
 tokio = { version = "1.29.1", features = ["full"] }
+
+
+
