@@ -10,10 +10,8 @@ use syn::{PathArguments, GenericArgument, TypePath, Type, ReturnType, FnArg, par
 use util::{derive_oaschema_enum, derive_oaschema_struct};
 use crate::attr::{get_docstring, OperationAttributes};
 use crate::util::derive_oaschema_newtype;
-use syn::{visit::Visit, Expr}; // I added // dead code was ExprPath, ExprTuple
+use syn::{visit::Visit};
 use axum::http::StatusCode;
-//use indexmap::IndexMap;
-use syn::ExprReturn;
 use std::collections::HashMap;
 
 mod util;
@@ -307,17 +305,6 @@ impl<'ast> Visit<'ast> for ErrorCollector {
                     self.extract_error_from_tuple(tuple);
                 }
             }
-
-            syn::Expr::Let(let_expr) => {
-                if let syn::Expr::Macro(mac) = &*let_expr.expr {
-                    if mac.mac.path.is_ident("format") {
-                        let formatted = self.extract_formatted_message(mac);
-                        // You could store it if needed
-                        println!("Captured formatted message: {}", formatted);
-                    }
-                }
-            }
-
             _ => {}
         }
 

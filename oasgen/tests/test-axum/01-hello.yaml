@@ -26,12 +26,11 @@ paths:
         '400':
           description: Mobile number cannot be empty or invalid
         '403':
-          description: This account {_body.0.mobile} is blocke
+          description: This account {_body.0.mobile} is blocked
         '404':
           description: Invalid vault ID
         '500':
           description: Database error occurred
- components:
 components:
   schemas:
     SendCode:
