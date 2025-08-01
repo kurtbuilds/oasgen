@@ -2,7 +2,7 @@ use oasgen::{OaSchema, Server, oasgen};
 use axum::{Json, http::StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;  
-//use tracing::error;
+
 
 #[derive(Deserialize, OaSchema)]
 pub struct Task {
@@ -18,7 +18,7 @@ pub struct TaskResponse {
 
 #[oasgen(tags("tasks"), summary = "Create a new task with error cases")]
 async fn create_task(Json(task): Json<Task>) -> Result<Json<TaskResponse>, (StatusCode, String)> {
-    // 400: Task title empty
+
     if task.title.trim().is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -26,7 +26,6 @@ async fn create_task(Json(task): Json<Task>) -> Result<Json<TaskResponse>, (Stat
         ));
     }
 
-    // 422: Invalid priority
     if let Some(priority) = task.priority {
         if priority > 5 {
             return Err((
@@ -61,7 +60,6 @@ fn main() {
         ;
 
     let spec = &server.openapi;
-    // Generate the OpenAPI spec and compare with the YAML snapshot
     let spec_yaml = serde_yaml::to_string(&server.openapi).unwrap();
     let expected_yaml = include_str!("04-status_code.yaml");
 
