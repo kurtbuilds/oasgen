@@ -1,24 +1,22 @@
 #![allow(non_snake_case)]
 
+use crate::attr::{get_docstring, OperationAttributes};
+use crate::util::derive_oaschema_newtype;
 use proc_macro::TokenStream;
 use quote::quote;
 use serde_derive_internals::{
     ast::{Container, Data, Style},
     Ctxt, Derive,
 };
-use syn::{PathArguments, GenericArgument, TypePath, Type, ReturnType, FnArg, parse_macro_input, DeriveInput};
-use util::{derive_oaschema_enum, derive_oaschema_struct};
-use crate::attr::{get_docstring, OperationAttributes};
-use crate::util::derive_oaschema_newtype;
-use syn::{visit::Visit};
-use axum::http::StatusCode;
 use std::collections::HashMap;
+use syn::{
+    parse_macro_input, visit::Visit, DeriveInput, FnArg, GenericArgument, PathArguments,
+    ReturnType, Type, TypePath,
+};
+use util::{derive_oaschema_enum, derive_oaschema_struct};
 
-mod util;
 mod attr;
-
-
-
+mod util;
 
 #[proc_macro_derive(OaSchema, attributes(oasgen))]
 pub fn derive_oaschema(item: TokenStream) -> TokenStream {
@@ -34,92 +32,117 @@ pub fn derive_oaschema(item: TokenStream) -> TokenStream {
     let id = &cont.ident;
     let docstring = get_docstring(&ast.attrs).expect("Failed to parse docstring");
     match &cont.data {
-        Data::Struct(Style::Struct, fields) => {
-            derive_oaschema_struct(id, fields, docstring)
-        }
+        Data::Struct(Style::Struct, fields) => derive_oaschema_struct(id, fields, docstring),
         Data::Struct(Style::Newtype, fields) => {
             derive_oaschema_newtype(id, fields.first().unwrap())
         }
-        Data::Enum(variants) => {
-            derive_oaschema_enum(id, variants, &cont.attrs.tag(), docstring)
-        }
+        Data::Enum(variants) => derive_oaschema_enum(id, variants, &cont.attrs.tag(), docstring),
         Data::Struct(Style::Tuple | Style::Unit, _) => {
             panic!("#[derive(OaSchema)] can not be used on tuple structs")
         }
     }
 }
 
-
 #[proc_macro_attribute]
 pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as syn::ItemFn);
 
-    //Collect errors from the function AST
-    let mut collector = ErrorCollector::new();
+    let mut collector = ErrorCollector::default();
     collector.visit_block(&ast.block);
-    let mut errors_by_code: HashMap<StatusCode, Vec<String>> = HashMap::new();
-    for (status, msg) in &collector.errors {
-        errors_by_code.entry(*status).or_default().push(msg.clone());
+
+    let mut errors_by_code: HashMap<String, Vec<String>> = HashMap::new();
+
+    for (status_tokens, message) in &collector.errors {
+        let key = status_tokens.to_string();
+        errors_by_code.entry(key).or_default().push(message.clone());
     }
 
-    let mut attr = syn::parse::<OperationAttributes>(attr).expect("Failed to parse operation attributes");
+    let mut attr =
+        syn::parse::<OperationAttributes>(attr).expect("Failed to parse operation attributes");
     attr.merge_attributes(&ast.attrs);
-    let args = ast.sig.inputs.iter().map(|arg| {
-        match arg {
+    let args = ast
+        .sig
+        .inputs
+        .iter()
+        .map(|arg| match arg {
             FnArg::Receiver(_) => panic!("Receiver arguments are not supported"),
             FnArg::Typed(pat) => turbofish(pat.ty.as_ref().clone()),
-        }
-    }).collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
     let ret = match &ast.sig.output {
         ReturnType::Default => None,
         ReturnType::Type(_, ty) => Some(turbofish(ty.as_ref().clone())),
     };
-    let body = args.last().map(|t| {
-        quote! {
-            let body = <#t as ::oasgen::OaParameter>::body_schema();
-            if body.is_some() {
-                op.add_request_body_json(body);
+    let body = args
+        .last()
+        .map(|t| {
+            quote! {
+                let body = <#t as ::oasgen::OaParameter>::body_schema();
+                if body.is_some() {
+                    op.add_request_body_json(body);
+                }
             }
-        }
-    }).unwrap_or_default();
-    let description = attr.description.as_ref().map(|s| s.value()).map(|c| {
-        quote! {
-            op.description = Some(#c.to_string());
-        }
-    }).unwrap_or_default();
-    let ret = ret.map(|t| {
-        quote! {
-            let body = <#t as ::oasgen::OaParameter>::body_schema();
-            if body.is_some() {
-                op.add_response_success_json(body);
+        })
+        .unwrap_or_default();
+    let description = attr
+        .description
+        .as_ref()
+        .map(|s| s.value())
+        .map(|c| {
+            quote! {
+                op.description = Some(#c.to_string());
             }
-        }
-    }).unwrap_or_default();
-    let error_responses = errors_by_code.iter().map(|(status, messages)| {
-        let code = status.as_u16();
-        let description = if messages.len() == 1 {
-            messages[0].clone()
-        } else {
-            format!("Possible reasons:\n- {}", messages.join("\n- "))
-        };
-    
-        quote! {
-            op.add_response_error_json(
-                ::oasgen::StatusCode::Code(#code),
-                #description.to_string()
-            );
-        }
-    });
-    let tags = attr.tags.iter().flatten().map(|s| {
-        quote! {
-            op.tags.push(#s.to_string());
-        }
-    }).collect::<Vec<_>>();
-    let summary = attr.summary.as_ref().map(|s| s.value()).map(|c| {
-        quote! {
-            op.summary = Some(#c.to_string());
-        }
-    }).unwrap_or_default();
+        })
+        .unwrap_or_default();
+    let ret = ret
+        .map(|t| {
+            quote! {
+                let body = <#t as ::oasgen::OaParameter>::body_schema();
+                if body.is_some() {
+                    op.add_response_success_json(body);
+                }
+            }
+        })
+        .unwrap_or_default();
+    let error_responses: Vec<_> = errors_by_code
+        .iter()
+        .map(|(status_str, messages)| {
+            let status_tokens: TokenStream = status_str.parse().expect("Invalid tokens");
+
+            let description = if messages.len() == 1 {
+                messages[0].clone()
+            } else {
+                format!("Possible reasons:\n- {}", messages.join("\n- "))
+            };
+            let status_tokens_2: proc_macro2::TokenStream = status_tokens.clone().into();
+            quote! {
+                op.add_response_error_json(
+                    #status_tokens_2.as_u16(),
+                    #description.to_string()
+                );
+            }
+        })
+        .collect();
+    let tags = attr
+        .tags
+        .iter()
+        .flatten()
+        .map(|s| {
+            quote! {
+                op.tags.push(#s.to_string());
+            }
+        })
+        .collect::<Vec<_>>();
+    let summary = attr
+        .summary
+        .as_ref()
+        .map(|s| s.value())
+        .map(|c| {
+            quote! {
+                op.summary = Some(#c.to_string());
+            }
+        })
+        .unwrap_or_default();
     let name = ast.sig.ident.to_string();
     let deprecated = attr.deprecated;
     let operation_id = if let Some(id) = attr.operation_id {
@@ -157,7 +180,8 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     quote! {
         #ast
         #submit
-    }.into()
+    }
+    .into()
 }
 
 /// insert the turbofish :: into a syn::Type
@@ -191,110 +215,25 @@ fn turbofish(mut ty: Type) -> Type {
     ty
 }
 
+#[derive(Default)]
 struct ErrorCollector {
-    errors: Vec<(StatusCode, String)>,
+    errors: Vec<(proc_macro2::TokenStream, String)>,
     parent_stack: Vec<String>,
-    
 }
 impl ErrorCollector {
-    pub fn new() -> Self {
-        Self {
-            errors: Vec::new(),
-            parent_stack: Vec::new(),
-        }
-    }
-
     fn extract_error_from_tuple(&mut self, tuple: &syn::ExprTuple) {
         if tuple.elems.len() == 2 {
             if let syn::Expr::Path(status_path) = &tuple.elems[0] {
-                let status_code = status_path
-                    .path
-                    .segments
-                    .last()
-                    .unwrap()
-                    .ident
-                    .to_string();
-    
+                let status_tokens = quote! { #status_path };
                 let message = extract_message(&tuple.elems[1]);
-                let status_enum = status_code_from_str(&status_code);
-    
-                self.errors.push((status_enum, message));
+                self.errors.push((status_tokens, message));
             }
         }
     }
-    
 }
-
-fn status_code_from_str(code: &str) -> StatusCode {
-    match code {
-       // 3xx Redirection
-        "MULTIPLE_CHOICES" => StatusCode::MULTIPLE_CHOICES,                                 // 300
-        "MOVED_PERMANENTLY" => StatusCode::MOVED_PERMANENTLY,                               // 301
-        "FOUND" => StatusCode::FOUND,                                                       // 302
-        "SEE_OTHER" => StatusCode::SEE_OTHER,                                               // 303
-        "NOT_MODIFIED" => StatusCode::NOT_MODIFIED,                                         // 304
-        "TEMPORARY_REDIRECT" => StatusCode::TEMPORARY_REDIRECT,                             // 307
-        "PERMANENT_REDIRECT" => StatusCode::PERMANENT_REDIRECT,                             // 308
-
-        // 4xx Client Errors
-        "BAD_REQUEST" => StatusCode::BAD_REQUEST,                                           // 400
-        "UNAUTHORIZED" => StatusCode::UNAUTHORIZED,                                         // 401
-        "PAYMENT_REQUIRED" => StatusCode::PAYMENT_REQUIRED,                                 // 402
-        "FORBIDDEN" => StatusCode::FORBIDDEN,                                               // 403
-        "NOT_FOUND" => StatusCode::NOT_FOUND,                                               // 404
-        "METHOD_NOT_ALLOWED" => StatusCode::METHOD_NOT_ALLOWED,                             // 405
-        "NOT_ACCEPTABLE" => StatusCode::NOT_ACCEPTABLE,                                     // 406
-        "PROXY_AUTHENTICATION_REQUIRED" => StatusCode::PROXY_AUTHENTICATION_REQUIRED,       // 407
-        "REQUEST_TIMEOUT" => StatusCode::REQUEST_TIMEOUT,                                   // 408
-        "CONFLICT" => StatusCode::CONFLICT,                                                 // 409
-        "GONE" => StatusCode::GONE,                                                         // 410
-        "LENGTH_REQUIRED" => StatusCode::LENGTH_REQUIRED,                                   // 411
-        "PRECONDITION_FAILED" => StatusCode::PRECONDITION_FAILED,                           // 412
-        "PAYLOAD_TOO_LARGE" => StatusCode::PAYLOAD_TOO_LARGE,                               // 413
-        "URI_TOO_LONG" => StatusCode::URI_TOO_LONG,                                         // 414
-        "UNSUPPORTED_MEDIA_TYPE" => StatusCode::UNSUPPORTED_MEDIA_TYPE,                     // 415
-        "RANGE_NOT_SATISFIABLE" => StatusCode::RANGE_NOT_SATISFIABLE,                       // 416
-        "EXPECTATION_FAILED" => StatusCode::EXPECTATION_FAILED,                             // 417
-        "IM_A_TEAPOT" => StatusCode::IM_A_TEAPOT,                                           // 418
-        "MISDIRECTED_REQUEST" => StatusCode::MISDIRECTED_REQUEST,                           // 421
-        "UNPROCESSABLE_ENTITY" => StatusCode::UNPROCESSABLE_ENTITY,                         // 422
-        "LOCKED" => StatusCode::LOCKED,                                                     // 423
-        "FAILED_DEPENDENCY" => StatusCode::FAILED_DEPENDENCY,                               // 424
-        "TOO_EARLY" => StatusCode::TOO_EARLY,                                               // 425
-        "UPGRADE_REQUIRED" => StatusCode::UPGRADE_REQUIRED,                                 // 426
-        "PRECONDITION_REQUIRED" => StatusCode::PRECONDITION_REQUIRED,                       // 428
-        "TOO_MANY_REQUESTS" => StatusCode::TOO_MANY_REQUESTS,                               // 429
-        "REQUEST_HEADER_FIELDS_TOO_LARGE" => StatusCode::REQUEST_HEADER_FIELDS_TOO_LARGE,   // 431
-        "UNAVAILABLE_FOR_LEGAL_REASONS" => StatusCode::UNAVAILABLE_FOR_LEGAL_REASONS,       // 451
-
-        // 5xx Server Errors
-        "INTERNAL_SERVER_ERROR" => StatusCode::INTERNAL_SERVER_ERROR,                       // 500
-        "NOT_IMPLEMENTED" => StatusCode::NOT_IMPLEMENTED,                                   // 501
-        "BAD_GATEWAY" => StatusCode::BAD_GATEWAY,                                           // 502
-        "SERVICE_UNAVAILABLE" => StatusCode::SERVICE_UNAVAILABLE,                           // 503
-        "GATEWAY_TIMEOUT" => StatusCode::GATEWAY_TIMEOUT,                                   // 504
-        "HTTP_VERSION_NOT_SUPPORTED" => StatusCode::HTTP_VERSION_NOT_SUPPORTED,             // 505
-        "VARIANT_ALSO_NEGOTIATES" => StatusCode::VARIANT_ALSO_NEGOTIATES,                   // 506
-        "INSUFFICIENT_STORAGE" => StatusCode::INSUFFICIENT_STORAGE,                         // 507
-        "LOOP_DETECTED" => StatusCode::LOOP_DETECTED,                                       // 508
-        "NOT_EXTENDED" => StatusCode::NOT_EXTENDED,                                         // 510
-        "NETWORK_AUTHENTICATION_REQUIRED" => StatusCode::NETWORK_AUTHENTICATION_REQUIRED,   // 511
-
-        _ => StatusCode::INTERNAL_SERVER_ERROR, // fallback for unknown codes
-    }
-}
-
 
 impl<'ast> Visit<'ast> for ErrorCollector {
     fn visit_expr(&mut self, expr: &'ast syn::Expr) {
-        // Skip debug! macros
-        if let syn::Expr::Macro(macro_expr) = expr {
-            let name = macro_expr.mac.path.segments.last().unwrap().ident.to_string();
-            if name == "debug" {
-                return;
-            }
-        }
-
         // Push the method name if it's a method call (like map_err)
         if let syn::Expr::MethodCall(method_call) = expr {
             self.parent_stack.push(method_call.method.to_string());
@@ -324,7 +263,12 @@ impl<'ast> Visit<'ast> for ErrorCollector {
 
             // Handle tuples, but only if parent is map_err
             syn::Expr::Tuple(tuple) => {
-                if self.parent_stack.last().map(|s| s == "map_err").unwrap_or(false) {
+                if self
+                    .parent_stack
+                    .last()
+                    .map(|s| s == "map_err")
+                    .unwrap_or(false)
+                {
                     self.extract_error_from_tuple(tuple);
                 }
             }
@@ -338,33 +282,32 @@ impl<'ast> Visit<'ast> for ErrorCollector {
     }
 }
 
-
-
-// Helper function to extract string message from an Expr
+/// Helper function to extract string message from an Expr
 fn extract_message(expr: &syn::Expr) -> String {
     match expr {
         // Case: direct string literal
-        syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(lit_str), .. }) => {
-            lit_str.value()
-        }
+        syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Str(lit_str),
+            ..
+        }) => lit_str.value(),
 
         // Case: format!(...) macro
         syn::Expr::Macro(mac) if mac.mac.path.is_ident("format") => {
             let tokens = mac.mac.tokens.to_string();
-    
+
             if let Some(first_literal) = tokens.split(',').next() {
                 let fmt_str = first_literal.trim().trim_matches('"');
-    
+
                 // Replace `{}` placeholders with {arg_name}
                 let mut formatted = fmt_str.to_string();
-    
+
                 let args: Vec<&str> = tokens.split(',').skip(1).map(|s| s.trim()).collect();
                 for arg in args {
                     // Use the argument name if possible
                     let var_name = arg.split_whitespace().last().unwrap_or("");
-                    formatted = formatted.replacen("{}", &format!("{{{}}}", var_name), 1);
+                    formatted = formatted.replacen("{}", &format!("{{{var_name}}}"), 1);
                 }
-    
+
                 return formatted;
             };
             String::new()
@@ -372,7 +315,11 @@ fn extract_message(expr: &syn::Expr) -> String {
 
         // Case: method call like `err.to_string()`
         syn::Expr::MethodCall(method) if method.method == "to_string" => {
-            if let syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Str(lit_str), .. }) = &*method.receiver {
+            if let syn::Expr::Lit(syn::ExprLit {
+                lit: syn::Lit::Str(lit_str),
+                ..
+            }) = &*method.receiver
+            {
                 lit_str.value()
             } else {
                 String::new()
@@ -383,17 +330,18 @@ fn extract_message(expr: &syn::Expr) -> String {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
-    use quote::ToTokens;
     use super::*;
+    use quote::ToTokens;
 
     #[test]
     fn test_pathed_ty() {
         let ty = syn::parse_str::<Type>("axum::Json<SendCode>").unwrap();
         let ty = turbofish(ty);
-        assert_eq!(ty.to_token_stream().to_string(), "axum :: Json :: < SendCode >");
+        assert_eq!(
+            ty.to_token_stream().to_string(),
+            "axum :: Json :: < SendCode >"
+        );
     }
 }

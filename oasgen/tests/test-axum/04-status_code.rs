@@ -59,7 +59,6 @@ fn main() {
         .post("/tasks", create_task)
         ;
 
-    let spec = &server.openapi;
     let spec_yaml = serde_yaml::to_string(&server.openapi).unwrap();
     let expected_yaml = include_str!("04-status_code.yaml");
 

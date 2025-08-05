@@ -44,7 +44,7 @@ axum = { version = "0.8.1", optional = true, default-features = false, features 
 futures = "0.3.28"
 http = "1.0.0"
 indexmap = "2"
-openapiv3-extended = {path = "/Users/isabell/openapiv3" }
+openapiv3-extended = { version = "6" }
 oasgen-core.workspace = true
 oasgen-macro.workspace = true
 serde = { version = "1.0.171", features = ["derive"] }
