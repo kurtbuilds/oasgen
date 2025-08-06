@@ -1,19 +1,16 @@
 #![allow(non_snake_case)]
 
-use crate::attr::{get_docstring, OperationAttributes};
-use crate::util::derive_oaschema_newtype;
 use proc_macro::TokenStream;
 use quote::quote;
 use serde_derive_internals::{
     ast::{Container, Data, Style},
     Ctxt, Derive,
 };
+use syn::{PathArguments, GenericArgument, TypePath, Type, ReturnType, FnArg, parse_macro_input, DeriveInput};
 use std::collections::HashMap;
-use syn::{
-    parse_macro_input, visit::Visit, DeriveInput, FnArg, GenericArgument, PathArguments,
-    ReturnType, Type, TypePath,
-};
 use util::{derive_oaschema_enum, derive_oaschema_struct};
+use crate::attr::{get_docstring, OperationAttributes};
+use crate::util::derive_oaschema_newtype;
 
 mod attr;
 mod util;
