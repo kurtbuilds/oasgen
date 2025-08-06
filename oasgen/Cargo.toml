@@ -40,7 +40,9 @@ required-features = ["axum"]
 [dependencies]
 inventory = "0.3.13"
 actix-web = { version = "4.3.1", optional = true }
-axum = { version = "0.8.1", optional = true, default-features = false, features = ["json"] }
+axum = { version = "0.8.1", optional = true, default-features = false, features = [
+    "json",
+] }
 futures = "0.3.28"
 http = "1.0.0"
 indexmap = "2"
@@ -77,6 +79,3 @@ trybuild = "1.0.81"
 actix-web = { version = "4.3.1" }
 pretty_assertions = "1.4.0"
 tokio = { version = "1.29.1", features = ["full"] }
-
-
-
