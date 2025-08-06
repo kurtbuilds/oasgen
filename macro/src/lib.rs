@@ -12,8 +12,8 @@ use util::{derive_oaschema_enum, derive_oaschema_struct};
 use crate::attr::{get_docstring, OperationAttributes};
 use crate::util::derive_oaschema_newtype;
 
-mod attr;
 mod util;
+mod attr;
 
 #[proc_macro_derive(OaSchema, attributes(oasgen))]
 pub fn derive_oaschema(item: TokenStream) -> TokenStream {
