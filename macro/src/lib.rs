@@ -6,7 +6,7 @@ use serde_derive_internals::{
     ast::{Container, Data, Style},
     Ctxt, Derive,
 };
-use syn::{PathArguments, GenericArgument, TypePath, Type, ReturnType, FnArg, parse_macro_input, DeriveInput};
+use syn::{PathArguments, GenericArgument, TypePath, Type, ReturnType, FnArg, parse_macro_input, DeriveInput,visit::Visit};
 use std::collections::HashMap;
 use util::{derive_oaschema_enum, derive_oaschema_struct};
 use crate::attr::{get_docstring, OperationAttributes};
