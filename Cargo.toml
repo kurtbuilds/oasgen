@@ -2,10 +2,13 @@
 resolver = "2"
 members = ["oasgen", "core", "macro", "swagger-ui"]
 
+[workspace.package]
+version = "0.25.1"
+edition = "2024"
 
 [workspace.dependencies]
 oasgen = { path = "oasgen", version = "0.25" }
 oasgen-core = { path = "core", version = "0.25" }
 oasgen-macro = { path = "macro", version = "0.25" }
 swagger-ui2 = { version = "0.6", path = "swagger-ui" }
-
+openapiv3-extended = { version = "6.0.1" }
