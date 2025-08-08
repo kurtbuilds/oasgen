@@ -13,8 +13,7 @@ documentation = "https://docs.rs/oasgen"
 
 [dependencies]
 inventory = "0.3.13"
-openapiv3-extended = {  git = "https://github.com/18IsabellaM/openapiv3", branch = "isabella/error_json"}
-#openapiv3-extended = { version = "6" }
+openapiv3-extended.workspace = true
 serde_json = "1.0.100"
 actix-web = { version = "4.3.1", optional = true }
 axum = { version = "0.8.1", optional = true }
