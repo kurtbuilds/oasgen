@@ -67,6 +67,15 @@ async fn main() {
         .unwrap()
 }
 ```
+To compile the actix-web example, use the following dependencies:
+
+```toml
+[dependencies]
+actix-web = ".."
+oasgen = { version = "..", features = ["actix", "actix-web"] }
+serde = { version = "..", features = ["derive"] }
+tokio = { version = "..", features = ["full"] }
+```
 
 ```rust
 // axum example
