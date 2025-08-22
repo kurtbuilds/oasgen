@@ -7,7 +7,7 @@ use serde_derive_internals::{
     Ctxt, Derive,
 };
 use syn::{PathArguments, GenericArgument, TypePath, Type, ReturnType, FnArg, parse_macro_input, DeriveInput,visit::Visit};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use util::{derive_oaschema_enum, derive_oaschema_struct};
 use crate::attr::{get_docstring, OperationAttributes};
 use crate::util::derive_oaschema_newtype;
@@ -47,7 +47,7 @@ pub fn oasgen(attr: TokenStream, input: TokenStream) -> TokenStream {
     let mut collector = ErrorCollector::default();
     collector.visit_block(&ast.block);
 
-    let mut errors_by_code: HashMap<String, Vec<String>> = HashMap::new();
+    let mut errors_by_code: BTreeMap<String, Vec<String>> = BTreeMap::new();
 
     for (status_tokens, message) in &collector.errors {
         let key = status_tokens.to_string();
