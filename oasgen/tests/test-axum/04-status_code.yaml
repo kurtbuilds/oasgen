@@ -1,0 +1,52 @@
+openapi: 3.0.3
+info:
+  title: ''
+  version: ''
+paths:
+  /tasks:
+    post:
+      tags:
+      - tasks
+      summary: Create a new task with error cases
+      operationId: create_task
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '422':
+          description: Priority must be between 1 and 5
+        '500':
+          description: Failed to save task
+        '400':
+          description: Task title cannot be empty
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        title:
+          type: string
+        priority:
+          nullable: true
+          type: integer
+      required:
+      - title
+    TaskResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+      required:
+      - id
+      - message

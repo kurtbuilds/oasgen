@@ -14,12 +14,13 @@ documentation = "https://docs.rs/oasgen"
 proc-macro = true
 
 [dependencies]
-syn = { version = "2", features = ["full"] }
+syn = { version = "2", features = ["full","visit"] }
 quote = "1.0"
 proc-macro2 = "1.0.64"
 oasgen-core.workspace = true
 structmeta = "0.3.0"
 serde_derive_internals = "0.29.0"
+http = "1.2.0"
 
 [dev-dependencies]
 trybuild = "1.0.81"
