@@ -5,20 +5,23 @@ use std::path::Path;
 use std::sync::Arc;
 
 use http::Method;
+use indexmap::IndexMap;
 use once_cell::sync::Lazy;
-use openapiv3::{OpenAPI, Operation, ReferenceOr, Parameter, ParameterKind};
+use openapiv3::{OpenAPI, Operation, Parameter, ParameterKind, PathItem, RefOr, ReferenceOr};
 
-use oasgen_core::{OaSchema};
+use oasgen_core::OaSchema;
 
 #[cfg_attr(docsrs, doc(cfg(feature = "actix")))]
 #[cfg(feature = "actix")]
-mod actix;
+pub mod actix;
 #[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
 #[cfg(feature = "axum")]
 mod axum;
 mod none;
 
-static OPERATION_LOOKUP: Lazy<HashMap<&'static str, &'static (dyn Fn() -> Operation + Send + Sync)>> = Lazy::new(|| {
+static OPERATION_LOOKUP: Lazy<
+    HashMap<&'static str, &'static (dyn Fn() -> Operation + Send + Sync)>,
+> = Lazy::new(|| {
     let mut map = HashMap::new();
     for flag in inventory::iter::<oasgen_core::OperationRegister> {
         let z: &'static (dyn Fn() -> Operation + Send + Sync) = flag.constructor;
@@ -66,12 +69,18 @@ impl<Router: Clone> Clone for Server<Router, Arc<OpenAPI>> {
     }
 }
 
+pub trait HandlerSpec {
+    fn paths(&mut self) -> impl Iterator<Item = (String, RefOr<PathItem>)>;
+}
+
 impl<Router: Default> Server<Router, OpenAPI> {
     pub fn new() -> Self {
         let mut openapi = OpenAPI::default();
         for flag in inventory::iter::<oasgen_core::SchemaRegister> {
             let schema = (flag.constructor)();
-            openapi.schemas.insert(flag.name.to_string(), ReferenceOr::Item(schema));
+            openapi
+                .schemas
+                .insert(flag.name.to_string(), ReferenceOr::Item(schema));
         }
         // This is required to have stable diffing between builds
         openapi.schemas.sort_keys();
@@ -90,25 +99,12 @@ impl<Router: Default> Server<Router, OpenAPI> {
 
     /// Add a handler to the OpenAPI spec (which is different than mounting it to a server).
     fn add_handler_to_spec<F>(&mut self, path: &str, method: Method, _handler: &F) {
-        use http::Method;
-        let item = self.openapi.paths.paths.entry(path.to_string()).or_default();
-        let item = item.as_mut().expect("Currently don't support references for PathItem");
-        let type_name = std::any::type_name::<F>();
-        let mut operation = OPERATION_LOOKUP.get(type_name)
+        add_handler_to_spec::<F>(&mut self.openapi.paths.paths, path, method)
+    }
 
-            .expect(&format!("Operation {} not found in OpenAPI spec.", type_name))();
-        modify_parameter_names(&mut operation, &path);
-        match method {
-            Method::GET => item.get = Some(operation),
-            Method::POST => item.post = Some(operation),
-            Method::PUT => item.put = Some(operation),
-            Method::DELETE => item.delete = Some(operation),
-            Method::OPTIONS => item.options = Some(operation),
-            Method::HEAD => item.head = Some(operation),
-            Method::PATCH => item.patch = Some(operation),
-            Method::TRACE => item.trace = Some(operation),
-            _ => panic!("Unsupported method: {}", method),
-        }
+    /// Extends the OpenAPI spec with the provided handlers (which is different than mounting it to a server).
+    fn extend_handler_spec(&mut self, handler: &mut impl HandlerSpec) {
+        self.openapi.paths.paths.extend(handler.paths());
     }
 
     /// Configure the server to add a route that serves the spec as JSON
@@ -185,7 +181,8 @@ impl<Router: Default> Server<Router, OpenAPI> {
         let path = path.as_ref();
         if var("OASGEN_WRITE_SPEC").map(|s| s == "1").unwrap_or(false) {
             let spec = if path.extension().map(|e| e == "json").unwrap_or(false) {
-                serde_json::to_string(&self.openapi).expect("Serializing OpenAPI spec to JSON failed.")
+                serde_json::to_string(&self.openapi)
+                    .expect("Serializing OpenAPI spec to JSON failed.")
             } else {
                 serde_yaml::to_string(&self.openapi).expect("Serializing OpenAPI spec failed.")
             };
@@ -214,15 +211,57 @@ impl<Router: Default> Server<Router, OpenAPI> {
     }
 }
 
+impl<Router: Default> Default for Server<Router, OpenAPI> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub(crate) fn add_handler_to_spec<F>(
+    paths: &mut IndexMap<String, RefOr<PathItem>>,
+    path: &str,
+    method: Method,
+) {
+    let item = paths.entry(path.to_string()).or_default();
+    let item = item
+        .as_mut()
+        .expect("Currently don't support references for PathItem");
+    let type_name = std::any::type_name::<F>();
+
+    // Handlers are stored in `OPERATION_LOOKUP` without generics,
+    // so strip `type_name` of generic part.
+    let type_name = type_name.split('<').next().unwrap_or(type_name);
+
+    let mut operation = OPERATION_LOOKUP
+        .get(type_name)
+        .unwrap_or_else(|| panic!("Operation {type_name} not found in OpenAPI spec."))(
+    );
+    modify_parameter_names(&mut operation, path);
+    match method {
+        Method::GET => item.get = Some(operation),
+        Method::POST => item.post = Some(operation),
+        Method::PUT => item.put = Some(operation),
+        Method::DELETE => item.delete = Some(operation),
+        Method::OPTIONS => item.options = Some(operation),
+        Method::HEAD => item.head = Some(operation),
+        Method::PATCH => item.patch = Some(operation),
+        Method::TRACE => item.trace = Some(operation),
+        _ => panic!("Unsupported method: {}", method),
+    }
+}
+
 // Note: this takes an OpenAPI url, which parameterizes like: /path/{param}
 fn modify_parameter_names(operation: &mut Operation, path: &str) {
     if !path.contains("{") {
         return;
     }
-    let path_parts = path.split("/")
+    let path_parts = path
+        .split("/")
         .filter(|part| part.starts_with("{"))
         .map(|part| &part[1..part.len() - 1]);
-    let path_params = operation.parameters.iter_mut()
+    let path_params = operation
+        .parameters
+        .iter_mut()
         .filter_map(|mut p| p.as_mut())
         .filter(|p| matches!(p.kind, ParameterKind::Path { .. }));
 
@@ -240,10 +279,22 @@ mod tests {
     fn test_modify_parameter_names() {
         let path = "/api/v1/pet/{id}/";
         let mut operation = Operation::default();
-        operation.parameters.push(Parameter::path("path", oa::Schema::new_number()).into());
-        operation.parameters.push(Parameter::query("query", oa::Schema::new_number()).into());
+        operation
+            .parameters
+            .push(Parameter::path("path", oa::Schema::new_number()).into());
+        operation
+            .parameters
+            .push(Parameter::query("query", oa::Schema::new_number()).into());
         modify_parameter_names(&mut operation, path);
-        assert_eq!(operation.parameters[0].as_item().unwrap().name, "id", "path param name is updated");
-        assert_eq!(operation.parameters[1].as_item().unwrap().name, "query", "leave query param alone");
+        assert_eq!(
+            operation.parameters[0].as_item().unwrap().name,
+            "id",
+            "path param name is updated"
+        );
+        assert_eq!(
+            operation.parameters[1].as_item().unwrap().name,
+            "query",
+            "leave query param alone"
+        );
     }
 }

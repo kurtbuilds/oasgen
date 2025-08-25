@@ -96,6 +96,7 @@ impl_oa_schema!(f32, Schema::new_number());
 impl_oa_schema!(f64, Schema::new_number());
 
 impl_oa_schema!(String, Schema::new_string());
+impl_oa_schema!(&str, Schema::new_string());
 
 impl<T> OaSchema for Vec<T>
 where

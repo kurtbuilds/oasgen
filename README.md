@@ -35,7 +35,10 @@ Contributions to support other web frameworks are welcome!
 // Actix-web example
 use actix_web::web::Json;
 use actix_web::{App, HttpServer};
-use oasgen::{oasgen, OaSchema, Server};
+use oasgen::{
+    actix::{get, scope},
+    oasgen, OaSchema, Server,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(OaSchema, Deserialize)]
@@ -55,16 +58,25 @@ async fn send_code(_body: Json<SendCode>) -> Json<SendCodeResponse> {
     })
 }
 
+#[oasgen]
+async fn get_code() -> Json<String> {
+    Json("code".into())
+}
+
 #[tokio::main]
 async fn main() {
-    let server = Server::actix().post("/send-code", send_code).freeze();
-
-    HttpServer::new(move || App::new().service(server.clone().into_service()))
-        .bind(("127.0.0.1", 5000))
-        .unwrap()
-        .run()
-        .await
-        .unwrap()
+    HttpServer::new(move || {
+        let server = Server::actix()
+            .post("/send-code", send_code)
+            .service(scope("/scoped").route("/get-code", get().to(get_code)))
+            .freeze();
+        App::new().service(server.into_service())
+    })
+    .bind(("127.0.0.1", 5000))
+    .unwrap()
+    .run()
+    .await
+    .unwrap()
 }
 ```
 To compile the actix-web example, use the following dependencies:

@@ -1,61 +1,27 @@
-use std::str::FromStr;
+use crate::Format;
+use actix_web::dev::{AppService, HttpServiceFactory};
+use actix_web::http::Method;
 #[cfg(feature = "swagger-ui")]
 use actix_web::HttpRequest;
-use actix_web::{web, Error, FromRequest, Handler, HttpResponse, Resource, Responder, Scope};
-use actix_web::http::Method;
+use actix_web::{guard::Guard, http::header::CONTENT_TYPE};
+use actix_web::{web, Error, FromRequest, Handler, HttpResponse, Resource, Responder};
 use futures::future::{ok, Ready};
-use openapiv3::OpenAPI;
+use indexmap::IndexMap;
+use openapiv3::{OpenAPI, PathItem, RefOr};
+use std::marker::PhantomData;
+use std::str::FromStr;
 use std::sync::Arc;
-use actix_web::http::header::CONTENT_TYPE;
-use crate::Format;
 
-use super::Server;
+use super::{add_handler_to_spec, HandlerSpec, Server};
 
 use oasgen_core::{OaParameter, OaSchema};
 
-#[derive(Default)]
-pub struct ActixRouter(Vec<InnerResourceFactory<'static>>);
+pub struct ActixRouter(actix_web::Scope);
 
-impl Clone for ActixRouter {
-    fn clone(&self) -> Self {
-        ActixRouter(self.0.iter().map(|f| f.manual_clone()).collect::<Vec<_>>())
+impl Default for ActixRouter {
+    fn default() -> Self {
+        Self(actix_web::Scope::new(""))
     }
-}
-
-/// ResourceFactory is a no-argument closure that returns a user-provided view handler.
-///
-/// Because `actix_web::Resource : !Clone`, we can't store the `Resource` directly in the `Server`
-/// struct (since we need `Server: Clone`, because `Server` is cloned for every server thread by actix_web).
-/// This trait essentially adds `Clone` to these closures.
-pub trait ResourceFactory<'a>: Send + Fn() -> Resource {
-    fn manual_clone(&self) -> InnerResourceFactory<'static>;
-}
-
-impl<'a, T> ResourceFactory<'a> for T
-where
-    T: 'static + Clone + Fn() -> Resource + Send,
-{
-    fn manual_clone(&self) -> InnerResourceFactory<'static> {
-        Box::new(self.clone())
-    }
-}
-
-pub type InnerResourceFactory<'a> = Box<dyn ResourceFactory<'a, Output=Resource>>;
-
-fn build_inner_resource<F, Args>(
-    path: String,
-    method: Method,
-    handler: F,
-) -> InnerResourceFactory<'static>
-where
-    F: Handler<Args> + 'static + Copy + Send,
-    Args: FromRequest + 'static,
-    F::Output: Responder + 'static,
-{
-    Box::new(move || {
-        Resource::new(path.clone())
-            .route(web::route().method(method.clone()).to(handler))
-    })
 }
 
 impl Server<ActixRouter> {
@@ -63,18 +29,23 @@ impl Server<ActixRouter> {
         Self::new()
     }
 
+    pub fn service<F>(mut self, mut factory: F) -> Self
+    where
+        F: HandlerSpec + HttpServiceFactory + 'static,
+    {
+        self.extend_handler_spec(&mut factory);
+        self.router.0 = self.router.0.service(factory);
+        self
+    }
+
     pub fn get<F, Args>(mut self, path: &str, handler: F) -> Self
     where
-        F: Handler<Args>,
+        F: Handler<Args> + Copy + Send,
         Args: FromRequest + 'static,
-        F::Output: Responder + 'static,
-        <F as Handler<Args>>::Output: OaParameter,
-        F: Copy + Send,
+        F::Output: OaParameter + Responder + 'static,
     {
         self.add_handler_to_spec(path, http::Method::GET, &handler);
-        self.router
-            .0
-            .push(build_inner_resource(path.to_string(), Method::GET, handler));
+        self.router.0 = self.router.0.route(path, web::get().to(handler));
         self
     }
 
@@ -82,15 +53,32 @@ impl Server<ActixRouter> {
     where
         F: Handler<Args> + Copy + Send,
         Args: FromRequest + 'static,
-        F::Output: Responder + 'static,
-        <F as Handler<Args>>::Output: OaParameter,
+        F::Output: OaParameter + Responder + 'static,
     {
         self.add_handler_to_spec(path, http::Method::POST, &handler);
-        self.router.0.push(build_inner_resource(
-            path.to_string(),
-            Method::POST,
-            handler,
-        ));
+        self.router.0 = self.router.0.route(path, web::post().to(handler));
+        self
+    }
+
+    pub fn put<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: OaParameter + Responder + 'static,
+    {
+        self.add_handler_to_spec(path, http::Method::PUT, &handler);
+        self.router.0 = self.router.0.route(path, web::put().to(handler));
+        self
+    }
+
+    pub fn delete<F, Args>(mut self, path: &str, handler: F) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: OaParameter + Responder + 'static,
+    {
+        self.add_handler_to_spec(path, http::Method::DELETE, &handler);
+        self.router.0 = self.router.0.route(path, web::delete().to(handler));
         self
     }
 
@@ -98,25 +86,17 @@ impl Server<ActixRouter> {
     where
         F: Handler<Args> + Copy + Send,
         Args: FromRequest + 'static,
-        F::Output: Responder + 'static,
-        <F as Handler<Args>>::Output: OaParameter,
+        F::Output: OaParameter + Responder + 'static,
     {
         self.add_handler_to_spec(path, http::Method::PATCH, &handler);
-        self.router.0.push(build_inner_resource(
-            path.to_string(),
-            Method::PATCH,
-            handler,
-        ));
+        self.router.0 = self.router.0.route(path, web::patch().to(handler));
         self
     }
 }
 
 impl Server<ActixRouter, Arc<OpenAPI>> {
-    pub fn into_service(self) -> Scope {
+    pub fn into_service(self) -> actix_web::Scope {
         let mut scope = web::scope(&self.prefix.unwrap_or_default());
-        for resource in self.router.0 {
-            scope = scope.service(resource());
-        }
         if let Some(path) = self.json_route {
             scope = scope.service(
                 web::resource(&path).route(web::get().to(OaSpecJsonHandler(self.openapi.clone()))),
@@ -135,8 +115,149 @@ impl Server<ActixRouter, Arc<OpenAPI>> {
             scope = scope.app_data(web::Data::new(swagger_ui));
             scope = scope.service(web::resource(path).route(web::get().to(handler_swagger)));
         }
-        scope
+        scope.service(self.router.0)
     }
+}
+
+pub struct Scope {
+    path: String,
+    paths: IndexMap<String, RefOr<PathItem>>,
+    inner: actix_web::Scope,
+}
+
+impl Scope {
+    pub fn new(path: &str) -> Self {
+        Self {
+            path: path.into(),
+            paths: Default::default(),
+            inner: actix_web::Scope::new(path),
+        }
+    }
+
+    /// Proxy for [`actix_web::Scope::guard`](https://docs.rs/actix-web/*/actix_web/struct.Scope.html#method.guard).
+    ///
+    /// **NOTE:** This doesn't affect spec generation.
+    pub fn guard<G: Guard + 'static>(mut self, guard: G) -> Self {
+        self.inner = self.inner.guard(guard);
+        self
+    }
+
+    /// Wrapper for [`actix_web::Scope::route`](https://docs.rs/actix-web/*/actix_web/struct.Scope.html#method.route).
+    pub fn route<F, Args>(mut self, path: &str, route: Route<F>) -> Self
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: OaParameter + Responder + 'static,
+    {
+        let scoped_path = self.scoped_path(path);
+        add_handler_to_spec::<F>(&mut self.paths, &scoped_path, route.method());
+        self.inner = self.inner.route(path, route.inner);
+        self
+    }
+
+    fn scoped_path(&self, path: &str) -> String {
+        match (self.path.ends_with('/'), path.starts_with('/')) {
+            (true, true) => format!("{}{}", self.path, &path[1..]),
+            (true, false) | (false, true) => format!("{}{}", self.path, path),
+            (false, false) => format!("{}/{}", self.path, path),
+        }
+    }
+}
+
+impl HandlerSpec for Scope {
+    fn paths(&mut self) -> impl Iterator<Item = (String, RefOr<PathItem>)> {
+        self.paths.drain(..)
+    }
+}
+
+/// Wrapper for [`actix_web::web::scope`](https://docs.rs/actix-web/*/actix_web/web/fn.scope.html).
+pub fn scope(path: &str) -> Scope {
+    Scope::new(path)
+}
+
+impl HttpServiceFactory for Scope {
+    fn register(self, config: &mut AppService) {
+        self.inner.register(config);
+    }
+}
+
+pub struct Route<H = ()> {
+    method: Method,
+    inner: actix_web::Route,
+    _handler: PhantomData<H>,
+}
+
+impl Route {
+    pub fn new(method: Method) -> Self {
+        Self {
+            method: method.clone(),
+            inner: actix_web::Route::new().method(method),
+            _handler: PhantomData,
+        }
+    }
+
+    /// Proxy for [`actix_web::Route::guard`](https://docs.rs/actix-web/*/actix_web/struct.Route.html#method.guard).
+    ///
+    /// **NOTE:** This doesn't affect spec generation.
+    pub fn guard<G: Guard + 'static>(mut self, guard: G) -> Self {
+        self.inner = self.inner.guard(guard);
+        self
+    }
+
+    /// Wrapper for [`actix_web::Route::to`](https://docs.rs/actix-web/*/actix_web/struct.Route.html#method.to)
+    pub fn to<F, Args>(mut self, handler: F) -> Route<F>
+    where
+        F: Handler<Args> + Copy + Send,
+        Args: FromRequest + 'static,
+        F::Output: Responder + 'static,
+    {
+        Route {
+            method: self.method,
+            inner: self.inner.to(handler),
+            _handler: PhantomData,
+        }
+    }
+}
+
+impl<T> Route<T> {
+    fn method(&self) -> http::Method {
+        match &self.method {
+            &Method::GET => http::Method::GET,
+            &Method::POST => http::Method::POST,
+            &Method::PUT => http::Method::PUT,
+            &Method::DELETE => http::Method::DELETE,
+            &Method::OPTIONS => http::Method::OPTIONS,
+            &Method::HEAD => http::Method::HEAD,
+            &Method::PATCH => http::Method::PATCH,
+            &Method::TRACE => http::Method::TRACE,
+            v => panic!("Unsupported method: {v}"),
+        }
+    }
+}
+
+/// Wrapper for [`actix_web::web::get`](https://docs.rs/actix-web/*/actix_web/web/fn.get.html).
+pub fn get() -> Route {
+    Route::new(Method::GET)
+}
+
+/// Wrapper for [`actix_web::web::put`](https://docs.rs/actix-web/*/actix_web/web/fn.put.html).
+pub fn put() -> Route {
+    Route::new(Method::PUT)
+}
+
+/// Wrapper for [`actix_web::web::post`](https://docs.rs/actix-web/*/actix_web/web/fn.post.html).
+pub fn post() -> Route {
+    Route::new(Method::POST)
+}
+
+/// Wrapper for [`actix_web::web::patch`](https://docs.rs/actix-web/*/actix_web/web/fn.patch.html).
+pub fn patch() -> Route {
+    Route::new(Method::PATCH)
+}
+
+/// Wrapper for [`actix_web::web::delete`](https://docs.rs/actix-web/*/actix_web/web/fn.delete.html).
+pub fn delete() -> Route {
+    Route::new(Method::DELETE)
 }
 
 #[derive(Clone)]
@@ -180,8 +301,10 @@ async fn handler_swagger(
 
         response.headers().iter().for_each(|(k, v)| {
             // actix still using http=0.2
-            let k = actix_web::http::header::HeaderName::from_str(k.as_str()).expect("Invalid header name");
-            let v = actix_web::http::header::HeaderValue::from_bytes(v.as_bytes()).expect("Invalid header value");
+            let k = actix_web::http::header::HeaderName::from_str(k.as_str())
+                .expect("Invalid header name");
+            let v = actix_web::http::header::HeaderValue::from_bytes(v.as_bytes())
+                .expect("Invalid header value");
             builder.append_header((k, v));
         });
         builder.body(response.body_mut().to_owned())

@@ -17,7 +17,7 @@ check:
 alias c := check
 
 fix:
-    cargo clippy --fix
+    cargo clippy --all-features --all-targets --fix
 
 # Bump version. level=major,minor,patch
 version level:
